@@ -81,7 +81,7 @@ export default function AuthPage() {
               <Shield className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-bold text-lg text-foreground tracking-tight">SentinelSecOps</div>
+              <div className="font-bold text-lg text-foreground tracking-tight">Sentinel Forge</div>
               <div className="text-xs text-muted-foreground">AI-Powered Security Compliance</div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function AuthPage() {
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <Shield className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
-            <div className="font-bold text-lg tracking-tight">SentinelSecOps</div>
+            <div className="font-bold text-lg tracking-tight">Sentinel Forge</div>
           </div>
 
           <Tabs value={tab} onValueChange={setTab} className="w-full">

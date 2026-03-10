@@ -1,7 +1,7 @@
-# SentinelSecOps - AI Security Compliance Platform
+# Sentinel Forge - AI Security Compliance Platform
 
 ## Overview
-SentinelSecOps is a globally scalable AI-powered SecOps compliance platform that unifies vulnerability scanning, compliance mapping, and automated audit reporting.
+Sentinel Forge is a globally scalable AI-powered SecOps compliance platform that unifies vulnerability scanning, compliance mapping, and automated audit reporting.
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui

@@ -83,7 +83,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Shield className="w-4.5 h-4.5 text-primary-foreground" />
               </div>
               <div>
-                <div className="text-sm font-bold text-sidebar-foreground tracking-tight">SentinelSecOps</div>
+                <div className="text-sm font-bold text-sidebar-foreground tracking-tight">Sentinel Forge</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
                   {user?.organization?.plan ? `${user.organization.plan} plan` : "Active"}

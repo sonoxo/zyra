@@ -33,7 +33,7 @@ export async function registerRoutes(
         conString: process.env.DATABASE_URL,
         createTableIfMissing: true,
       }),
-      secret: process.env.SESSION_SECRET || "sentinel-secops-secret-key-change-in-prod",
+      secret: process.env.SESSION_SECRET || "sentinel-forge-secret-key-change-in-prod",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -441,7 +441,7 @@ export async function registerRoutes(
 function generatePDFContent(report: any): Buffer {
   const lines = [
     `%PDF-1.4`,
-    `SENTINEL SECOPS - SECURITY AUDIT REPORT`,
+    `SENTINEL FORGE - SECURITY AUDIT REPORT`,
     ``,
     `Title: ${report.title}`,
     `Generated: ${report.generatedAt || new Date().toISOString()}`,
