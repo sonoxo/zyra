@@ -7,8 +7,11 @@ import {
   type ScanFinding, type InsertScanFinding,
   type ComplianceMapping, type InsertComplianceMapping,
   type Report, type InsertReport,
+  type Setting, type InsertSetting,
+  type AuditLog, type InsertAuditLog,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
+  settings, auditLogs,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -46,6 +49,13 @@ export interface IStorage {
   getReport(id: string, orgId: string): Promise<Report | undefined>;
   createReport(report: InsertReport): Promise<Report>;
   updateReport(id: string, data: Partial<Report>): Promise<Report | undefined>;
+
+  getSettings(orgId: string, category?: string): Promise<Setting[]>;
+  getSetting(orgId: string, category: string, key: string): Promise<Setting | undefined>;
+  upsertSetting(setting: InsertSetting): Promise<Setting>;
+
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(orgId: string, limit?: number): Promise<AuditLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -163,6 +173,45 @@ export class DatabaseStorage implements IStorage {
   async updateReport(id: string, data: Partial<Report>): Promise<Report | undefined> {
     const [updated] = await db.update(reports).set(data).where(eq(reports.id, id)).returning();
     return updated;
+  }
+
+  async getSettings(orgId: string, category?: string): Promise<Setting[]> {
+    if (category) {
+      return db.select().from(settings).where(and(eq(settings.organizationId, orgId), eq(settings.category, category)));
+    }
+    return db.select().from(settings).where(eq(settings.organizationId, orgId));
+  }
+
+  async getSetting(orgId: string, category: string, key: string): Promise<Setting | undefined> {
+    const [setting] = await db.select().from(settings)
+      .where(and(eq(settings.organizationId, orgId), eq(settings.category, category), eq(settings.key, key)))
+      .limit(1);
+    return setting;
+  }
+
+  async upsertSetting(setting: InsertSetting): Promise<Setting> {
+    const existing = await this.getSetting(setting.organizationId, setting.category, setting.key);
+    if (existing) {
+      const [updated] = await db.update(settings)
+        .set({ value: setting.value, updatedAt: new Date() })
+        .where(eq(settings.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(settings).values(setting).returning();
+    return created;
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [created] = await db.insert(auditLogs).values(log).returning();
+    return created;
+  }
+
+  async getAuditLogs(orgId: string, limit: number = 100): Promise<AuditLog[]> {
+    return db.select().from(auditLogs)
+      .where(eq(auditLogs.organizationId, orgId))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(limit);
   }
 }
 

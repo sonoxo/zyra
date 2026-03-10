@@ -1,0 +1,204 @@
+Continue building the SentinelSecOps platform.
+
+Execute the project build in structured phases and do not pause between phases.
+
+The system must produce a fully runnable MVP.
+
+PHASE 1 — PROJECT SCAFFOLDING
+
+Create the full project structure.
+
+frontend/
+backend/
+scanners/
+compliance/
+reports/
+settings/
+integrations/
+database/
+workers/
+
+Implement Docker configuration for local development.
+
+Add environment variable support.
+
+Add a README explaining how to run the system locally.
+
+Ensure the project runs with a single command.
+
+PHASE 2 — AUTHENTICATION & ORGANIZATION SYSTEM
+
+Implement authentication with:
+
+JWT tokens
+password hashing
+session management
+
+Create the following models:
+
+Users
+Organizations
+Projects
+ScanResults
+ComplianceReports
+Settings
+
+Add role-based access control:
+
+Admin
+Security Engineer
+Compliance Auditor
+Developer
+Viewer
+
+Ensure each organization has isolated data.
+
+PHASE 3 — SETTINGS CENTER
+
+Build a configurable settings system that allows users to control platform behavior.
+
+Implement settings modules for:
+
+organization settings
+scan settings
+compliance frameworks
+notification preferences
+data retention policies
+AI report settings
+
+Settings must be stored in the database and loaded dynamically.
+
+PHASE 4 — SECURITY SCANNING ENGINE
+
+Create a scanning pipeline that supports multiple scan types.
+
+Integrate:
+
+Semgrep for static code analysis
+Bandit for Python scanning
+Trivy for container scanning
+OWASP ZAP for web security testing
+
+Build worker services that run scans asynchronously.
+
+Use a queue system to process scans.
+
+Workers must report results back to the platform.
+
+PHASE 5 — COMPLIANCE ENGINE
+
+Build a compliance mapping system.
+
+Supported frameworks:
+
+SOC2
+HIPAA
+ISO27001
+PCI-DSS
+FedRAMP
+GDPR
+
+Allow users to upload documentation.
+
+Use AI to analyze documentation and detect security controls.
+
+Map detected controls to compliance requirements.
+
+Generate compliance gap reports.
+
+PHASE 6 — AI DIAGNOSTIC REPORT ENGINE
+
+Build a report generator that produces:
+
+Executive summary
+Security score
+Vulnerability details
+Attack explanation
+Remediation recommendations
+Compliance impact
+
+Reports should be exportable as:
+
+PDF
+JSON
+CSV
+
+PHASE 7 — DASHBOARD UI
+
+Build a cybersecurity dashboard that shows:
+
+Security score
+Vulnerability counts
+Compliance coverage
+Recent scan activity
+Remediation progress
+
+Create charts for:
+
+severity distribution
+compliance coverage
+risk trends
+
+PHASE 8 — INTEGRATIONS
+
+Add integrations with:
+
+GitHub
+GitLab
+Slack
+Jira
+
+Allow repository scanning.
+
+Allow CI/CD pipeline scanning.
+
+PHASE 9 — DISTRIBUTED SCAN WORKERS
+
+Create containerized workers that run scans.
+
+Workers must scale horizontally.
+
+Workers receive scan jobs from a queue.
+
+Workers return scan results to the platform.
+
+PHASE 10 — GLOBAL SCALABILITY
+
+Prepare the platform for global SaaS deployment.
+
+Add:
+
+multi-region support
+load balancing
+auto-scaling workers
+API rate limiting
+secure secrets storage
+
+Ensure the architecture is Kubernetes compatible.
+
+PHASE 11 — SECURITY CONTROLS
+
+Implement:
+
+audit logging
+encrypted data storage
+strict authorization checks
+secure API access
+
+Add scan authorization confirmation before scanning external targets.
+
+PHASE 12 — FINALIZATION
+
+Ensure the application runs locally with:
+
+Docker compose up
+
+Verify all services start correctly.
+
+Provide a developer guide explaining:
+
+architecture
+scan pipeline
+AI reporting
+settings customization
+deployment steps

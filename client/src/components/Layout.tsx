@@ -3,7 +3,7 @@ import {
   Shield, LayoutDashboard, Search, CheckSquare,
   FileText, GitBranch, FolderOpen, Settings,
   Bell, Sun, Moon, LogOut, ChevronDown,
-  Activity, Zap, Globe
+  Activity, Zap, Globe, Plug
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const navItems = [
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/repositories", label: "Repositories", icon: GitBranch },
   { href: "/documents", label: "Documents", icon: FolderOpen },
+  { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

@@ -11,6 +11,7 @@ declare module "express-session" {
   interface SessionData {
     userId: string;
     organizationId: string;
+    role: string;
   }
 }
 
@@ -19,6 +20,26 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   next();
+}
+
+function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (!req.session.role || !roles.includes(req.session.role)) {
+      return res.status(403).json({ message: "Insufficient permissions" });
+    }
+    next();
+  };
+}
+
+async function logAudit(orgId: string, userId: string, action: string, resourceType?: string, resourceId?: string, details?: any, ipAddress?: string) {
+  try {
+    await storage.createAuditLog({ organizationId: orgId, userId, action, resourceType, resourceId, details, ipAddress });
+  } catch (e) {
+    console.error("Audit log error:", e);
+  }
 }
 
 export async function registerRoutes(
@@ -84,6 +105,9 @@ export async function registerRoutes(
 
       req.session.userId = user.id;
       req.session.organizationId = org.id;
+      req.session.role = user.role;
+
+      await logAudit(org.id, user.id, "user.register", "user", user.id, { username }, req.ip);
 
       return res.json({
         id: user.id,
@@ -118,6 +142,9 @@ export async function registerRoutes(
 
       req.session.userId = user.id;
       req.session.organizationId = user.organizationId;
+      req.session.role = user.role;
+
+      await logAudit(user.organizationId, user.id, "user.login", "user", user.id, { username }, req.ip);
 
       return res.json({
         id: user.id,
@@ -273,7 +300,7 @@ export async function registerRoutes(
     return res.json(findings);
   });
 
-  app.post("/api/scans", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/scans", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
       const orgId = req.session.organizationId!;
       const userId = req.session.userId!;
@@ -302,6 +329,7 @@ export async function registerRoutes(
       });
 
       runScanSimulation(scan.id, orgId, scanType);
+      await logAudit(orgId, userId, "scan.create", "scan", scan.id, { scanType, name: scan.name }, req.ip);
 
       return res.json(scan);
     } catch (err: any) {
@@ -327,7 +355,7 @@ export async function registerRoutes(
     return res.json(report);
   });
 
-  app.post("/api/reports", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/reports", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
       const orgId = req.session.organizationId!;
       const userId = req.session.userId!;
@@ -347,6 +375,7 @@ export async function registerRoutes(
       });
 
       generateReport(report.id, orgId, frameworks || ["SOC2", "HIPAA"]);
+      await logAudit(orgId, userId, "report.create", "report", report.id, { title: report.title }, req.ip);
 
       return res.json(report);
     } catch (err: any) {
@@ -371,7 +400,7 @@ export async function registerRoutes(
     return res.json(repos);
   });
 
-  app.post("/api/repositories", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/repositories", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
       const orgId = req.session.organizationId!;
       const { provider, name, fullName, url, branch } = req.body;
@@ -389,6 +418,7 @@ export async function registerRoutes(
         branch: branch || "main",
       });
 
+      await logAudit(orgId, req.session.userId!, "repository.create", "repository", repo.id, { name, provider }, req.ip);
       return res.json(repo);
     } catch (err: any) {
       console.error("Create repo error:", err);
@@ -396,7 +426,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/repositories/:id", requireAuth, async (req: Request, res: Response) => {
+  app.delete("/api/repositories/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
     await storage.deleteRepository(id, req.session.organizationId!);
     return res.json({ message: "Deleted" });
@@ -407,7 +437,7 @@ export async function registerRoutes(
     return res.json(docs);
   });
 
-  app.post("/api/documents", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/documents", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
       const orgId = req.session.organizationId!;
       const userId = req.session.userId!;
@@ -429,10 +459,80 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/documents/:id", requireAuth, async (req: Request, res: Response) => {
+  app.delete("/api/documents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
+    await logAudit(req.session.organizationId!, req.session.userId!, "document.delete", "document", id, null, req.ip);
     await storage.deleteDocument(id, req.session.organizationId!);
     return res.json({ message: "Deleted" });
+  });
+
+  app.get("/api/settings", requireAuth, async (req: Request, res: Response) => {
+    const category = req.query.category as string | undefined;
+    const allSettings = await storage.getSettings(req.session.organizationId!, category);
+    return res.json(allSettings);
+  });
+
+  app.put("/api/settings", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { category, key, value } = req.body;
+      if (!category || !key) {
+        return res.status(400).json({ message: "Category and key are required" });
+      }
+      const setting = await storage.upsertSetting({ organizationId: orgId, category, key, value });
+      await logAudit(orgId, req.session.userId!, "settings.update", "setting", setting.id, { category, key }, req.ip);
+      return res.json(setting);
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to save setting" });
+    }
+  });
+
+  app.get("/api/audit-logs", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const logs = await storage.getAuditLogs(req.session.organizationId!);
+    return res.json(logs);
+  });
+
+  app.get("/api/reports/:id/export/csv", requireAuth, async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const report = await storage.getReport(id, req.session.organizationId!);
+    if (!report) return res.status(404).json({ message: "Report not found" });
+
+    const findings = await storage.getFindingsByOrg(req.session.organizationId!);
+    const mappings = await storage.getComplianceMappings(req.session.organizationId!);
+
+    function csvSafe(val: string): string {
+      let s = (val || "").replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s}"`;
+    }
+
+    const lines: string[] = [];
+    lines.push("Section,Field,Value");
+    lines.push(`Summary,Title,${csvSafe(report.title || "")}`);
+    lines.push(`Summary,Security Score,${report.securityScore || "N/A"}`);
+    lines.push(`Summary,Total Vulnerabilities,${report.totalVulnerabilities}`);
+    lines.push(`Summary,Critical,${report.criticalCount}`);
+    lines.push(`Summary,High,${report.highCount}`);
+    lines.push(`Summary,Medium,${report.mediumCount}`);
+    lines.push(`Summary,Low,${report.lowCount}`);
+    lines.push("");
+    lines.push("Title,Severity,Category,File,Remediation,Compliance Frameworks");
+    findings.forEach((f) => {
+      lines.push(`${csvSafe(f.title)},${f.severity},${csvSafe(f.category || "")},${csvSafe(f.filePath || "")},${csvSafe(f.remediation || "")},${csvSafe((f.complianceFrameworks || []).join("; "))}`);
+    });
+    lines.push("");
+    lines.push("Framework,Coverage %,Status");
+    const frameworks = ["SOC2", "HIPAA", "ISO27001", "PCI-DSS", "FedRAMP", "GDPR"];
+    frameworks.forEach((fw) => {
+      const fwMappings = mappings.filter((m) => m.framework === fw);
+      const avg = fwMappings.length > 0 ? Math.round(fwMappings.reduce((a, m) => a + m.coverage, 0) / fwMappings.length) : 0;
+      const status = avg >= 80 ? "compliant" : avg >= 50 ? "partial" : "non-compliant";
+      lines.push(`${fw},${avg},${status}`);
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${report.title?.replace(/\s+/g, "_") || "report"}.csv"`);
+    res.send(lines.join("\n"));
   });
 
   return httpServer;

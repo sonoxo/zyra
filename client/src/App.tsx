@@ -14,6 +14,8 @@ import Reports from "@/pages/reports";
 import ReportDetail from "@/pages/report-detail";
 import Repositories from "@/pages/repositories";
 import Documents from "@/pages/documents";
+import Integrations from "@/pages/integrations";
+import SettingsPage from "@/pages/settings";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -82,6 +84,8 @@ function Router() {
       <Route path="/reports">{() => <ProtectedRoute component={Reports} />}</Route>
       <Route path="/repositories">{() => <ProtectedRoute component={Repositories} />}</Route>
       <Route path="/documents">{() => <ProtectedRoute component={Documents} />}</Route>
+      <Route path="/integrations">{() => <ProtectedRoute component={Integrations} />}</Route>
+      <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>
