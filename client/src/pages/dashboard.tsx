@@ -387,7 +387,7 @@ export default function Dashboard() {
                   <Activity className="w-8 h-8 text-muted-foreground mb-3 opacity-50" />
                   <p className="text-sm text-muted-foreground">No scans yet</p>
                   <Link href="/scans">
-                    <Button variant="link" size="sm" className="mt-1 h-auto p-0 text-xs">Start your first scan</Button>
+                    <Button variant="ghost" size="sm" className="mt-1 h-auto p-0 text-xs">Start your first scan</Button>
                   </Link>
                 </div>
               )}
