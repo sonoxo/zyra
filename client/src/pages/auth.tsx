@@ -1,0 +1,294 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Shield, Lock, Eye, EyeOff, ArrowRight, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { login, register } from "@/lib/auth";
+import { Badge } from "@/components/ui/badge";
+
+const loginSchema = z.object({
+  username: z.string().min(1, "Username required"),
+  password: z.string().min(1, "Password required"),
+});
+
+const registerSchema = z.object({
+  fullName: z.string().min(2, "Full name required"),
+  email: z.string().email("Valid email required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  organizationName: z.string().min(2, "Organization name required"),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
+
+const features = [
+  "Multi-framework compliance mapping (SOC2, HIPAA, ISO27001, PCI-DSS, FedRAMP, GDPR)",
+  "Automated scans with Semgrep, Trivy, Bandit & OWASP ZAP",
+  "AI-powered security audit report generation",
+  "Real-time vulnerability dashboards & analytics",
+  "Multi-tenant architecture with role-based access",
+];
+
+export default function AuthPage() {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [showPassword, setShowPassword] = useState(false);
+  const [tab, setTab] = useState("login");
+
+  const loginForm = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { username: "", password: "" } });
+  const registerForm = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { fullName: "", email: "", username: "", password: "", organizationName: "" }
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: (data: LoginForm) => login(data.username, data.password),
+    onSuccess: (user) => {
+      qc.setQueryData(["/api/auth/me"], user);
+      navigate("/dashboard");
+    },
+    onError: () => toast({ title: "Login failed", description: "Invalid credentials", variant: "destructive" }),
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: (data: RegisterForm) => register(data),
+    onSuccess: (user) => {
+      qc.setQueryData(["/api/auth/me"], user);
+      navigate("/dashboard");
+    },
+    onError: (err: any) => toast({ title: "Registration failed", description: err.message || "Try again", variant: "destructive" }),
+  });
+
+  return (
+    <div className="min-h-screen flex bg-background">
+      <div className="hidden lg:flex flex-col w-1/2 bg-gradient-to-br from-primary/10 via-background to-background border-r border-border p-12 justify-between relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+              <Shield className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <div className="font-bold text-lg text-foreground tracking-tight">SentinelSecOps</div>
+              <div className="text-xs text-muted-foreground">AI-Powered Security Compliance</div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
+              Globally Scalable Platform
+            </Badge>
+            <h1 className="text-3xl font-bold text-foreground leading-tight mb-4">
+              Enterprise-grade security<br />compliance, simplified.
+            </h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Unify vulnerability scanning, compliance mapping, and audit reporting across your entire infrastructure — from code to cloud.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {features.map((f, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <ChevronRight className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-sm text-muted-foreground leading-relaxed">{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative grid grid-cols-3 gap-4">
+          {[
+            { label: "Frameworks", value: "6+" },
+            { label: "Scan Tools", value: "4" },
+            { label: "Compliance Coverage", value: "98%" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-card border border-card-border rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+              <Shield className="w-4.5 h-4.5 text-primary-foreground" />
+            </div>
+            <div className="font-bold text-lg tracking-tight">SentinelSecOps</div>
+          </div>
+
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50">
+              <TabsTrigger value="login" data-testid="tab-login">Sign In</TabsTrigger>
+              <TabsTrigger value="register" data-testid="tab-register">Create Account</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login" className="space-y-0">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-foreground">Welcome back</h2>
+                <p className="text-sm text-muted-foreground mt-1">Sign in to your security console</p>
+              </div>
+              <form onSubmit={loginForm.handleSubmit((d) => loginMutation.mutate(d))} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-username" className="text-sm font-medium">Username</Label>
+                  <Input
+                    id="login-username"
+                    data-testid="input-username"
+                    placeholder="Enter your username"
+                    {...loginForm.register("username")}
+                    className="h-10"
+                  />
+                  {loginForm.formState.errors.username && (
+                    <p className="text-xs text-destructive">{loginForm.formState.errors.username.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      data-testid="input-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      {...loginForm.register("password")}
+                      className="h-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {loginForm.formState.errors.password && (
+                    <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  data-testid="button-login"
+                  className="w-full h-10"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Signing in..." : (
+                    <span className="flex items-center gap-2">Sign in <ArrowRight className="w-4 h-4" /></span>
+                  )}
+                </Button>
+              </form>
+              <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-xs text-muted-foreground text-center">
+                  Demo: <span className="font-mono font-medium text-foreground">demo</span> / <span className="font-mono font-medium text-foreground">password123</span>
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="register" className="space-y-0">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-foreground">Create your account</h2>
+                <p className="text-sm text-muted-foreground mt-1">Set up your security compliance platform</p>
+              </div>
+              <form onSubmit={registerForm.handleSubmit((d) => registerMutation.mutate(d))} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Full name</Label>
+                    <Input
+                      data-testid="input-fullname"
+                      placeholder="John Doe"
+                      {...registerForm.register("fullName")}
+                      className="h-10"
+                    />
+                    {registerForm.formState.errors.fullName && (
+                      <p className="text-xs text-destructive">{registerForm.formState.errors.fullName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Username</Label>
+                    <Input
+                      data-testid="input-reg-username"
+                      placeholder="johndoe"
+                      {...registerForm.register("username")}
+                      className="h-10"
+                    />
+                    {registerForm.formState.errors.username && (
+                      <p className="text-xs text-destructive">{registerForm.formState.errors.username.message}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Email</Label>
+                  <Input
+                    data-testid="input-email"
+                    type="email"
+                    placeholder="you@company.com"
+                    {...registerForm.register("email")}
+                    className="h-10"
+                  />
+                  {registerForm.formState.errors.email && (
+                    <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Organization name</Label>
+                  <Input
+                    data-testid="input-org-name"
+                    placeholder="Acme Corp"
+                    {...registerForm.register("organizationName")}
+                    className="h-10"
+                  />
+                  {registerForm.formState.errors.organizationName && (
+                    <p className="text-xs text-destructive">{registerForm.formState.errors.organizationName.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Input
+                      data-testid="input-reg-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Min 8 characters"
+                      {...registerForm.register("password")}
+                      className="h-10 pr-10"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {registerForm.formState.errors.password && (
+                    <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  data-testid="button-register"
+                  className="w-full h-10"
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? "Creating account..." : (
+                    <span className="flex items-center gap-2">Create account <ArrowRight className="w-4 h-4" /></span>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+}
