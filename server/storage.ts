@@ -9,9 +9,11 @@ import {
   type Report, type InsertReport,
   type Setting, type InsertSetting,
   type AuditLog, type InsertAuditLog,
+  type ApiKey, type InsertApiKey,
+  type Subscription, type InsertSubscription,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
-  settings, auditLogs,
+  settings, auditLogs, apiKeys, subscriptions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -56,6 +58,17 @@ export interface IStorage {
 
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(orgId: string, limit?: number): Promise<AuditLog[]>;
+
+  getApiKeys(orgId: string): Promise<ApiKey[]>;
+  getApiKey(id: string, orgId: string): Promise<ApiKey | undefined>;
+  getApiKeyByHash(keyHash: string): Promise<ApiKey | undefined>;
+  createApiKey(key: InsertApiKey): Promise<ApiKey>;
+  updateApiKey(id: string, data: Partial<ApiKey>): Promise<ApiKey | undefined>;
+  deleteApiKey(id: string, orgId: string): Promise<void>;
+
+  getSubscription(orgId: string): Promise<Subscription | undefined>;
+  createSubscription(sub: InsertSubscription): Promise<Subscription>;
+  updateSubscription(orgId: string, data: Partial<Subscription>): Promise<Subscription | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -212,6 +225,49 @@ export class DatabaseStorage implements IStorage {
       .where(eq(auditLogs.organizationId, orgId))
       .orderBy(desc(auditLogs.createdAt))
       .limit(limit);
+  }
+
+  async getApiKeys(orgId: string): Promise<ApiKey[]> {
+    return db.select().from(apiKeys).where(eq(apiKeys.organizationId, orgId)).orderBy(desc(apiKeys.createdAt));
+  }
+
+  async getApiKey(id: string, orgId: string): Promise<ApiKey | undefined> {
+    const [key] = await db.select().from(apiKeys).where(and(eq(apiKeys.id, id), eq(apiKeys.organizationId, orgId))).limit(1);
+    return key;
+  }
+
+  async getApiKeyByHash(keyHash: string): Promise<ApiKey | undefined> {
+    const [key] = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash)).limit(1);
+    return key;
+  }
+
+  async createApiKey(key: InsertApiKey): Promise<ApiKey> {
+    const [created] = await db.insert(apiKeys).values(key).returning();
+    return created;
+  }
+
+  async updateApiKey(id: string, data: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    const [updated] = await db.update(apiKeys).set(data).where(eq(apiKeys.id, id)).returning();
+    return updated;
+  }
+
+  async deleteApiKey(id: string, orgId: string): Promise<void> {
+    await db.delete(apiKeys).where(and(eq(apiKeys.id, id), eq(apiKeys.organizationId, orgId)));
+  }
+
+  async getSubscription(orgId: string): Promise<Subscription | undefined> {
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.organizationId, orgId)).limit(1);
+    return sub;
+  }
+
+  async createSubscription(sub: InsertSubscription): Promise<Subscription> {
+    const [created] = await db.insert(subscriptions).values(sub).returning();
+    return created;
+  }
+
+  async updateSubscription(orgId: string, data: Partial<Subscription>): Promise<Subscription | undefined> {
+    const [updated] = await db.update(subscriptions).set(data).where(eq(subscriptions.organizationId, orgId)).returning();
+    return updated;
   }
 }
 

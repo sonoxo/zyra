@@ -15,6 +15,10 @@ import ReportDetail from "@/pages/report-detail";
 import Repositories from "@/pages/repositories";
 import Documents from "@/pages/documents";
 import Integrations from "@/pages/integrations";
+import Enterprise from "@/pages/enterprise";
+import Billing from "@/pages/billing";
+import ApiKeysPage from "@/pages/api-keys";
+import Analytics from "@/pages/analytics";
 import SettingsPage from "@/pages/settings";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
@@ -84,7 +88,11 @@ function Router() {
       <Route path="/reports">{() => <ProtectedRoute component={Reports} />}</Route>
       <Route path="/repositories">{() => <ProtectedRoute component={Repositories} />}</Route>
       <Route path="/documents">{() => <ProtectedRoute component={Documents} />}</Route>
+      <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
       <Route path="/integrations">{() => <ProtectedRoute component={Integrations} />}</Route>
+      <Route path="/enterprise">{() => <ProtectedRoute component={Enterprise} />}</Route>
+      <Route path="/billing">{() => <ProtectedRoute component={Billing} />}</Route>
+      <Route path="/api-keys">{() => <ProtectedRoute component={ApiKeysPage} />}</Route>
       <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />

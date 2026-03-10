@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { runScanSimulation } from "./scan-worker";
 import { generateReport } from "./report-generator";
@@ -532,6 +533,363 @@ export async function registerRoutes(
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${report.title?.replace(/\s+/g, "_") || "report"}.csv"`);
+    res.send(lines.join("\n"));
+  });
+
+  // === API KEY MANAGEMENT ===
+  app.get("/api/api-keys", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const keys = await storage.getApiKeys(req.session.organizationId!);
+    return res.json(keys.map((k) => ({ ...k, keyHash: undefined })));
+  });
+
+  app.post("/api/api-keys", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { name, permissions, expiresInDays } = req.body;
+      if (!name) return res.status(400).json({ message: "Name is required" });
+
+      const rawKey = `sf_${crypto.randomBytes(32).toString("hex")}`;
+      const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
+      const keyPrefix = rawKey.substring(0, 10);
+
+      let expiresAt: Date | null = null;
+      if (expiresInDays && expiresInDays > 0) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+      }
+
+      const apiKey = await storage.createApiKey({
+        organizationId: orgId,
+        name,
+        keyHash,
+        keyPrefix,
+        permissions: permissions || ["read:scans", "read:reports"],
+        expiresAt: expiresAt ? expiresAt : undefined,
+        isActive: true,
+        createdById: req.session.userId!,
+      });
+
+      await logAudit(orgId, req.session.userId!, "apikey.create", "api_key", apiKey.id, { name }, req.ip);
+      return res.json({ ...apiKey, keyHash: undefined, rawKey });
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to create API key" });
+    }
+  });
+
+  app.delete("/api/api-keys/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    await logAudit(req.session.organizationId!, req.session.userId!, "apikey.revoke", "api_key", id, null, req.ip);
+    await storage.deleteApiKey(id, req.session.organizationId!);
+    return res.json({ message: "API key revoked" });
+  });
+
+  app.post("/api/api-keys/:id/regenerate", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string;
+      const existing = await storage.getApiKey(id, req.session.organizationId!);
+      if (!existing) return res.status(404).json({ message: "API key not found" });
+
+      const rawKey = `sf_${crypto.randomBytes(32).toString("hex")}`;
+      const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
+      const keyPrefix = rawKey.substring(0, 10);
+
+      await storage.updateApiKey(id, { keyHash, keyPrefix });
+      await logAudit(req.session.organizationId!, req.session.userId!, "apikey.regenerate", "api_key", id, null, req.ip);
+      return res.json({ rawKey, keyPrefix });
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to regenerate key" });
+    }
+  });
+
+  // === BILLING & SUBSCRIPTIONS ===
+  const PLAN_DETAILS: Record<string, any> = {
+    starter: { name: "Starter", price: 0, maxUsers: 5, maxScansPerMonth: 50, maxRepositories: 10, features: ["Basic scanning", "3 compliance frameworks", "Email support", "Community access"] },
+    professional: { name: "Professional", price: 99, maxUsers: 25, maxScansPerMonth: 500, maxRepositories: 50, features: ["All scan tools", "All compliance frameworks", "Priority support", "API access", "SSO integration", "Advanced analytics", "CSV/PDF export"] },
+    enterprise: { name: "Enterprise", price: 499, maxUsers: -1, maxScansPerMonth: -1, maxRepositories: -1, features: ["Unlimited everything", "All compliance frameworks", "Dedicated support", "SSO & SAML", "Custom integrations", "SLA guarantee", "Multi-region deployment", "Audit log export", "Advanced RBAC"] },
+  };
+
+  app.get("/api/billing/plans", requireAuth, async (_req: Request, res: Response) => {
+    return res.json(Object.entries(PLAN_DETAILS).map(([key, val]) => ({ id: key, ...val })));
+  });
+
+  app.get("/api/billing/subscription", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    let sub = await storage.getSubscription(orgId);
+    if (!sub) {
+      const periodEnd = new Date();
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      sub = await storage.createSubscription({
+        organizationId: orgId,
+        plan: "starter",
+        status: "active",
+        maxUsers: 5,
+        maxScansPerMonth: 50,
+        maxRepositories: 10,
+        features: PLAN_DETAILS.starter.features,
+        currentPeriodEnd: periodEnd,
+      });
+    }
+    return res.json(sub);
+  });
+
+  app.put("/api/billing/subscription", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { plan } = req.body;
+      if (!plan || !PLAN_DETAILS[plan]) return res.status(400).json({ message: "Invalid plan" });
+
+      const details = PLAN_DETAILS[plan];
+      const periodEnd = new Date();
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+
+      let sub = await storage.getSubscription(orgId);
+      if (sub) {
+        sub = await storage.updateSubscription(orgId, {
+          plan,
+          maxUsers: details.maxUsers === -1 ? 9999 : details.maxUsers,
+          maxScansPerMonth: details.maxScansPerMonth === -1 ? 99999 : details.maxScansPerMonth,
+          maxRepositories: details.maxRepositories === -1 ? 9999 : details.maxRepositories,
+          features: details.features,
+          currentPeriodEnd: periodEnd,
+        });
+      } else {
+        sub = await storage.createSubscription({
+          organizationId: orgId,
+          plan,
+          status: "active",
+          maxUsers: details.maxUsers === -1 ? 9999 : details.maxUsers,
+          maxScansPerMonth: details.maxScansPerMonth === -1 ? 99999 : details.maxScansPerMonth,
+          maxRepositories: details.maxRepositories === -1 ? 9999 : details.maxRepositories,
+          features: details.features,
+          currentPeriodEnd: periodEnd,
+        });
+      }
+
+      await logAudit(orgId, req.session.userId!, "billing.plan_change", "subscription", sub?.id, { plan }, req.ip);
+      return res.json(sub);
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  app.get("/api/billing/usage", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const sub = await storage.getSubscription(orgId);
+    const repos = await storage.getRepositories(orgId);
+    const allScans = await storage.getScans(orgId);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const scansThisMonth = allScans.filter((s) => new Date(s.createdAt) >= monthStart).length;
+
+    return res.json({
+      users: { current: 1, limit: sub?.maxUsers ?? 5 },
+      scans: { current: scansThisMonth, limit: sub?.maxScansPerMonth ?? 50 },
+      repositories: { current: repos.length, limit: sub?.maxRepositories ?? 10 },
+    });
+  });
+
+  // === SSO CONFIGURATION ===
+  app.get("/api/sso/config", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const ssoSettings = await storage.getSettings(orgId, "sso");
+    const config: Record<string, any> = {};
+    ssoSettings.forEach((s) => { config[s.key] = s.value; });
+    return res.json(config);
+  });
+
+  app.put("/api/sso/config", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { provider, entityId, ssoUrl, certificate, domains, enabled } = req.body;
+
+      const updates = [
+        { key: "provider", value: provider },
+        { key: "entityId", value: entityId },
+        { key: "ssoUrl", value: ssoUrl },
+        { key: "certificate", value: certificate },
+        { key: "domains", value: domains },
+        { key: "enabled", value: enabled },
+      ];
+
+      for (const u of updates) {
+        if (u.value !== undefined) {
+          await storage.upsertSetting({ organizationId: orgId, category: "sso", key: u.key, value: u.value });
+        }
+      }
+
+      await logAudit(orgId, req.session.userId!, "sso.config_update", "sso", undefined, { provider, enabled }, req.ip);
+      return res.json({ message: "SSO configuration updated" });
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to update SSO config" });
+    }
+  });
+
+  app.get("/api/sso/status", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const enabled = await storage.getSetting(orgId, "sso", "enabled");
+    const provider = await storage.getSetting(orgId, "sso", "provider");
+    return res.json({
+      enabled: enabled?.value === true,
+      provider: provider?.value || null,
+    });
+  });
+
+  // === ADVANCED ANALYTICS ===
+  app.get("/api/analytics/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const allFindings = await storage.getFindingsByOrg(orgId);
+      const allScans = await storage.getScans(orgId);
+
+      const resolved = allFindings.filter((f) => f.isResolved);
+      const mttrDays = resolved.length > 0
+        ? Math.round(resolved.reduce((sum, f) => {
+            const created = new Date(f.createdAt).getTime();
+            const resolvedAt = f.resolvedAt ? new Date(f.resolvedAt).getTime() : created + 3 * 86400000;
+            return sum + (resolvedAt - created) / 86400000;
+          }, 0) / resolved.length)
+        : 0;
+
+      const open = allFindings.filter((f) => !f.isResolved);
+      const riskScore = Math.max(0, 100 - (open.filter((f) => f.severity === "critical").length * 15
+        + open.filter((f) => f.severity === "high").length * 8
+        + open.filter((f) => f.severity === "medium").length * 3
+        + open.filter((f) => f.severity === "low").length));
+
+      const now = new Date();
+      const weeklyTrend = Array.from({ length: 12 }, (_, i) => {
+        const weekEnd = new Date(now);
+        weekEnd.setDate(weekEnd.getDate() - i * 7);
+        const weekStart = new Date(weekEnd);
+        weekStart.setDate(weekStart.getDate() - 7);
+        const weekLabel = `W${12 - i}`;
+        const weekFindings = allFindings.filter((f) => {
+          const d = new Date(f.createdAt);
+          return d >= weekStart && d < weekEnd;
+        });
+        return {
+          week: weekLabel,
+          critical: weekFindings.filter((f) => f.severity === "critical").length,
+          high: weekFindings.filter((f) => f.severity === "high").length,
+          medium: weekFindings.filter((f) => f.severity === "medium").length,
+          low: weekFindings.filter((f) => f.severity === "low").length,
+        };
+      });
+
+      const categoryMap = new Map<string, number>();
+      allFindings.forEach((f) => {
+        const cat = f.category || "Uncategorized";
+        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+      });
+      const topCategories = Array.from(categoryMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([name, count]) => ({ name, count }));
+
+      const toolStats = [
+        { tool: "Semgrep", findings: allFindings.filter((f) => f.scanTool === "semgrep").length, scans: allScans.filter((s) => s.scanType === "semgrep").length },
+        { tool: "Trivy", findings: allFindings.filter((f) => f.scanTool === "trivy").length, scans: allScans.filter((s) => s.scanType === "trivy").length },
+        { tool: "Bandit", findings: allFindings.filter((f) => f.scanTool === "bandit").length, scans: allScans.filter((s) => s.scanType === "bandit").length },
+        { tool: "OWASP ZAP", findings: allFindings.filter((f) => f.scanTool === "zap").length, scans: allScans.filter((s) => s.scanType === "zap").length },
+      ];
+
+      const cvssDistribution = [
+        { range: "0-2", count: allFindings.filter((f) => f.severity === "info").length },
+        { range: "2-4", count: Math.round(allFindings.filter((f) => f.severity === "low").length * 0.7) },
+        { range: "4-6", count: allFindings.filter((f) => f.severity === "medium").length },
+        { range: "6-8", count: allFindings.filter((f) => f.severity === "high").length },
+        { range: "8-10", count: allFindings.filter((f) => f.severity === "critical").length },
+      ];
+
+      const riskHistory = Array.from({ length: 12 }, (_, i) => ({
+        week: `W${12 - i}`,
+        score: Math.max(0, Math.min(100, riskScore + Math.floor(Math.random() * 20 - 10 + i * 2))),
+      }));
+
+      const scansPerWeek = allScans.length > 0 ? Math.round(allScans.length / Math.max(1, 12)) : 0;
+
+      const remediationByS: Record<string, { avg: number; count: number }> = {};
+      ["critical", "high", "medium", "low"].forEach((sev) => {
+        const sevResolved = resolved.filter((f) => f.severity === sev);
+        const avgDays = sevResolved.length > 0
+          ? Math.round(sevResolved.reduce((s, f) => {
+              const c = new Date(f.createdAt).getTime();
+              const r = f.resolvedAt ? new Date(f.resolvedAt).getTime() : c + 86400000;
+              return s + (r - c) / 86400000;
+            }, 0) / sevResolved.length)
+          : 0;
+        remediationByS[sev] = { avg: avgDays, count: sevResolved.length };
+      });
+
+      return res.json({
+        mttr: mttrDays,
+        riskScore,
+        totalOpen: open.length,
+        scansPerWeek,
+        severityTrend: weeklyTrend,
+        topCategories,
+        toolEffectiveness: toolStats,
+        cvssDistribution,
+        riskHistory,
+        resolvedCount: resolved.length,
+        unresolvedCount: open.length,
+        remediationBySeverity: remediationByS,
+        attackSurface: {
+          external: Math.round(open.length * 0.4),
+          internal: Math.round(open.length * 0.6),
+          network: Math.round(open.length * 0.3),
+          application: Math.round(open.length * 0.7),
+        },
+      });
+    } catch (err: any) {
+      console.error("Analytics error:", err);
+      return res.status(500).json({ message: "Failed to load analytics" });
+    }
+  });
+
+  // === MULTI-REGION DEPLOYMENT ===
+  app.get("/api/deployment/regions", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const config = await storage.getSetting(orgId, "deployment", "regions");
+    const savedConfig = (config?.value as any) || {};
+
+    const regions = [
+      { id: "us-east-1", name: "US East (Virginia)", latency: "12ms", status: savedConfig["us-east-1"] || "active" },
+      { id: "us-west-2", name: "US West (Oregon)", latency: "45ms", status: savedConfig["us-west-2"] || "standby" },
+      { id: "eu-west-1", name: "EU West (Ireland)", latency: "89ms", status: savedConfig["eu-west-1"] || "standby" },
+      { id: "eu-central-1", name: "EU Central (Frankfurt)", latency: "95ms", status: savedConfig["eu-central-1"] || "disabled" },
+      { id: "ap-southeast-1", name: "AP Southeast (Singapore)", latency: "180ms", status: savedConfig["ap-southeast-1"] || "disabled" },
+      { id: "ap-northeast-1", name: "AP Northeast (Tokyo)", latency: "165ms", status: savedConfig["ap-northeast-1"] || "disabled" },
+    ];
+    return res.json(regions);
+  });
+
+  app.put("/api/deployment/config", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { regions, primaryRegion, failoverEnabled, rateLimit } = req.body;
+
+      if (regions) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "regions", value: regions });
+      if (primaryRegion) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "primaryRegion", value: primaryRegion });
+      if (failoverEnabled !== undefined) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "failoverEnabled", value: failoverEnabled });
+      if (rateLimit) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "rate_limit", value: rateLimit });
+
+      await logAudit(orgId, req.session.userId!, "deployment.config_update", "deployment", undefined, { primaryRegion, failoverEnabled }, req.ip);
+      return res.json({ message: "Deployment configuration updated" });
+    } catch (err: any) {
+      return res.status(500).json({ message: "Failed to update deployment config" });
+    }
+  });
+
+  // === ENHANCED AUDIT LOGS ===
+  app.get("/api/audit-logs/export", requireAuth, requireRole("owner"), async (req: Request, res: Response) => {
+    const logs = await storage.getAuditLogs(req.session.organizationId!, 1000);
+    const lines = ["Timestamp,Action,Resource Type,Resource ID,User ID,IP Address,Details"];
+    logs.forEach((log) => {
+      lines.push(`${log.createdAt},${log.action},${log.resourceType || ""},${log.resourceId || ""},${log.userId || ""},${log.ipAddress || ""},${JSON.stringify(log.details || {}).replace(/"/g, '""')}`);
+    });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="audit_logs.csv"');
     res.send(lines.join("\n"));
   });
 

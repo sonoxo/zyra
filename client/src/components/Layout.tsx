@@ -3,7 +3,8 @@ import {
   Shield, LayoutDashboard, Search, CheckSquare,
   FileText, GitBranch, FolderOpen, Settings,
   Bell, Sun, Moon, LogOut, ChevronDown,
-  Activity, Zap, Globe, Plug
+  Activity, Zap, Globe, Plug, Building2,
+  CreditCard, Key, BarChart3
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -21,12 +22,16 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/scans", label: "Security Scans", icon: Search },
   { href: "/compliance", label: "Compliance", icon: CheckSquare },
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/repositories", label: "Repositories", icon: GitBranch },
   { href: "/documents", label: "Documents", icon: FolderOpen },
   { href: "/integrations", label: "Integrations", icon: Plug },
+  { href: "/enterprise", label: "Enterprise", icon: Building2 },
+  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/api-keys", label: "API Keys", icon: Key },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
