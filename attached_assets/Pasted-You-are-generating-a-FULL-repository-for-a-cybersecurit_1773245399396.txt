@@ -1,0 +1,418 @@
+You are generating a FULL repository for a cybersecurity SaaS platform named "Sentinel Forge".
+
+The project must be optimized for Replit so it runs immediately with:
+python backend/main.py
+
+The repository must include:
+
+• FastAPI backend
+• Next.js dashboard frontend
+• AI pentesting engine
+• Cloud security scanners (AWS/GCP/Azure stubs)
+• DevSecOps CI scanning hooks
+• Compliance mapping
+• Security report generator
+• Background scan workers
+• Docker + Kubernetes deployment configs
+• SQLite for local dev (Replit), PostgreSQL-ready for production
+
+==================================================
+REPOSITORY STRUCTURE
+==================================================
+
+sentinel-forge/
+  README.md
+  requirements.txt
+  docker-compose.yml
+  Dockerfile
+
+  backend/
+    main.py
+    config.py
+    database.py
+    models.py
+    scan_engine.py
+    compliance_engine.py
+    report_engine.py
+    ai_engine.py
+
+    routes/
+      projects.py
+      scans.py
+      reports.py
+
+  pentest_engine/
+    pentest_agent.py
+
+  cloud_security/
+    aws_scanner.py
+    gcp_scanner.py
+    azure_scanner.py
+
+  devsecops/
+    ci_scanner.py
+
+  workers/
+    scan_worker.py
+
+  frontend/
+    nextjs-dashboard/
+
+  k8s/
+    deployment.yaml
+    service.yaml
+
+
+==================================================
+requirements.txt
+==================================================
+
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-multipart
+passlib[bcrypt]
+python-jose
+requests
+
+
+==================================================
+backend/config.py
+==================================================
+
+import os
+
+class Settings:
+    APP_NAME = "Sentinel Forge"
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///sentinelforge.db")
+
+settings = Settings()
+
+
+==================================================
+backend/database.py
+==================================================
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from backend.config import settings
+
+engine = create_engine(settings.DATABASE_URL)
+
+SessionLocal = sessionmaker(bind=engine)
+
+Base = declarative_base()
+
+
+==================================================
+backend/models.py
+==================================================
+
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
+from backend.database import Base
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+class ScanResult(Base):
+    __tablename__ = "scan_results"
+
+    id = Column(Integer, primary_key=True)
+    severity = Column(String)
+    description = Column(String)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+==================================================
+backend/scan_engine.py
+==================================================
+
+import requests
+
+def run_scan(target):
+
+    findings = []
+
+    try:
+        r = requests.get(target)
+
+        if "login" in r.text.lower():
+            findings.append({
+                "severity": "medium",
+                "description": "Login endpoint detected"
+            })
+
+    except Exception:
+        findings.append({
+            "severity": "critical",
+            "description": "Target unreachable"
+        })
+
+    return findings
+
+
+==================================================
+backend/compliance_engine.py
+==================================================
+
+def map_to_compliance(findings):
+
+    controls = []
+
+    for f in findings:
+        if f["severity"] == "critical":
+            controls.append("SOC2-CC7")
+
+    return controls
+
+
+==================================================
+backend/report_engine.py
+==================================================
+
+def generate_report(findings):
+
+    score = 100
+
+    for f in findings:
+
+        if f["severity"] == "critical":
+            score -= 10
+
+        elif f["severity"] == "high":
+            score -= 7
+
+    return {
+        "security_score": score,
+        "findings": findings
+    }
+
+
+==================================================
+backend/ai_engine.py
+==================================================
+
+def ai_analysis(findings):
+
+    insights = []
+
+    for f in findings:
+
+        insights.append({
+            "issue": f["description"],
+            "recommendation": "Investigate and patch vulnerability"
+        })
+
+    return insights
+
+
+==================================================
+backend/main.py
+==================================================
+
+from fastapi import FastAPI
+from backend.scan_engine import run_scan
+from backend.report_engine import generate_report
+from pentest_engine.pentest_agent import run_pentest
+
+app = FastAPI(title="Sentinel Forge")
+
+@app.get("/")
+def home():
+    return {"platform": "Sentinel Forge"}
+
+@app.post("/scan")
+def scan(target: str):
+
+    findings = run_scan(target)
+
+    pentest = run_pentest(target)
+
+    report = generate_report(findings)
+
+    return {
+        "report": report,
+        "pentest_results": pentest
+    }
+
+
+==================================================
+pentest_engine/pentest_agent.py
+==================================================
+
+def run_pentest(target):
+
+    payloads = [
+        "' OR 1=1 --",
+        "<script>alert(1)</script>"
+    ]
+
+    results = []
+
+    for payload in payloads:
+        results.append({
+            "payload": payload,
+            "status": "tested"
+        })
+
+    return results
+
+
+==================================================
+cloud_security/aws_scanner.py
+==================================================
+
+def scan_aws():
+
+    return [
+        {"severity": "high", "issue": "Public S3 bucket"},
+        {"severity": "medium", "issue": "Weak IAM policy"}
+    ]
+
+
+==================================================
+cloud_security/gcp_scanner.py
+==================================================
+
+def scan_gcp():
+
+    return [
+        {"severity": "high", "issue": "Open firewall rule"}
+    ]
+
+
+==================================================
+cloud_security/azure_scanner.py
+==================================================
+
+def scan_azure():
+
+    return [
+        {"severity": "medium", "issue": "Unrestricted storage access"}
+    ]
+
+
+==================================================
+devsecops/ci_scanner.py
+==================================================
+
+def scan_repo(repo):
+
+    return {
+        "repo": repo,
+        "issues": ["outdated dependency", "insecure config"]
+    }
+
+
+==================================================
+workers/scan_worker.py
+==================================================
+
+import time
+
+def worker():
+
+    while True:
+        print("Sentinel Forge worker active")
+        time.sleep(10)
+
+
+==================================================
+frontend/nextjs-dashboard/pages/index.js
+==================================================
+
+export default function Home() {
+
+  return (
+    <div style={{padding:40}}>
+      <h1>Sentinel Forge Dashboard</h1>
+      <p>Cybersecurity monitoring platform</p>
+    </div>
+  )
+
+}
+
+
+==================================================
+Dockerfile
+==================================================
+
+FROM python:3.11
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install -r requirements.txt
+
+CMD ["python", "backend/main.py"]
+
+
+==================================================
+k8s/deployment.yaml
+==================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-forge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sentinel-forge
+  template:
+    metadata:
+      labels:
+        app: sentinel-forge
+    spec:
+      containers:
+      - name: sentinel-forge
+        image: sentinel-forge
+        ports:
+        - containerPort: 8000
+
+
+==================================================
+k8s/service.yaml
+==================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-forge
+spec:
+  selector:
+    app: sentinel-forge
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer
+
+
+==================================================
+README.md
+==================================================
+
+# Sentinel Forge
+
+AI-driven cybersecurity platform for:
+
+• vulnerability scanning
+• compliance auditing
+• pentesting
+• cloud security monitoring
+
+Run locally:
+
+pip install -r requirements.txt
+python backend/main.py
+
+Open API docs:
+
+http://localhost:8000/docs
