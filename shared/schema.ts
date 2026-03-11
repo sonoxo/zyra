@@ -681,6 +681,76 @@ export const insertScanFindingSchema = createInsertSchema(scanFindings).omit({ i
 export const insertComplianceMappingSchema = createInsertSchema(complianceMappings).omit({ id: true, createdAt: true });
 export const insertReportSchema = createInsertSchema(reports).omit({ id: true, createdAt: true });
 
+// ── Security Data Lake ──────────────────────────────────────────────────────
+export const securityEvents = pgTable("security_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  eventType: text("event_type").notNull(),
+  source: text("source").notNull(),
+  assetId: text("asset_id"),
+  severity: text("severity").notNull().default("info"),
+  title: text("title").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  correlatedEventIds: text("correlated_event_ids").array(),
+  isCorrelated: boolean("is_correlated").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── SOAR Playbooks ──────────────────────────────────────────────────────────
+export const soarPlaybooks = pgTable("soar_playbooks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  trigger: text("trigger").notNull(),
+  category: text("category").notNull().default("response"),
+  actions: jsonb("actions").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  isBuiltin: boolean("is_builtin").notNull().default(false),
+  executionCount: integer("execution_count").notNull().default(0),
+  lastExecutedAt: timestamp("last_executed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const soarExecutions = pgTable("soar_executions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  playbookId: varchar("playbook_id").notNull(),
+  playbookName: text("playbook_name").notNull(),
+  triggeredBy: text("triggered_by").notNull(),
+  status: text("status").notNull().default("running"),
+  steps: jsonb("steps").notNull(),
+  inputData: jsonb("input_data"),
+  outputData: jsonb("output_data"),
+  duration: integer("duration"),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// ── Security Graph ──────────────────────────────────────────────────────────
+export const graphNodes = pgTable("graph_nodes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  nodeType: text("node_type").notNull(),
+  externalId: text("external_id").notNull(),
+  label: text("label").notNull(),
+  properties: jsonb("properties"),
+  riskScore: integer("risk_score").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const graphEdges = pgTable("graph_edges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  sourceNodeId: varchar("source_node_id").notNull().references(() => graphNodes.id),
+  targetNodeId: varchar("target_node_id").notNull().references(() => graphNodes.id),
+  edgeType: text("edge_type").notNull(),
+  weight: real("weight").notNull().default(1),
+  properties: jsonb("properties"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type Organization = typeof organizations.$inferSelect;
 export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
 export type User = typeof users.$inferSelect;
@@ -795,3 +865,20 @@ export type ContainerScan = typeof containerScans.$inferSelect;
 export type InsertContainerScan = z.infer<typeof insertContainerScanSchema>;
 export type ContainerFinding = typeof containerFindings.$inferSelect;
 export type InsertContainerFinding = z.infer<typeof insertContainerFindingSchema>;
+
+export const insertSecurityEventSchema = createInsertSchema(securityEvents).omit({ id: true, createdAt: true });
+export const insertSoarPlaybookSchema = createInsertSchema(soarPlaybooks).omit({ id: true, createdAt: true });
+export const insertSoarExecutionSchema = createInsertSchema(soarExecutions).omit({ id: true });
+export const insertGraphNodeSchema = createInsertSchema(graphNodes).omit({ id: true, createdAt: true });
+export const insertGraphEdgeSchema = createInsertSchema(graphEdges).omit({ id: true, createdAt: true });
+
+export type SecurityEvent = typeof securityEvents.$inferSelect;
+export type InsertSecurityEvent = z.infer<typeof insertSecurityEventSchema>;
+export type SoarPlaybook = typeof soarPlaybooks.$inferSelect;
+export type InsertSoarPlaybook = z.infer<typeof insertSoarPlaybookSchema>;
+export type SoarExecution = typeof soarExecutions.$inferSelect;
+export type InsertSoarExecution = z.infer<typeof insertSoarExecutionSchema>;
+export type GraphNode = typeof graphNodes.$inferSelect;
+export type InsertGraphNode = z.infer<typeof insertGraphNodeSchema>;
+export type GraphEdge = typeof graphEdges.$inferSelect;
+export type InsertGraphEdge = z.infer<typeof insertGraphEdgeSchema>;

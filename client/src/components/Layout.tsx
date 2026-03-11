@@ -9,7 +9,8 @@ import {
   KeyRound, TriangleAlert, Radar, TrendingUp,
   Users, ClipboardList, Rocket, Check, X,
   GraduationCap, Building, Eye, Map, Fish, Box,
-  Cpu, GitFork, ScanSearch, Bot, DatabaseZap
+  Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
+  Share2, Database, BarChart2
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const navGroups = [
       { href: "/sbom", label: "Supply Chain", icon: Package },
       { href: "/security-roadmap", label: "Security Roadmap", icon: Map },
       { href: "/bug-bounty", label: "Bug Bounty", icon: Fish },
+      { href: "/soar", label: "SOAR Automation", icon: Zap },
     ],
   },
   {
@@ -80,6 +82,8 @@ const navGroups = [
       { href: "/attack-paths", label: "Attack Path Modeling", icon: GitFork },
       { href: "/threat-hunting", label: "Threat Hunting", icon: ScanSearch },
       { href: "/security-copilot", label: "Security Copilot", icon: Bot },
+      { href: "/security-events", label: "Security Data Lake", icon: Database },
+      { href: "/security-graph", label: "Security Graph", icon: Share2 },
     ],
   },
   {
@@ -95,6 +99,7 @@ const navGroups = [
     items: [
       { href: "/team", label: "Team", icon: Users },
       { href: "/audit-logs", label: "Audit Logs", icon: ClipboardList },
+      { href: "/platform-metrics", label: "Platform Metrics", icon: BarChart2 },
       { href: "/enterprise", label: "Enterprise", icon: Building2 },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/api-keys", label: "API Keys", icon: Key },

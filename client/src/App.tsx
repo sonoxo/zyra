@@ -43,6 +43,10 @@ import AttackPathsPage from "@/pages/attack-paths";
 import ThreatHuntingPage from "@/pages/threat-hunting";
 import SecurityCopilotPage from "@/pages/security-copilot";
 import CveIntelligencePage from "@/pages/cve-intelligence";
+import SoarPage from "@/pages/soar";
+import SecurityEventsPage from "@/pages/security-events";
+import SecurityGraphPage from "@/pages/security-graph";
+import PlatformMetricsPage from "@/pages/platform-metrics";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -140,6 +144,10 @@ function Router() {
       <Route path="/threat-hunting">{() => <ProtectedRoute component={ThreatHuntingPage} />}</Route>
       <Route path="/security-copilot">{() => <ProtectedRoute component={SecurityCopilotPage} />}</Route>
       <Route path="/cve-intelligence">{() => <ProtectedRoute component={CveIntelligencePage} />}</Route>
+      <Route path="/soar">{() => <ProtectedRoute component={SoarPage} />}</Route>
+      <Route path="/security-events">{() => <ProtectedRoute component={SecurityEventsPage} />}</Route>
+      <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
+      <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>

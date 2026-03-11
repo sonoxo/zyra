@@ -9,6 +9,9 @@ import { runScanSimulation } from "./scan-worker";
 import { generateReport } from "./report-generator";
 import { runPentestSimulation, runCloudScanSimulation, refreshThreatIntel } from "./simulations";
 import { seedIntelligenceData, fetchCveDatabase, runThreatHunt, runSecurityCopilot } from "./intelligence";
+import { ensureSoarPlaybooksSeeded, executePlaybook } from "./soar";
+import { getMetrics, getPrometheusMetrics, requestMetricsMiddleware, runThreatCorrelation, seedSecurityEvents } from "./metrics";
+import { getGraphData, addGraphNode, addGraphEdge } from "./graph";
 import {
   insertPentestSessionSchema,
   insertCloudScanTargetSchema,
@@ -76,6 +79,8 @@ export async function registerRoutes(
       },
     })
   );
+
+  app.use(requestMetricsMiddleware());
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
@@ -1937,21 +1942,32 @@ export async function registerRoutes(
   // ── Intelligence Stats (Dashboard) ───────────────────────────────────────
   app.get("/api/intelligence/stats", requireAuth, async (req: Request, res: Response) => {
     await ensureIntelSeeded(req.session.organizationId!);
-    const [cves, assets, paths] = await Promise.all([
+    const [cves, assets, paths, queries, convs] = await Promise.all([
       fetchCveDatabase(req.session.organizationId!),
       storage.getAssets(req.session.organizationId!),
       storage.getAttackPaths(req.session.organizationId!),
+      storage.getThreatHuntQueries(req.session.organizationId!),
+      storage.getCopilotConversation(req.session.organizationId!, req.session.userId!),
     ]);
     res.json({
-      totalAssets: assets.length,
+      assets: assets.length,
       criticalAssets: assets.filter(a => a.criticality === "critical").length,
-      totalCves: cves.length,
+      cves: cves.length,
       criticalCves: cves.filter(c => c.severity === "critical").length,
       affectedCves: cves.filter(c => c.affectedInEnvironment).length,
-      activeAttackPaths: paths.filter(p => !p.mitigated).length,
+      attackPaths: paths.filter(p => !p.mitigated).length,
+      criticalPaths: paths.filter(p => p.severity === "critical" && !p.mitigated).length,
       highestRiskPath: paths.sort((a, b) => b.riskScore - a.riskScore)[0] || null,
+      huntQueries: queries.length,
+      huntHits: queries.reduce((s: number, q: any) => s + (q.hitCount ?? 0), 0),
+      copilotConversations: convs ? 1 : 0,
     });
   });
+
+  await registerSoarRoutes(app);
+  await registerSecurityEventsRoutes(app);
+  await registerGraphRoutes(app);
+  await registerMetricsRoutes(app);
 
   return httpServer;
 }
@@ -2057,4 +2073,166 @@ async function seedComplianceData(orgId: string) {
       });
     }
   }
+}
+
+// ── SOAR Routes ─────────────────────────────────────────────────────────────
+async function registerSoarRoutes(app: Express) {
+  app.get("/api/soar/playbooks", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      await ensureSoarPlaybooksSeeded(orgId);
+      const playbooks = await storage.getSoarPlaybooks(orgId);
+      res.json(playbooks);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/soar/executions", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const executions = await storage.getSoarExecutions(orgId);
+      res.json(executions);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/soar/execute/:playbookId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const userId = req.session.userId!;
+      const { playbookId } = req.params;
+      const result = await executePlaybook(playbookId, orgId, userId, req.body);
+      res.json(result);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/soar/stats", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      await ensureSoarPlaybooksSeeded(orgId);
+      const playbooks = await storage.getSoarPlaybooks(orgId);
+      const executions = await storage.getSoarExecutions(orgId);
+      res.json({
+        totalPlaybooks: playbooks.length,
+        activePlaybooks: playbooks.filter(p => p.isActive).length,
+        totalExecutions: executions.length,
+        successfulExecutions: executions.filter(e => e.status === "success").length,
+      });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+}
+
+// ── Security Events Routes ───────────────────────────────────────────────────
+async function registerSecurityEventsRoutes(app: Express) {
+  app.get("/api/security-events", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      await seedSecurityEvents(orgId);
+      const limit = parseInt(req.query.limit as string) || 100;
+      const events = await storage.getSecurityEvents(orgId, limit);
+      res.json(events);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/security-events", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const ev = await storage.createSecurityEvent({ ...req.body, organizationId: orgId });
+      res.json(ev);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/security-events/stats", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      await seedSecurityEvents(orgId);
+      const events = await storage.getSecurityEvents(orgId, 500);
+      const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+      const bySource: Record<string, number> = {};
+      const byType: Record<string, number> = {};
+      for (const ev of events) {
+        (bySeverity as any)[ev.severity] = ((bySeverity as any)[ev.severity] ?? 0) + 1;
+        bySource[ev.source] = (bySource[ev.source] ?? 0) + 1;
+        byType[ev.eventType] = (byType[ev.eventType] ?? 0) + 1;
+      }
+      res.json({ total: events.length, bySeverity, bySource, byType, correlated: events.filter(e => e.isCorrelated).length });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/correlate", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const result = await runThreatCorrelation(orgId);
+      res.json(result);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+}
+
+// ── Graph Routes ─────────────────────────────────────────────────────────────
+async function registerGraphRoutes(app: Express) {
+  app.get("/api/graph", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const data = await getGraphData(orgId);
+      res.json(data);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/graph/nodes", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { nodeType, externalId, label, properties, riskScore } = req.body;
+      const node = await addGraphNode(orgId, nodeType, externalId, label, properties, riskScore);
+      res.json(node);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/graph/edges", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const { sourceNodeId, targetNodeId, edgeType, weight } = req.body;
+      const edge = await addGraphEdge(orgId, sourceNodeId, targetNodeId, edgeType, weight);
+      res.json(edge);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+}
+
+// ── Metrics Routes ────────────────────────────────────────────────────────────
+async function registerMetricsRoutes(app: Express) {
+  app.get("/metrics", (req: Request, res: Response) => {
+    res.set("Content-Type", "text/plain; version=0.0.4");
+    res.send(getPrometheusMetrics());
+  });
+
+  app.get("/api/metrics", requireAuth, (req: Request, res: Response) => {
+    res.json(getMetrics());
+  });
+
+  app.get("/api/dashboard/security-score", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const [scans, incidents, risks, events] = await Promise.all([
+        storage.getScans(orgId),
+        storage.getIncidents(orgId),
+        storage.getRisks(orgId),
+        storage.getSecurityEvents(orgId, 200).catch(() => []),
+      ]);
+
+      const criticalScans = scans.filter(s => s.criticalCount > 0).length;
+      const openIncidents = incidents.filter(i => i.status !== "resolved").length;
+      const criticalRisks = risks.filter(r => r.severity === "critical" && r.status !== "accepted").length;
+      const criticalEvents = events.filter((e: any) => e.severity === "critical").length;
+
+      const scanScore = Math.max(0, 100 - criticalScans * 8);
+      const incidentScore = Math.max(0, 100 - openIncidents * 10 - criticalEvents * 5);
+      const riskScore = Math.max(0, 100 - criticalRisks * 12);
+      const overallScore = Math.round((scanScore * 0.4 + incidentScore * 0.35 + riskScore * 0.25));
+
+      res.json({
+        overall_score: overallScore,
+        breakdown: { scans: scanScore, incidents: incidentScore, risks: riskScore },
+        risk_trend: overallScore >= 70 ? "improving" : overallScore >= 50 ? "stable" : "degrading",
+        critical_findings: criticalScans + openIncidents + criticalRisks,
+        last_updated: new Date().toISOString(),
+      });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
 }

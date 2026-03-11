@@ -41,6 +41,11 @@ import {
   type AttackPath, type InsertAttackPath,
   type ThreatHuntQuery, type InsertThreatHuntQuery,
   type CopilotConversation, type InsertCopilotConversation,
+  type SecurityEvent, type InsertSecurityEvent,
+  type SoarPlaybook, type InsertSoarPlaybook,
+  type SoarExecution, type InsertSoarExecution,
+  type GraphNode, type InsertGraphNode,
+  type GraphEdge, type InsertGraphEdge,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -52,6 +57,7 @@ import {
   trainingRecords, phishingCampaigns, vendors, darkWebAlerts,
   remediationTasks, bountyReports, containerScans, containerFindings,
   assetInventory, attackPaths, threatHuntQueries, copilotConversations,
+  securityEvents, soarPlaybooks, soarExecutions, graphNodes, graphEdges,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -266,6 +272,27 @@ export interface IStorage {
   // Copilot Conversations
   getCopilotConversation(orgId: string, userId: string): Promise<CopilotConversation | undefined>;
   upsertCopilotConversation(orgId: string, userId: string, messages: any[]): Promise<CopilotConversation>;
+
+  // Security Events (Data Lake)
+  getSecurityEvents(orgId: string, limit?: number): Promise<SecurityEvent[]>;
+  createSecurityEvent(e: InsertSecurityEvent): Promise<SecurityEvent>;
+
+  // SOAR
+  getSoarPlaybooks(orgId: string): Promise<SoarPlaybook[]>;
+  getSoarPlaybook(id: string, orgId: string): Promise<SoarPlaybook | undefined>;
+  createSoarPlaybook(p: InsertSoarPlaybook): Promise<SoarPlaybook>;
+  updateSoarPlaybook(id: string, data: Partial<SoarPlaybook>): Promise<SoarPlaybook | undefined>;
+  getSoarExecutions(orgId: string): Promise<SoarExecution[]>;
+  getSoarExecution(id: string): Promise<SoarExecution | undefined>;
+  createSoarExecution(e: InsertSoarExecution): Promise<SoarExecution>;
+  updateSoarExecution(id: string, data: Partial<SoarExecution>): Promise<SoarExecution | undefined>;
+
+  // Graph
+  getGraphNodes(orgId: string): Promise<GraphNode[]>;
+  createGraphNode(n: InsertGraphNode): Promise<GraphNode>;
+  updateGraphNode(id: string, data: Partial<GraphNode>): Promise<GraphNode | undefined>;
+  getGraphEdges(orgId: string): Promise<GraphEdge[]>;
+  createGraphEdge(e: InsertGraphEdge): Promise<GraphEdge>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -959,6 +986,82 @@ export class DatabaseStorage implements IStorage {
       return r;
     }
     const [r] = await db.insert(copilotConversations).values({ organizationId: orgId, userId, messages }).returning();
+    return r;
+  }
+
+  // ── Security Events ────────────────────────────────────────────────────────
+  async getSecurityEvents(orgId: string, limit = 100): Promise<SecurityEvent[]> {
+    return db.select().from(securityEvents)
+      .where(eq(securityEvents.organizationId, orgId))
+      .orderBy(desc(securityEvents.createdAt))
+      .limit(limit);
+  }
+  async createSecurityEvent(e: InsertSecurityEvent): Promise<SecurityEvent> {
+    const [r] = await db.insert(securityEvents).values(e).returning();
+    return r;
+  }
+
+  // ── SOAR ───────────────────────────────────────────────────────────────────
+  async getSoarPlaybooks(orgId: string): Promise<SoarPlaybook[]> {
+    return db.select().from(soarPlaybooks)
+      .where(eq(soarPlaybooks.organizationId, orgId))
+      .orderBy(desc(soarPlaybooks.createdAt));
+  }
+  async getSoarPlaybook(id: string, orgId: string): Promise<SoarPlaybook | undefined> {
+    const [r] = await db.select().from(soarPlaybooks)
+      .where(and(eq(soarPlaybooks.id, id), eq(soarPlaybooks.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createSoarPlaybook(p: InsertSoarPlaybook): Promise<SoarPlaybook> {
+    const [r] = await db.insert(soarPlaybooks).values(p).returning();
+    return r;
+  }
+  async updateSoarPlaybook(id: string, data: Partial<SoarPlaybook>): Promise<SoarPlaybook | undefined> {
+    const [r] = await db.update(soarPlaybooks).set(data).where(eq(soarPlaybooks.id, id)).returning();
+    return r;
+  }
+  async getSoarExecutions(orgId: string): Promise<SoarExecution[]> {
+    return db.select().from(soarExecutions)
+      .where(eq(soarExecutions.organizationId, orgId))
+      .orderBy(desc(soarExecutions.startedAt))
+      .limit(50);
+  }
+  async getSoarExecution(id: string): Promise<SoarExecution | undefined> {
+    const [r] = await db.select().from(soarExecutions).where(eq(soarExecutions.id, id)).limit(1);
+    return r;
+  }
+  async createSoarExecution(e: InsertSoarExecution): Promise<SoarExecution> {
+    const [r] = await db.insert(soarExecutions).values(e).returning();
+    return r;
+  }
+  async updateSoarExecution(id: string, data: Partial<SoarExecution>): Promise<SoarExecution | undefined> {
+    const [r] = await db.update(soarExecutions).set(data).where(eq(soarExecutions.id, id)).returning();
+    return r;
+  }
+
+  // ── Graph ──────────────────────────────────────────────────────────────────
+  async getGraphNodes(orgId: string): Promise<GraphNode[]> {
+    return db.select().from(graphNodes)
+      .where(eq(graphNodes.organizationId, orgId))
+      .orderBy(desc(graphNodes.riskScore));
+  }
+  async createGraphNode(n: InsertGraphNode): Promise<GraphNode> {
+    const [r] = await db.insert(graphNodes).values(n).returning();
+    return r;
+  }
+  async updateGraphNode(id: string, data: Partial<GraphNode>): Promise<GraphNode | undefined> {
+    const [r] = await db.update(graphNodes).set(data).where(eq(graphNodes.id, id)).returning();
+    return r;
+  }
+  async getGraphEdges(orgId: string): Promise<GraphEdge[]> {
+    const nodes = await this.getGraphNodes(orgId);
+    const nodeIds = nodes.map(n => n.id);
+    if (nodeIds.length === 0) return [];
+    return db.select().from(graphEdges)
+      .where(eq(graphEdges.organizationId, orgId));
+  }
+  async createGraphEdge(e: InsertGraphEdge): Promise<GraphEdge> {
+    const [r] = await db.insert(graphEdges).values(e).returning();
     return r;
   }
 }

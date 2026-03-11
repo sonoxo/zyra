@@ -1,0 +1,374 @@
+Upgrade Sentinel Forge into a production-ready cybersecurity platform.
+
+The platform must include all enterprise security layers and remain runnable with:
+
+python backend/main.py
+
+Use:
+
+FastAPI
+SQLAlchemy
+Redis queue workers
+SQLite (development)
+PostgreSQL-ready schema
+
+--------------------------------------------------
+
+FINAL ARCHITECTURE
+
+sentinel-forge/
+
+backend/
+  main.py
+  config.py
+  database.py
+
+  core/
+    auth.py
+    rbac.py
+    api_keys.py
+    rate_limiter.py
+    notifications.py
+    audit_log.py
+
+  models/
+    user.py
+    organization.py
+    asset.py
+    vulnerability.py
+    incident.py
+    risk.py
+    security_event.py
+    threat_intel.py
+
+  services/
+    scanning_service.py
+    vulnerability_service.py
+    incident_service.py
+    risk_service.py
+    asset_service.py
+    threat_intel_service.py
+    security_score_service.py
+
+  modules/
+    devsecops/
+      repo_scanner.py
+      secrets_scanner.py
+      sbom_scanner.py
+
+    cloud_security/
+      aws_scanner.py
+      gcp_scanner.py
+      azure_scanner.py
+      container_scanner.py
+
+    security_ops/
+      incident_response.py
+      attack_surface.py
+      threat_hunting.py
+
+    governance/
+      risk_register.py
+      vendor_risk.py
+      compliance_controls.py
+
+    intelligence/
+      cve_ingestion.py
+      threat_intel.py
+      anomaly_detection.py
+      attack_path_modeling.py
+
+    awareness/
+      phishing_simulation.py
+      training_tracking.py
+
+    monitoring/
+      dark_web_monitor.py
+
+  graph_engine/
+    asset_graph.py
+    attack_graph.py
+
+  soar/
+    playbooks.py
+    workflow_engine.py
+
+  data_lake/
+    security_event_store.py
+    event_pipeline.py
+
+  ai/
+    security_copilot.py
+
+  routes/
+    users.py
+    assets.py
+    vulnerabilities.py
+    incidents.py
+    risks.py
+    scans.py
+    threat_intel.py
+    dashboard.py
+    notifications.py
+    onboarding.py
+
+  workers/
+    scan_worker.py
+    threat_intel_worker.py
+    graph_worker.py
+
+frontend/
+  nextjs-dashboard/
+
+k8s/
+  deployment.yaml
+  service.yaml
+
+docker/
+  docker-compose.yml
+
+tests/
+  test_scans.py
+  test_incidents.py
+  test_vulnerabilities.py
+
+--------------------------------------------------
+
+SECURITY GRAPH DATABASE
+
+Create a graph engine to model relationships.
+
+Graph nodes:
+
+assets
+vulnerabilities
+identities
+repositories
+containers
+cloud accounts
+
+Edges represent relationships:
+
+asset hosts container
+container runs in cluster
+cluster belongs to cloud account
+vulnerability affects asset
+
+Create functions:
+
+add_graph_node()
+add_graph_edge()
+
+--------------------------------------------------
+
+ATTACK PATH VISUALIZER
+
+Create attack path modeling system.
+
+Function:
+
+generate_attack_paths()
+
+Return paths like:
+
+public endpoint
+→ vulnerable container
+→ exposed service
+→ database
+
+Provide risk score for each path.
+
+Expose endpoint:
+
+GET /attack-paths
+
+Frontend renders graph visualization.
+
+--------------------------------------------------
+
+SECURITY DATA LAKE
+
+Create central storage for all security telemetry.
+
+Model:
+
+SecurityEvent
+
+Fields:
+
+event_type
+source
+asset_id
+severity
+timestamp
+metadata_json
+
+All modules must send events here.
+
+--------------------------------------------------
+
+THREAT CORRELATION ENGINE
+
+Create correlation engine.
+
+Function:
+
+correlate_events()
+
+Examples:
+
+new CVE appears
+→ check SBOM
+→ identify affected assets
+→ generate alert
+
+--------------------------------------------------
+
+SOAR AUTOMATION PLATFORM
+
+Create workflow engine.
+
+Directory:
+
+backend/soar/
+
+Example workflows:
+
+contain_compromised_host()
+disable_exposed_api_key()
+rotate_credentials()
+block_malicious_ip()
+
+Workflows trigger automatically based on security events.
+
+--------------------------------------------------
+
+AI SECURITY COPILOT
+
+Create AI assistant module.
+
+Function:
+
+answer_security_question(question)
+
+Example queries:
+
+"Which assets are exposed to the internet?"
+
+"Show critical vulnerabilities in production."
+
+"Which risks are highest priority?"
+
+Return summarized analysis using platform data.
+
+--------------------------------------------------
+
+SECURITY API GATEWAY
+
+Add API gateway layer.
+
+Features:
+
+API keys
+rate limiting
+request logging
+role-based permissions
+
+Endpoints must validate API keys.
+
+--------------------------------------------------
+
+OBSERVABILITY
+
+Add monitoring features.
+
+Metrics:
+
+scan execution time
+worker queue length
+API request rate
+incident resolution time
+
+Expose metrics endpoint:
+
+GET /metrics
+
+--------------------------------------------------
+
+DISTRIBUTED WORKERS
+
+Create worker services.
+
+Workers process:
+
+scan jobs
+threat intel ingestion
+attack graph calculations
+playbook automation
+
+Workers must scale horizontally.
+
+--------------------------------------------------
+
+SECURITY POSTURE ENGINE
+
+Create unified security score.
+
+Inputs:
+
+vulnerabilities
+incidents
+attack surface
+risk register
+
+Expose endpoint:
+
+GET /dashboard/security-score
+
+Return:
+
+overall_score
+risk_trend
+critical_findings
+
+--------------------------------------------------
+
+GETTING STARTED IMPROVEMENTS
+
+Add onboarding steps.
+
+create organization
+invite team member
+enable SSO
+connect repository
+add cloud account
+run first scan
+generate API key
+configure alerts
+
+When complete display:
+
+Sentinel Forge fully configured.
+
+--------------------------------------------------
+
+SUCCESS CRITERIA
+
+Sentinel Forge becomes a unified cybersecurity platform capable of:
+
+DevSecOps scanning
+cloud security posture management
+threat intelligence ingestion
+security operations
+risk governance
+attack path modeling
+SOAR automation
+AI security analysis
+
+The platform must still run locally using:
+
+python backend/main.py
+
+API documentation must remain available at:
+
+/docs
