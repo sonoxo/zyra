@@ -1,0 +1,158 @@
+Add a Cyber Asset Attack Surface Management (CAASM) layer to Sentinel Forge.
+
+This system will create a unified inventory of all infrastructure, applications, and identities.
+
+Create new directory:
+
+backend/caasm/
+
+Files:
+
+asset_discovery.py
+identity_inventory.py
+external_asset_scanner.py
+asset_correlation.py
+
+--------------------------------------------------
+
+ASSET INVENTORY MODEL
+
+Create Asset model.
+
+Fields:
+
+id
+name
+asset_type
+ip_address
+cloud_provider
+owner
+environment
+exposure_level
+
+Asset types:
+
+server
+container
+repository
+database
+domain
+kubernetes_cluster
+
+--------------------------------------------------
+
+IDENTITY INVENTORY
+
+Create Identity model.
+
+Fields:
+
+id
+identity_type
+name
+permissions
+last_activity
+
+Identity types:
+
+user
+service_account
+api_key
+iam_role
+
+--------------------------------------------------
+
+EXTERNAL ASSET DISCOVERY
+
+Create function:
+
+discover_external_assets(domain)
+
+Discover:
+
+subdomains
+public IPs
+open ports
+TLS certificates
+
+--------------------------------------------------
+
+ASSET CORRELATION
+
+Create correlation engine.
+
+Example relationships:
+
+repository → container image
+container → kubernetes cluster
+cluster → cloud account
+asset → vulnerabilities
+asset → incidents
+asset → risks
+
+--------------------------------------------------
+
+ASSET RISK SCORE
+
+Calculate asset risk score using:
+
+vulnerabilities
+exposure level
+privileges
+threat intelligence
+
+Return:
+
+asset_risk_score
+
+--------------------------------------------------
+
+CAASM DASHBOARD
+
+Add new dashboard module.
+
+Display:
+
+all discovered assets
+high-risk assets
+publicly exposed assets
+identity privilege risks
+
+--------------------------------------------------
+
+API ENDPOINTS
+
+GET /assets
+GET /assets/high-risk
+GET /assets/exposed
+GET /identities
+
+--------------------------------------------------
+
+SYSTEM INTEGRATION
+
+All Sentinel Forge modules must reference assets.
+
+Examples:
+
+vulnerability detected
+→ linked to asset
+
+incident created
+→ linked to asset
+
+attack path generated
+→ linked to assets
+
+--------------------------------------------------
+
+SUCCESS CRITERIA
+
+Sentinel Forge now maintains a unified security inventory covering:
+
+infrastructure assets
+application assets
+identity assets
+external attack surface
+
+This becomes the source of truth for all security analytics.

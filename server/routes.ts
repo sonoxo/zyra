@@ -29,7 +29,7 @@ declare module "express-session" {
   }
 }
 
-function requireAuth(req: Request, res: Response, next: NextFunction) {
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -1968,6 +1968,8 @@ export async function registerRoutes(
   await registerSecurityEventsRoutes(app);
   await registerGraphRoutes(app);
   await registerMetricsRoutes(app);
+  const { registerCaasmRoutes } = await import("./caasm");
+  await registerCaasmRoutes(app);
 
   return httpServer;
 }

@@ -1,7 +1,7 @@
 # Sentinel Forge — Intelligent Autonomous Cybersecurity Platform
 
 ## Overview
-Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines vulnerability scanning, AI-assisted pentesting, cloud security posture management, threat intelligence, compliance automation, continuous DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, security posture trending, security awareness training, vendor risk management, dark web monitoring, security roadmap planning, bug bounty management, and container/Kubernetes security into a unified enterprise platform.
+Sentinel Forge is a globally scalable, AI-powered SecOps platform combining vulnerability scanning, AI pentesting, cloud security posture management, threat intelligence, compliance automation, DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, security awareness training, vendor risk management, dark web monitoring, security roadmap planning, bug bounty management, container/Kubernetes security, SOAR automation, Security Data Lake, threat correlation, security graph visualization, platform metrics/observability, and CAASM (Cyber Asset Attack Surface Management) into a unified enterprise platform.
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts
@@ -13,38 +13,47 @@ Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines 
 ## Project Structure
 ```
 client/src/
-  pages/          - All page components (26 pages + auth)
+  pages/          - All page components (35 pages + auth)
   components/     - Layout (6-group sidebar nav), ThemeProvider, shadcn/ui
   lib/            - auth, queryClient
   hooks/          - use-toast
 
 server/
   index.ts            - Express server entry point
-  routes.ts           - All API routes (auth + 24 feature modules)
+  routes.ts           - All API routes (auth + 24 feature modules); exports requireAuth
   simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
-  storage.ts          - DatabaseStorage (IStorage interface, 33 tables)
+  storage.ts          - DatabaseStorage (IStorage interface, 39 tables)
   db.ts               - Database connection
   scan-worker.ts      - Security scan simulations (Semgrep, Trivy, Bandit, ZAP)
   report-generator.ts - Automated compliance report generation
+  soar.ts             - SOAR automation engine (6 built-in playbooks, execution simulator)
+  metrics.ts          - Prometheus metrics, request middleware, threat correlation, event seeding
+  graph.ts            - Security graph seeding (14 nodes, 15 edges) and query functions
+  caasm.ts            - CAASM engine: risk scoring, correlation, identity seeding, API routes
 
 shared/
-  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (33 tables)
+  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (39 tables)
 ```
 
-## Database Tables (33 total)
+## Database Tables (39 total)
 **Core (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
 
 **SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
 
 **New Modules (8):** training_records, phishing_campaigns, vendors, dark_web_alerts, remediation_tasks, bounty_reports, container_scans, container_findings
 
+**Intelligence Layer (6):** asset_inventory, attack_paths, threat_hunt_queries, copilot_conversations, graph_nodes, graph_edges
+
+**Enterprise Layer (5):** security_events, soar_playbooks, soar_executions, caasm_identities, notifications/invite_tokens/onboarding_steps (misc)
+
 ## Sidebar Navigation (6 groups)
 - **Overview**: Dashboard, Analytics, Security Posture, Getting Started (/onboarding)
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
-- **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty
+- **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty, SOAR Automation
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
+- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Attack Path Modeling, Threat Hunting, Security Copilot, Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
-- **Platform**: Team, Audit Logs, Enterprise / SSO, Billing, API Keys, Settings
+- **Platform**: Team, Audit Logs, Platform Metrics, Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |

@@ -866,6 +866,24 @@ export type InsertContainerScan = z.infer<typeof insertContainerScanSchema>;
 export type ContainerFinding = typeof containerFindings.$inferSelect;
 export type InsertContainerFinding = z.infer<typeof insertContainerFindingSchema>;
 
+// ── CAASM Identities ─────────────────────────────────────────────────────────
+export const caasmIdentities = pgTable("caasm_identities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  identityType: text("identity_type").notNull().default("user"),
+  name: text("name").notNull(),
+  email: text("email"),
+  permissions: text("permissions").array().notNull().default(sql`'{}'`),
+  privilegeLevel: text("privilege_level").notNull().default("standard"),
+  mfaEnabled: boolean("mfa_enabled").notNull().default(false),
+  lastActivity: timestamp("last_activity"),
+  source: text("source").notNull().default("manual"),
+  riskScore: integer("risk_score").notNull().default(0),
+  linkedAssetIds: text("linked_asset_ids").array().notNull().default(sql`'{}'`),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertSecurityEventSchema = createInsertSchema(securityEvents).omit({ id: true, createdAt: true });
 export const insertSoarPlaybookSchema = createInsertSchema(soarPlaybooks).omit({ id: true, createdAt: true });
 export const insertSoarExecutionSchema = createInsertSchema(soarExecutions).omit({ id: true });
@@ -882,3 +900,7 @@ export type GraphNode = typeof graphNodes.$inferSelect;
 export type InsertGraphNode = z.infer<typeof insertGraphNodeSchema>;
 export type GraphEdge = typeof graphEdges.$inferSelect;
 export type InsertGraphEdge = z.infer<typeof insertGraphEdgeSchema>;
+
+export const insertCaasmIdentitySchema = createInsertSchema(caasmIdentities).omit({ id: true, createdAt: true });
+export type CaasmIdentity = typeof caasmIdentities.$inferSelect;
+export type InsertCaasmIdentity = z.infer<typeof insertCaasmIdentitySchema>;

@@ -46,6 +46,7 @@ import {
   type SoarExecution, type InsertSoarExecution,
   type GraphNode, type InsertGraphNode,
   type GraphEdge, type InsertGraphEdge,
+  type CaasmIdentity, type InsertCaasmIdentity,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -58,6 +59,7 @@ import {
   remediationTasks, bountyReports, containerScans, containerFindings,
   assetInventory, attackPaths, threatHuntQueries, copilotConversations,
   securityEvents, soarPlaybooks, soarExecutions, graphNodes, graphEdges,
+  caasmIdentities,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -256,6 +258,13 @@ export interface IStorage {
   createAsset(a: InsertAssetInventoryItem): Promise<AssetInventoryItem>;
   updateAsset(id: string, data: Partial<AssetInventoryItem>): Promise<AssetInventoryItem | undefined>;
   deleteAsset(id: string, orgId: string): Promise<void>;
+
+  // CAASM Identities
+  getCaasmIdentities(orgId: string): Promise<CaasmIdentity[]>;
+  getCaasmIdentity(id: string, orgId: string): Promise<CaasmIdentity | undefined>;
+  createCaasmIdentity(i: InsertCaasmIdentity): Promise<CaasmIdentity>;
+  updateCaasmIdentity(id: string, data: Partial<CaasmIdentity>): Promise<CaasmIdentity | undefined>;
+  deleteCaasmIdentity(id: string, orgId: string): Promise<void>;
 
   // Attack Paths
   getAttackPaths(orgId: string): Promise<AttackPath[]>;
@@ -1063,6 +1072,25 @@ export class DatabaseStorage implements IStorage {
   async createGraphEdge(e: InsertGraphEdge): Promise<GraphEdge> {
     const [r] = await db.insert(graphEdges).values(e).returning();
     return r;
+  }
+
+  async getCaasmIdentities(orgId: string): Promise<CaasmIdentity[]> {
+    return db.select().from(caasmIdentities).where(eq(caasmIdentities.organizationId, orgId)).orderBy(desc(caasmIdentities.riskScore));
+  }
+  async getCaasmIdentity(id: string, orgId: string): Promise<CaasmIdentity | undefined> {
+    const [r] = await db.select().from(caasmIdentities).where(and(eq(caasmIdentities.id, id), eq(caasmIdentities.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createCaasmIdentity(i: InsertCaasmIdentity): Promise<CaasmIdentity> {
+    const [r] = await db.insert(caasmIdentities).values(i).returning();
+    return r;
+  }
+  async updateCaasmIdentity(id: string, data: Partial<CaasmIdentity>): Promise<CaasmIdentity | undefined> {
+    const [r] = await db.update(caasmIdentities).set(data).where(eq(caasmIdentities.id, id)).returning();
+    return r;
+  }
+  async deleteCaasmIdentity(id: string, orgId: string): Promise<void> {
+    await db.delete(caasmIdentities).where(and(eq(caasmIdentities.id, id), eq(caasmIdentities.organizationId, orgId)));
   }
 }
 

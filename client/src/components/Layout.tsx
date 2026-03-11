@@ -10,7 +10,7 @@ import {
   Users, ClipboardList, Rocket, Check, X,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2
+  Share2, Database, BarChart2, Layers
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ const navGroups = [
   {
     label: "Intelligence",
     items: [
+      { href: "/caasm", label: "CAASM", icon: Layers },
       { href: "/asset-inventory", label: "Asset Inventory", icon: Cpu },
       { href: "/cve-intelligence", label: "CVE Intelligence", icon: DatabaseZap },
       { href: "/attack-paths", label: "Attack Path Modeling", icon: GitFork },

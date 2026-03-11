@@ -43,6 +43,7 @@ import AttackPathsPage from "@/pages/attack-paths";
 import ThreatHuntingPage from "@/pages/threat-hunting";
 import SecurityCopilotPage from "@/pages/security-copilot";
 import CveIntelligencePage from "@/pages/cve-intelligence";
+import CaasmPage from "@/pages/caasm";
 import SoarPage from "@/pages/soar";
 import SecurityEventsPage from "@/pages/security-events";
 import SecurityGraphPage from "@/pages/security-graph";
@@ -144,6 +145,7 @@ function Router() {
       <Route path="/threat-hunting">{() => <ProtectedRoute component={ThreatHuntingPage} />}</Route>
       <Route path="/security-copilot">{() => <ProtectedRoute component={SecurityCopilotPage} />}</Route>
       <Route path="/cve-intelligence">{() => <ProtectedRoute component={CveIntelligencePage} />}</Route>
+      <Route path="/caasm">{() => <ProtectedRoute component={CaasmPage} />}</Route>
       <Route path="/soar">{() => <ProtectedRoute component={SoarPage} />}</Route>
       <Route path="/security-events">{() => <ProtectedRoute component={SecurityEventsPage} />}</Route>
       <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
