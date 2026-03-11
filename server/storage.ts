@@ -29,6 +29,14 @@ import {
   type Notification, type InsertNotification,
   type InviteToken, type InsertInviteToken,
   type OnboardingStep, type InsertOnboardingStep,
+  type TrainingRecord, type InsertTrainingRecord,
+  type PhishingCampaign, type InsertPhishingCampaign,
+  type Vendor, type InsertVendor,
+  type DarkWebAlert, type InsertDarkWebAlert,
+  type RemediationTask, type InsertRemediationTask,
+  type BountyReport, type InsertBountyReport,
+  type ContainerScan, type InsertContainerScan,
+  type ContainerFinding, type InsertContainerFinding,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -37,6 +45,8 @@ import {
   incidents, vulnerabilities, sbomItems, secretsFindings,
   risks, attackSurfaceAssets, postureScores,
   notifications, inviteTokens, onboardingSteps,
+  trainingRecords, phishingCampaigns, vendors, darkWebAlerts,
+  remediationTasks, bountyReports, containerScans, containerFindings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -183,6 +193,51 @@ export interface IStorage {
   getOnboardingSteps(orgId: string): Promise<OnboardingStep[]>;
   upsertOnboardingStep(orgId: string, step: string, completed: boolean): Promise<OnboardingStep>;
   initOnboarding(orgId: string): Promise<void>;
+
+  // Security Awareness
+  getTrainingRecords(orgId: string): Promise<TrainingRecord[]>;
+  createTrainingRecord(t: InsertTrainingRecord): Promise<TrainingRecord>;
+  updateTrainingRecord(id: string, data: Partial<TrainingRecord>): Promise<TrainingRecord | undefined>;
+  deleteTrainingRecord(id: string, orgId: string): Promise<void>;
+  getPhishingCampaigns(orgId: string): Promise<PhishingCampaign[]>;
+  createPhishingCampaign(c: InsertPhishingCampaign): Promise<PhishingCampaign>;
+  updatePhishingCampaign(id: string, data: Partial<PhishingCampaign>): Promise<PhishingCampaign | undefined>;
+  deletePhishingCampaign(id: string, orgId: string): Promise<void>;
+
+  // Vendor Risk
+  getVendors(orgId: string): Promise<Vendor[]>;
+  getVendor(id: string, orgId: string): Promise<Vendor | undefined>;
+  createVendor(v: InsertVendor): Promise<Vendor>;
+  updateVendor(id: string, data: Partial<Vendor>): Promise<Vendor | undefined>;
+  deleteVendor(id: string, orgId: string): Promise<void>;
+
+  // Dark Web Monitoring
+  getDarkWebAlerts(orgId: string): Promise<DarkWebAlert[]>;
+  createDarkWebAlert(a: InsertDarkWebAlert): Promise<DarkWebAlert>;
+  updateDarkWebAlert(id: string, data: Partial<DarkWebAlert>): Promise<DarkWebAlert | undefined>;
+  deleteDarkWebAlert(id: string, orgId: string): Promise<void>;
+
+  // Remediation Tasks
+  getRemediationTasks(orgId: string): Promise<RemediationTask[]>;
+  getRemediationTask(id: string, orgId: string): Promise<RemediationTask | undefined>;
+  createRemediationTask(t: InsertRemediationTask): Promise<RemediationTask>;
+  updateRemediationTask(id: string, data: Partial<RemediationTask>): Promise<RemediationTask | undefined>;
+  deleteRemediationTask(id: string, orgId: string): Promise<void>;
+
+  // Bug Bounty
+  getBountyReports(orgId: string): Promise<BountyReport[]>;
+  getBountyReport(id: string, orgId: string): Promise<BountyReport | undefined>;
+  createBountyReport(r: InsertBountyReport): Promise<BountyReport>;
+  updateBountyReport(id: string, data: Partial<BountyReport>): Promise<BountyReport | undefined>;
+  deleteBountyReport(id: string, orgId: string): Promise<void>;
+
+  // Container Security
+  getContainerScans(orgId: string): Promise<ContainerScan[]>;
+  getContainerScan(id: string, orgId: string): Promise<ContainerScan | undefined>;
+  createContainerScan(s: InsertContainerScan): Promise<ContainerScan>;
+  updateContainerScan(id: string, data: Partial<ContainerScan>): Promise<ContainerScan | undefined>;
+  getContainerFindings(scanId: string): Promise<ContainerFinding[]>;
+  createContainerFinding(f: InsertContainerFinding): Promise<ContainerFinding>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -668,13 +723,143 @@ export class DatabaseStorage implements IStorage {
     return r;
   }
   async initOnboarding(orgId: string): Promise<void> {
-    const steps = ["create_project", "connect_repo", "run_first_scan", "add_cloud_target", "invite_teammate"];
+    const steps = ["create_org", "invite_team", "enable_sso", "connect_repo", "add_cloud_account", "run_first_scan", "enable_billing", "generate_api_key"];
     for (const step of steps) {
       const existing = await db.select().from(onboardingSteps).where(and(eq(onboardingSteps.organizationId, orgId), eq(onboardingSteps.step, step))).limit(1);
       if (existing.length === 0) {
         await db.insert(onboardingSteps).values({ organizationId: orgId, step, completed: false });
       }
     }
+  }
+
+  // ── Security Awareness ───────────────────────────────────────────────────
+  async getTrainingRecords(orgId: string): Promise<TrainingRecord[]> {
+    return db.select().from(trainingRecords).where(eq(trainingRecords.organizationId, orgId)).orderBy(desc(trainingRecords.createdAt));
+  }
+  async createTrainingRecord(t: InsertTrainingRecord): Promise<TrainingRecord> {
+    const [r] = await db.insert(trainingRecords).values(t).returning();
+    return r;
+  }
+  async updateTrainingRecord(id: string, data: Partial<TrainingRecord>): Promise<TrainingRecord | undefined> {
+    const [r] = await db.update(trainingRecords).set(data).where(eq(trainingRecords.id, id)).returning();
+    return r;
+  }
+  async deleteTrainingRecord(id: string, orgId: string): Promise<void> {
+    await db.delete(trainingRecords).where(and(eq(trainingRecords.id, id), eq(trainingRecords.organizationId, orgId)));
+  }
+  async getPhishingCampaigns(orgId: string): Promise<PhishingCampaign[]> {
+    return db.select().from(phishingCampaigns).where(eq(phishingCampaigns.organizationId, orgId)).orderBy(desc(phishingCampaigns.createdAt));
+  }
+  async createPhishingCampaign(c: InsertPhishingCampaign): Promise<PhishingCampaign> {
+    const [r] = await db.insert(phishingCampaigns).values(c).returning();
+    return r;
+  }
+  async updatePhishingCampaign(id: string, data: Partial<PhishingCampaign>): Promise<PhishingCampaign | undefined> {
+    const [r] = await db.update(phishingCampaigns).set(data).where(eq(phishingCampaigns.id, id)).returning();
+    return r;
+  }
+  async deletePhishingCampaign(id: string, orgId: string): Promise<void> {
+    await db.delete(phishingCampaigns).where(and(eq(phishingCampaigns.id, id), eq(phishingCampaigns.organizationId, orgId)));
+  }
+
+  // ── Vendor Risk ──────────────────────────────────────────────────────────
+  async getVendors(orgId: string): Promise<Vendor[]> {
+    return db.select().from(vendors).where(eq(vendors.organizationId, orgId)).orderBy(desc(vendors.createdAt));
+  }
+  async getVendor(id: string, orgId: string): Promise<Vendor | undefined> {
+    const [r] = await db.select().from(vendors).where(and(eq(vendors.id, id), eq(vendors.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createVendor(v: InsertVendor): Promise<Vendor> {
+    const [r] = await db.insert(vendors).values(v).returning();
+    return r;
+  }
+  async updateVendor(id: string, data: Partial<Vendor>): Promise<Vendor | undefined> {
+    const [r] = await db.update(vendors).set(data).where(eq(vendors.id, id)).returning();
+    return r;
+  }
+  async deleteVendor(id: string, orgId: string): Promise<void> {
+    await db.delete(vendors).where(and(eq(vendors.id, id), eq(vendors.organizationId, orgId)));
+  }
+
+  // ── Dark Web Monitoring ──────────────────────────────────────────────────
+  async getDarkWebAlerts(orgId: string): Promise<DarkWebAlert[]> {
+    return db.select().from(darkWebAlerts).where(eq(darkWebAlerts.organizationId, orgId)).orderBy(desc(darkWebAlerts.createdAt));
+  }
+  async createDarkWebAlert(a: InsertDarkWebAlert): Promise<DarkWebAlert> {
+    const [r] = await db.insert(darkWebAlerts).values(a).returning();
+    return r;
+  }
+  async updateDarkWebAlert(id: string, data: Partial<DarkWebAlert>): Promise<DarkWebAlert | undefined> {
+    const [r] = await db.update(darkWebAlerts).set(data).where(eq(darkWebAlerts.id, id)).returning();
+    return r;
+  }
+  async deleteDarkWebAlert(id: string, orgId: string): Promise<void> {
+    await db.delete(darkWebAlerts).where(and(eq(darkWebAlerts.id, id), eq(darkWebAlerts.organizationId, orgId)));
+  }
+
+  // ── Remediation Tasks ────────────────────────────────────────────────────
+  async getRemediationTasks(orgId: string): Promise<RemediationTask[]> {
+    return db.select().from(remediationTasks).where(eq(remediationTasks.organizationId, orgId)).orderBy(desc(remediationTasks.createdAt));
+  }
+  async getRemediationTask(id: string, orgId: string): Promise<RemediationTask | undefined> {
+    const [r] = await db.select().from(remediationTasks).where(and(eq(remediationTasks.id, id), eq(remediationTasks.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createRemediationTask(t: InsertRemediationTask): Promise<RemediationTask> {
+    const [r] = await db.insert(remediationTasks).values(t).returning();
+    return r;
+  }
+  async updateRemediationTask(id: string, data: Partial<RemediationTask>): Promise<RemediationTask | undefined> {
+    const [r] = await db.update(remediationTasks).set(data).where(eq(remediationTasks.id, id)).returning();
+    return r;
+  }
+  async deleteRemediationTask(id: string, orgId: string): Promise<void> {
+    await db.delete(remediationTasks).where(and(eq(remediationTasks.id, id), eq(remediationTasks.organizationId, orgId)));
+  }
+
+  // ── Bug Bounty ───────────────────────────────────────────────────────────
+  async getBountyReports(orgId: string): Promise<BountyReport[]> {
+    return db.select().from(bountyReports).where(eq(bountyReports.organizationId, orgId)).orderBy(desc(bountyReports.createdAt));
+  }
+  async getBountyReport(id: string, orgId: string): Promise<BountyReport | undefined> {
+    const [r] = await db.select().from(bountyReports).where(and(eq(bountyReports.id, id), eq(bountyReports.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createBountyReport(r: InsertBountyReport): Promise<BountyReport> {
+    const [row] = await db.insert(bountyReports).values(r).returning();
+    return row;
+  }
+  async updateBountyReport(id: string, data: Partial<BountyReport>): Promise<BountyReport | undefined> {
+    const [r] = await db.update(bountyReports).set(data).where(eq(bountyReports.id, id)).returning();
+    return r;
+  }
+  async deleteBountyReport(id: string, orgId: string): Promise<void> {
+    await db.delete(bountyReports).where(and(eq(bountyReports.id, id), eq(bountyReports.organizationId, orgId)));
+  }
+
+  // ── Container Security ───────────────────────────────────────────────────
+  async getContainerScans(orgId: string): Promise<ContainerScan[]> {
+    return db.select().from(containerScans).where(eq(containerScans.organizationId, orgId)).orderBy(desc(containerScans.createdAt));
+  }
+  async getContainerScan(id: string, orgId: string): Promise<ContainerScan | undefined> {
+    const [r] = await db.select().from(containerScans).where(and(eq(containerScans.id, id), eq(containerScans.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createContainerScan(s: InsertContainerScan): Promise<ContainerScan> {
+    const [r] = await db.insert(containerScans).values(s).returning();
+    return r;
+  }
+  async updateContainerScan(id: string, data: Partial<ContainerScan>): Promise<ContainerScan | undefined> {
+    const [r] = await db.update(containerScans).set(data).where(eq(containerScans.id, id)).returning();
+    return r;
+  }
+  async getContainerFindings(scanId: string): Promise<ContainerFinding[]> {
+    return db.select().from(containerFindings).where(eq(containerFindings.scanId, scanId)).orderBy(desc(containerFindings.createdAt));
+  }
+  async createContainerFinding(f: InsertContainerFinding): Promise<ContainerFinding> {
+    const [r] = await db.insert(containerFindings).values(f).returning();
+    return r;
   }
 }
 

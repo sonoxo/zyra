@@ -31,6 +31,13 @@ import SecretsPage from "@/pages/secrets";
 import RisksPage from "@/pages/risks";
 import AttackSurfacePage from "@/pages/attack-surface";
 import PosturePage from "@/pages/posture";
+import SecurityAwarenessPage from "@/pages/security-awareness";
+import VendorRiskPage from "@/pages/vendor-risk";
+import DarkWebPage from "@/pages/dark-web";
+import SecurityRoadmapPage from "@/pages/security-roadmap";
+import BugBountyPage from "@/pages/bug-bounty";
+import ContainerSecurityPage from "@/pages/container-security";
+import OnboardingPage from "@/pages/onboarding";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -116,6 +123,13 @@ function Router() {
       <Route path="/risks">{() => <ProtectedRoute component={RisksPage} />}</Route>
       <Route path="/attack-surface">{() => <ProtectedRoute component={AttackSurfacePage} />}</Route>
       <Route path="/posture">{() => <ProtectedRoute component={PosturePage} />}</Route>
+      <Route path="/security-awareness">{() => <ProtectedRoute component={SecurityAwarenessPage} />}</Route>
+      <Route path="/vendor-risk">{() => <ProtectedRoute component={VendorRiskPage} />}</Route>
+      <Route path="/dark-web">{() => <ProtectedRoute component={DarkWebPage} />}</Route>
+      <Route path="/security-roadmap">{() => <ProtectedRoute component={SecurityRoadmapPage} />}</Route>
+      <Route path="/bug-bounty">{() => <ProtectedRoute component={BugBountyPage} />}</Route>
+      <Route path="/container-security">{() => <ProtectedRoute component={ContainerSecurityPage} />}</Route>
+      <Route path="/onboarding">{() => <ProtectedRoute component={OnboardingPage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>

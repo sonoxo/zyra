@@ -1413,29 +1413,37 @@ export async function registerRoutes(
     await storage.initOnboarding(orgId);
     const rawSteps = await storage.getOnboardingSteps(orgId);
 
-    const stepOrder = ["create_project", "connect_repo", "run_first_scan", "add_cloud_target", "invite_teammate"];
-    const stepLabels: Record<string, { label: string; description: string }> = {
-      create_project: { label: "Create your project", description: "Your organization has been created and configured." },
-      connect_repo: { label: "Connect a repository", description: "Link a GitHub or GitLab repository to enable scanning." },
-      run_first_scan: { label: "Run your first scan", description: "Execute a security scan on a connected repository." },
-      add_cloud_target: { label: "Add a cloud target", description: "Connect an AWS, GCP, or Azure environment for CSPM." },
-      invite_teammate: { label: "Invite a teammate", description: "Bring in a colleague to collaborate on security operations." },
+    const stepOrder = ["create_org", "invite_team", "enable_sso", "connect_repo", "add_cloud_account", "run_first_scan", "enable_billing", "generate_api_key"];
+    const stepLabels: Record<string, { label: string; description: string; href: string }> = {
+      create_org: { label: "Create organization", description: "Your organization has been created and configured.", href: "/settings" },
+      invite_team: { label: "Invite team member", description: "Bring in a colleague to collaborate on security operations.", href: "/team" },
+      enable_sso: { label: "Enable SSO", description: "Configure Single Sign-On with Okta, Google, or Azure AD.", href: "/enterprise" },
+      connect_repo: { label: "Connect repository", description: "Link a GitHub or GitLab repository to enable scanning.", href: "/repositories" },
+      add_cloud_account: { label: "Add cloud account", description: "Connect an AWS, GCP, or Azure environment for CSPM.", href: "/cloud-security" },
+      run_first_scan: { label: "Run first scan", description: "Execute a security scan on a connected repository.", href: "/scans" },
+      enable_billing: { label: "Enable billing", description: "Set up your subscription plan to unlock all features.", href: "/billing" },
+      generate_api_key: { label: "Generate API key", description: "Create an API key for programmatic platform access.", href: "/api-keys" },
     };
 
-    const [repos, scans, cloudTargets, teamMembers, invites] = await Promise.all([
+    const [repos, scans, cloudTargets, teamMembers, invites, apiKeys, subscription] = await Promise.all([
       storage.getRepositories(orgId),
       storage.getScans(orgId),
       storage.getCloudScanTargets(orgId),
       storage.getTeamMembers(orgId),
       storage.getInviteTokens(orgId),
+      storage.getApiKeys(orgId),
+      storage.getSubscription(orgId),
     ]);
 
     const autoCompleted: Record<string, boolean> = {
-      create_project: true,
+      create_org: true,
+      invite_team: teamMembers.length > 1 || invites.some(i => !i.acceptedAt),
+      enable_sso: false,
       connect_repo: repos.length > 0,
+      add_cloud_account: cloudTargets.length > 0,
       run_first_scan: scans.some(s => s.status === "completed"),
-      add_cloud_target: cloudTargets.length > 0,
-      invite_teammate: teamMembers.length > 1 || invites.some(i => !i.acceptedAt),
+      enable_billing: !!subscription && subscription.plan !== "starter",
+      generate_api_key: apiKeys.length > 0,
     };
 
     for (const [step, completed] of Object.entries(autoCompleted)) {
@@ -1447,6 +1455,7 @@ export async function registerRoutes(
       step: key,
       label: stepLabels[key]?.label ?? key,
       description: stepLabels[key]?.description ?? "",
+      href: stepLabels[key]?.href ?? "/dashboard",
       completed: stepsMap[key]?.completed ?? autoCompleted[key] ?? false,
       completedAt: stepsMap[key]?.completedAt ?? null,
     }));
@@ -1459,6 +1468,300 @@ export async function registerRoutes(
     const orgId = req.session.organizationId!;
     await storage.upsertOnboardingStep(orgId, req.params.step, true);
     res.json({ ok: true });
+  });
+
+  // ── Security Awareness ────────────────────────────────────────────────────
+  app.get("/api/security-awareness/training", requireAuth, async (req: Request, res: Response) => {
+    const records = await storage.getTrainingRecords(req.session.organizationId!);
+    res.json(records);
+  });
+
+  app.post("/api/security-awareness/training", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const r = await storage.createTrainingRecord({ ...req.body, organizationId: orgId });
+    res.json(r);
+  });
+
+  app.put("/api/security-awareness/training/:id", requireAuth, async (req: Request, res: Response) => {
+    const r = await storage.updateTrainingRecord(req.params.id, req.body);
+    if (!r) return res.status(404).json({ message: "Not found" });
+    res.json(r);
+  });
+
+  app.delete("/api/security-awareness/training/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteTrainingRecord(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/security-awareness/campaigns", requireAuth, async (req: Request, res: Response) => {
+    const campaigns = await storage.getPhishingCampaigns(req.session.organizationId!);
+    res.json(campaigns);
+  });
+
+  app.post("/api/security-awareness/campaigns", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const c = await storage.createPhishingCampaign({ ...req.body, organizationId: orgId });
+    res.json(c);
+  });
+
+  app.put("/api/security-awareness/campaigns/:id", requireAuth, async (req: Request, res: Response) => {
+    const c = await storage.updatePhishingCampaign(req.params.id, req.body);
+    if (!c) return res.status(404).json({ message: "Not found" });
+    res.json(c);
+  });
+
+  app.post("/api/security-awareness/campaigns/:id/launch", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const existing = await storage.getPhishingCampaigns(orgId);
+    const campaign = existing.find(c => c.id === req.params.id);
+    if (!campaign) return res.status(404).json({ message: "Not found" });
+    const targetCount = campaign.targetCount || Math.floor(Math.random() * 50) + 10;
+    const clickedCount = Math.floor(targetCount * (Math.random() * 0.4 + 0.05));
+    const reportedCount = Math.floor(targetCount * (Math.random() * 0.2 + 0.05));
+    const ignoredCount = targetCount - clickedCount - reportedCount;
+    const humanRiskScore = Math.round((clickedCount / targetCount) * 100);
+    const updated = await storage.updatePhishingCampaign(req.params.id, {
+      status: "completed", targetCount, clickedCount, reportedCount, ignoredCount: Math.max(0, ignoredCount),
+      humanRiskScore, launchedAt: new Date(), completedAt: new Date(),
+    });
+    res.json(updated);
+  });
+
+  app.delete("/api/security-awareness/campaigns/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deletePhishingCampaign(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/security-awareness/stats", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const [records, campaigns] = await Promise.all([
+      storage.getTrainingRecords(orgId),
+      storage.getPhishingCampaigns(orgId),
+    ]);
+    const completedTraining = records.filter(r => r.completed).length;
+    const avgPhishingScore = campaigns.length > 0
+      ? Math.round(campaigns.reduce((s, c) => s + c.humanRiskScore, 0) / campaigns.length)
+      : 0;
+    res.json({ totalEmployees: records.length, completedTraining, completionRate: records.length > 0 ? Math.round((completedTraining / records.length) * 100) : 0, avgPhishingScore, activeCampaigns: campaigns.filter(c => c.status === "active").length });
+  });
+
+  // ── Vendor Risk ───────────────────────────────────────────────────────────
+  app.get("/api/vendors", requireAuth, async (req: Request, res: Response) => {
+    const vendors = await storage.getVendors(req.session.organizationId!);
+    res.json(vendors);
+  });
+
+  app.post("/api/vendors", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const v = await storage.createVendor({ ...req.body, organizationId: orgId });
+    res.json(v);
+  });
+
+  app.put("/api/vendors/:id", requireAuth, async (req: Request, res: Response) => {
+    const v = await storage.updateVendor(req.params.id, req.body);
+    if (!v) return res.status(404).json({ message: "Not found" });
+    res.json(v);
+  });
+
+  app.post("/api/vendors/:id/assess", requireAuth, async (req: Request, res: Response) => {
+    const riskScore = Math.floor(Math.random() * 100);
+    const riskRating = riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low";
+    const v = await storage.updateVendor(req.params.id, {
+      riskScore, riskRating, complianceStatus: Math.random() > 0.3 ? "compliant" : "non-compliant",
+      lastAssessedAt: new Date(), status: "assessed",
+    });
+    res.json(v);
+  });
+
+  app.delete("/api/vendors/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteVendor(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/vendors/stats", requireAuth, async (req: Request, res: Response) => {
+    const vendors = await storage.getVendors(req.session.organizationId!);
+    const high = vendors.filter(v => v.riskRating === "high").length;
+    const medium = vendors.filter(v => v.riskRating === "medium").length;
+    const low = vendors.filter(v => v.riskRating === "low").length;
+    const avgRisk = vendors.length > 0 ? Math.round(vendors.reduce((s, v) => s + v.riskScore, 0) / vendors.length) : 0;
+    res.json({ total: vendors.length, high, medium, low, avgRisk });
+  });
+
+  // ── Dark Web Monitoring ───────────────────────────────────────────────────
+  app.get("/api/dark-web/alerts", requireAuth, async (req: Request, res: Response) => {
+    const alerts = await storage.getDarkWebAlerts(req.session.organizationId!);
+    res.json(alerts);
+  });
+
+  app.post("/api/dark-web/scan", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const domain = req.body.domain || "company.com";
+    const alertTypes = ["credential", "api_key", "email", "pii", "source_code"];
+    const sources = ["PasteBin", "RaidForums", "BreachDB", "TelegramChannel", "DarkNetForum"];
+    const newAlerts = [];
+    const count = Math.floor(Math.random() * 3) + 1;
+    for (let i = 0; i < count; i++) {
+      const alertType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+      const severity = alertType === "credential" || alertType === "api_key" ? "critical" : "high";
+      const alert = await storage.createDarkWebAlert({
+        organizationId: orgId, domain, alertType, severity,
+        source: sources[Math.floor(Math.random() * sources.length)],
+        maskedValue: alertType === "credential" ? `${domain.split(".")[0]}_user:p***word` : alertType === "api_key" ? "sk-****...****" : `user@${domain}`,
+        description: `${alertType === "credential" ? "Employee credentials" : alertType === "api_key" ? "API key" : "Email addresses"} found in ${sources[Math.floor(Math.random() * sources.length)]} breach database`,
+        status: "new",
+      });
+      newAlerts.push(alert);
+    }
+    res.json({ scanned: domain, alertsFound: newAlerts.length, alerts: newAlerts });
+  });
+
+  app.put("/api/dark-web/alerts/:id", requireAuth, async (req: Request, res: Response) => {
+    const a = await storage.updateDarkWebAlert(req.params.id, req.body);
+    if (!a) return res.status(404).json({ message: "Not found" });
+    res.json(a);
+  });
+
+  app.delete("/api/dark-web/alerts/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteDarkWebAlert(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/dark-web/stats", requireAuth, async (req: Request, res: Response) => {
+    const alerts = await storage.getDarkWebAlerts(req.session.organizationId!);
+    res.json({
+      total: alerts.length,
+      new: alerts.filter(a => a.status === "new").length,
+      critical: alerts.filter(a => a.severity === "critical").length,
+      resolved: alerts.filter(a => a.status === "resolved").length,
+    });
+  });
+
+  // ── Security Roadmap ──────────────────────────────────────────────────────
+  app.get("/api/roadmap/tasks", requireAuth, async (req: Request, res: Response) => {
+    const tasks = await storage.getRemediationTasks(req.session.organizationId!);
+    res.json(tasks);
+  });
+
+  app.post("/api/roadmap/tasks", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const t = await storage.createRemediationTask({ ...req.body, organizationId: orgId });
+    res.json(t);
+  });
+
+  app.put("/api/roadmap/tasks/:id", requireAuth, async (req: Request, res: Response) => {
+    const data = { ...req.body };
+    if (data.status === "completed" && !data.completedAt) data.completedAt = new Date();
+    const t = await storage.updateRemediationTask(req.params.id, data);
+    if (!t) return res.status(404).json({ message: "Not found" });
+    res.json(t);
+  });
+
+  app.delete("/api/roadmap/tasks/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteRemediationTask(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/roadmap/stats", requireAuth, async (req: Request, res: Response) => {
+    const tasks = await storage.getRemediationTasks(req.session.organizationId!);
+    const open = tasks.filter(t => t.status === "open").length;
+    const inProgress = tasks.filter(t => t.status === "in_progress").length;
+    const completed = tasks.filter(t => t.status === "completed").length;
+    const progress = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+    res.json({ total: tasks.length, open, inProgress, completed, progress });
+  });
+
+  // ── Bug Bounty ────────────────────────────────────────────────────────────
+  app.get("/api/bounty/reports", requireAuth, async (req: Request, res: Response) => {
+    const reports = await storage.getBountyReports(req.session.organizationId!);
+    res.json(reports);
+  });
+
+  app.post("/api/bounty/report", async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId;
+    if (!orgId) return res.status(401).json({ message: "Unauthorized" });
+    const r = await storage.createBountyReport({ ...req.body, organizationId: orgId, status: "new" });
+    res.json(r);
+  });
+
+  app.put("/api/bounty/reports/:id", requireAuth, async (req: Request, res: Response) => {
+    const data = { ...req.body };
+    if (data.status === "resolved" && !data.resolvedAt) data.resolvedAt = new Date();
+    const r = await storage.updateBountyReport(req.params.id, data);
+    if (!r) return res.status(404).json({ message: "Not found" });
+    res.json(r);
+  });
+
+  app.delete("/api/bounty/reports/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteBountyReport(req.params.id, req.session.organizationId!);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/bounty/stats", requireAuth, async (req: Request, res: Response) => {
+    const reports = await storage.getBountyReports(req.session.organizationId!);
+    const totalReward = reports.reduce((s, r) => s + (r.reward || 0), 0);
+    res.json({
+      total: reports.length,
+      new: reports.filter(r => r.status === "new").length,
+      triaged: reports.filter(r => r.status === "triaged").length,
+      resolved: reports.filter(r => r.status === "resolved").length,
+      critical: reports.filter(r => r.severity === "critical").length,
+      totalReward,
+    });
+  });
+
+  // ── Container Security ────────────────────────────────────────────────────
+  app.get("/api/containers/scans", requireAuth, async (req: Request, res: Response) => {
+    const scans = await storage.getContainerScans(req.session.organizationId!);
+    res.json(scans);
+  });
+
+  app.post("/api/containers/scan", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const { imageName, imageTag = "latest", scanType = "image" } = req.body;
+    if (!imageName) return res.status(400).json({ message: "imageName is required" });
+    const scan = await storage.createContainerScan({ organizationId: orgId, imageName, imageTag, scanType, status: "running" });
+    setTimeout(async () => {
+      const criticalCount = Math.floor(Math.random() * 5);
+      const highCount = Math.floor(Math.random() * 10);
+      const mediumCount = Math.floor(Math.random() * 15);
+      const lowCount = Math.floor(Math.random() * 20);
+      const privilegedContainers = scanType === "kubernetes" ? Math.floor(Math.random() * 3) : 0;
+      const weakRbac = scanType === "kubernetes" && Math.random() > 0.5;
+      const openDashboards = scanType === "kubernetes" && Math.random() > 0.7;
+      const untrustedImages = Math.floor(Math.random() * 3);
+      await storage.updateContainerScan(scan.id, {
+        status: "completed", criticalCount, highCount, mediumCount, lowCount,
+        privilegedContainers, weakRbac, openDashboards, untrustedImages, completedAt: new Date(),
+      });
+      const findings = [
+        { title: "CVE-2023-44487 HTTP/2 Rapid Reset Attack", severity: "critical", findingType: "vulnerability", cveId: "CVE-2023-44487", packageName: "golang.org/x/net", description: "HTTP/2 protocol allows DoS attack via rapid stream resets" },
+        { title: "Outdated OpenSSL version", severity: "high", findingType: "vulnerability", cveId: "CVE-2023-0464", packageName: "openssl", description: "Certificate verification vulnerability in OpenSSL 3.0.x" },
+        { title: "Container running as root", severity: "high", findingType: "misconfiguration", description: "Container process is running as UID 0 (root), violating least privilege" },
+        { title: "Sensitive environment variables exposed", severity: "medium", findingType: "secret", description: "DATABASE_PASSWORD and API_KEY found in container environment" },
+        { title: "Missing resource limits", severity: "medium", findingType: "misconfiguration", description: "No CPU or memory limits set, container could consume all node resources" },
+      ];
+      for (let i = 0; i < Math.min(criticalCount + highCount + mediumCount, findings.length); i++) {
+        await storage.createContainerFinding({ ...findings[i], scanId: scan.id, organizationId: orgId, fixedVersion: "latest", remediation: "Update the affected package and rebuild the image", status: "open" });
+      }
+    }, 3000);
+    res.json(scan);
+  });
+
+  app.get("/api/containers/scans/:id/findings", requireAuth, async (req: Request, res: Response) => {
+    const findings = await storage.getContainerFindings(req.params.id);
+    res.json(findings);
+  });
+
+  app.get("/api/containers/stats", requireAuth, async (req: Request, res: Response) => {
+    const scans = await storage.getContainerScans(req.session.organizationId!);
+    const completed = scans.filter(s => s.status === "completed");
+    res.json({
+      totalScans: scans.length,
+      totalCritical: completed.reduce((s, c) => s + c.criticalCount, 0),
+      totalHigh: completed.reduce((s, c) => s + c.highCount, 0),
+      privilegedContainers: completed.reduce((s, c) => s + c.privilegedContainers, 0),
+      weakRbac: completed.filter(c => c.weakRbac).length,
+    });
   });
 
   return httpServer;

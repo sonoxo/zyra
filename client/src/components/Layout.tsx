@@ -7,7 +7,8 @@ import {
   CreditCard, Key, BarChart3, Crosshair,
   Cloud, Rss, GitMerge, Flame, Bug, Package,
   KeyRound, TriangleAlert, Radar, TrendingUp,
-  Users, ClipboardList, Rocket, Check, X
+  Users, ClipboardList, Rocket, Check, X,
+  GraduationCap, Building, Eye, Map, Fish, Box
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -42,9 +43,11 @@ const navGroups = [
       { href: "/scans", label: "Security Scans", icon: Search },
       { href: "/pentest", label: "AI Pentesting", icon: Crosshair },
       { href: "/cloud-security", label: "Cloud Security", icon: Cloud },
+      { href: "/container-security", label: "Container Security", icon: Box },
       { href: "/threat-intel", label: "Threat Intel", icon: Rss },
       { href: "/attack-surface", label: "Attack Surface", icon: Radar },
       { href: "/secrets", label: "Secrets Scanning", icon: KeyRound },
+      { href: "/dark-web", label: "Dark Web Monitor", icon: Eye },
     ],
   },
   {
@@ -54,6 +57,8 @@ const navGroups = [
       { href: "/vulnerabilities", label: "Vulnerabilities", icon: Bug },
       { href: "/risks", label: "Risk Register", icon: TriangleAlert },
       { href: "/sbom", label: "Supply Chain", icon: Package },
+      { href: "/security-roadmap", label: "Security Roadmap", icon: Map },
+      { href: "/bug-bounty", label: "Bug Bounty", icon: Fish },
     ],
   },
   {
@@ -62,6 +67,8 @@ const navGroups = [
       { href: "/compliance", label: "Compliance", icon: CheckSquare },
       { href: "/devsecops", label: "DevSecOps", icon: GitMerge },
       { href: "/reports", label: "Reports", icon: FileText },
+      { href: "/security-awareness", label: "Security Awareness", icon: GraduationCap },
+      { href: "/vendor-risk", label: "Vendor Risk", icon: Building },
     ],
   },
   {

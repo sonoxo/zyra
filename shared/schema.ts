@@ -465,6 +465,137 @@ export const onboardingSteps = pgTable("onboarding_steps", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ── Security Awareness & Phishing ──────────────────────────────────────────
+export const trainingRecords = pgTable("training_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  userEmail: text("user_email").notNull(),
+  course: text("course").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  phishingScore: integer("phishing_score").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const phishingCampaigns = pgTable("phishing_campaigns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  status: text("status").notNull().default("draft"),
+  templateType: text("template_type").notNull().default("credential_harvest"),
+  targetCount: integer("target_count").notNull().default(0),
+  clickedCount: integer("clicked_count").notNull().default(0),
+  reportedCount: integer("reported_count").notNull().default(0),
+  ignoredCount: integer("ignored_count").notNull().default(0),
+  humanRiskScore: integer("human_risk_score").notNull().default(0),
+  launchedAt: timestamp("launched_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Vendor Risk Management ──────────────────────────────────────────────────
+export const vendors = pgTable("vendors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  contactEmail: text("contact_email"),
+  website: text("website"),
+  riskScore: integer("risk_score").notNull().default(50),
+  riskRating: text("risk_rating").notNull().default("medium"),
+  status: text("status").notNull().default("pending"),
+  complianceStatus: text("compliance_status").notNull().default("unknown"),
+  questionnaireSent: boolean("questionnaire_sent").notNull().default(false),
+  questionnaireCompleted: boolean("questionnaire_completed").notNull().default(false),
+  category: text("category").notNull().default("saas"),
+  notes: text("notes"),
+  lastAssessedAt: timestamp("last_assessed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Dark Web Monitoring ─────────────────────────────────────────────────────
+export const darkWebAlerts = pgTable("dark_web_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  domain: text("domain").notNull(),
+  alertType: text("alert_type").notNull(),
+  severity: text("severity").notNull().default("high"),
+  source: text("source").notNull().default("simulated"),
+  maskedValue: text("masked_value"),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("new"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Security Roadmap / Remediation ─────────────────────────────────────────
+export const remediationTasks = pgTable("remediation_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  owner: text("owner"),
+  status: text("status").notNull().default("open"),
+  priority: text("priority").notNull().default("medium"),
+  category: text("category").notNull().default("vulnerability"),
+  targetDate: timestamp("target_date"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Bug Bounty ──────────────────────────────────────────────────────────────
+export const bountyReports = pgTable("bounty_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  researcherEmail: text("researcher_email").notNull(),
+  title: text("title").notNull(),
+  vulnerability: text("vulnerability").notNull(),
+  severity: text("severity").notNull().default("medium"),
+  status: text("status").notNull().default("new"),
+  reward: integer("reward"),
+  cvss: real("cvss"),
+  reproducible: boolean("reproducible").notNull().default(false),
+  stepsToReproduce: text("steps_to_reproduce"),
+  assignedTo: text("assigned_to"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Container / Kubernetes Security ────────────────────────────────────────
+export const containerScans = pgTable("container_scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  imageName: text("image_name").notNull(),
+  imageTag: text("image_tag").notNull().default("latest"),
+  scanType: text("scan_type").notNull().default("image"),
+  status: text("status").notNull().default("pending"),
+  criticalCount: integer("critical_count").notNull().default(0),
+  highCount: integer("high_count").notNull().default(0),
+  mediumCount: integer("medium_count").notNull().default(0),
+  lowCount: integer("low_count").notNull().default(0),
+  privilegedContainers: integer("privileged_containers").notNull().default(0),
+  weakRbac: boolean("weak_rbac").notNull().default(false),
+  openDashboards: boolean("open_dashboards").notNull().default(false),
+  untrustedImages: integer("untrusted_images").notNull().default(0),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const containerFindings = pgTable("container_findings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scanId: varchar("scan_id").notNull().references(() => containerScans.id),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  findingType: text("finding_type").notNull(),
+  severity: text("severity").notNull().default("medium"),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  cveId: text("cve_id"),
+  packageName: text("package_name"),
+  fixedVersion: text("fixed_version"),
+  remediation: text("remediation"),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertRepositorySchema = createInsertSchema(repositories).omit({ id: true, createdAt: true });
@@ -562,3 +693,29 @@ export type AlertRule = typeof alertRules.$inferSelect;
 export type InsertAlertRule = z.infer<typeof insertAlertRuleSchema>;
 export type PipelineConfig = typeof pipelineConfigs.$inferSelect;
 export type InsertPipelineConfig = z.infer<typeof insertPipelineConfigSchema>;
+
+export const insertTrainingRecordSchema = createInsertSchema(trainingRecords).omit({ id: true, createdAt: true });
+export const insertPhishingCampaignSchema = createInsertSchema(phishingCampaigns).omit({ id: true, createdAt: true });
+export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, createdAt: true });
+export const insertDarkWebAlertSchema = createInsertSchema(darkWebAlerts).omit({ id: true, createdAt: true });
+export const insertRemediationTaskSchema = createInsertSchema(remediationTasks).omit({ id: true, createdAt: true });
+export const insertBountyReportSchema = createInsertSchema(bountyReports).omit({ id: true, createdAt: true });
+export const insertContainerScanSchema = createInsertSchema(containerScans).omit({ id: true, createdAt: true });
+export const insertContainerFindingSchema = createInsertSchema(containerFindings).omit({ id: true, createdAt: true });
+
+export type TrainingRecord = typeof trainingRecords.$inferSelect;
+export type InsertTrainingRecord = z.infer<typeof insertTrainingRecordSchema>;
+export type PhishingCampaign = typeof phishingCampaigns.$inferSelect;
+export type InsertPhishingCampaign = z.infer<typeof insertPhishingCampaignSchema>;
+export type Vendor = typeof vendors.$inferSelect;
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
+export type DarkWebAlert = typeof darkWebAlerts.$inferSelect;
+export type InsertDarkWebAlert = z.infer<typeof insertDarkWebAlertSchema>;
+export type RemediationTask = typeof remediationTasks.$inferSelect;
+export type InsertRemediationTask = z.infer<typeof insertRemediationTaskSchema>;
+export type BountyReport = typeof bountyReports.$inferSelect;
+export type InsertBountyReport = z.infer<typeof insertBountyReportSchema>;
+export type ContainerScan = typeof containerScans.$inferSelect;
+export type InsertContainerScan = z.infer<typeof insertContainerScanSchema>;
+export type ContainerFinding = typeof containerFindings.$inferSelect;
+export type InsertContainerFinding = z.infer<typeof insertContainerFindingSchema>;

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Shield, AlertTriangle, CheckCircle, Clock, TrendingUp, TrendingDown,
-  Activity, Target, Zap, FileText, RefreshCw, ArrowUpRight
+  Activity, Target, Zap, FileText, RefreshCw, ArrowUpRight,
+  GraduationCap, Building, Eye, Map, Fish, Box
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -690,6 +691,113 @@ export default function Dashboard() {
             <DependencyVulnerabilitySummary stats={stats} />
           </div>
         </div>
+
+        <NewModulesSection />
+      </div>
+    </div>
+  );
+}
+
+function NewModulesSection() {
+  const { data: awarenessStats } = useQuery<any>({ queryKey: ["/api/security-awareness/stats"] });
+  const { data: vendorStats } = useQuery<any>({ queryKey: ["/api/vendors/stats"] });
+  const { data: darkWebStats } = useQuery<any>({ queryKey: ["/api/dark-web/stats"] });
+  const { data: roadmapStats } = useQuery<any>({ queryKey: ["/api/roadmap/stats"] });
+  const { data: bountyStats } = useQuery<any>({ queryKey: ["/api/bounty/stats"] });
+  const { data: containerStats } = useQuery<any>({ queryKey: ["/api/containers/stats"] });
+
+  const modules = [
+    {
+      href: "/security-awareness",
+      label: "Security Awareness",
+      icon: GraduationCap,
+      color: "text-violet-500",
+      bg: "bg-violet-500/10",
+      stat: awarenessStats ? `${awarenessStats.enrollments ?? 0} enrolled` : "–",
+      detail: awarenessStats ? `${awarenessStats.completionRate ?? 0}% completion` : "No data",
+      alert: (awarenessStats?.activeCampaigns ?? 0) > 0 ? `${awarenessStats.activeCampaigns} active campaign(s)` : null,
+    },
+    {
+      href: "/vendor-risk",
+      label: "Vendor Risk",
+      icon: Building,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      stat: vendorStats ? `${vendorStats.total ?? 0} vendors` : "–",
+      detail: vendorStats ? `${vendorStats.high ?? 0} high risk` : "No data",
+      alert: (vendorStats?.high ?? 0) > 0 ? `${vendorStats.high} high-risk vendor(s)` : null,
+    },
+    {
+      href: "/dark-web",
+      label: "Dark Web Monitor",
+      icon: Eye,
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+      stat: darkWebStats ? `${darkWebStats.total ?? 0} alerts` : "–",
+      detail: darkWebStats ? `${darkWebStats.new ?? 0} new` : "No data",
+      alert: (darkWebStats?.new ?? 0) > 0 ? `${darkWebStats.new} unresolved alert(s)` : null,
+    },
+    {
+      href: "/security-roadmap",
+      label: "Security Roadmap",
+      icon: Map,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      stat: roadmapStats ? `${roadmapStats.total ?? 0} tasks` : "–",
+      detail: roadmapStats ? `${roadmapStats.progress ?? 0}% complete` : "No data",
+      alert: null,
+    },
+    {
+      href: "/bug-bounty",
+      label: "Bug Bounty",
+      icon: Fish,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+      stat: bountyStats ? `${bountyStats.total ?? 0} reports` : "–",
+      detail: bountyStats ? `$${(bountyStats.totalReward ?? 0).toLocaleString()} rewarded` : "No data",
+      alert: (bountyStats?.critical ?? 0) > 0 ? `${bountyStats.critical} critical report(s)` : null,
+    },
+    {
+      href: "/container-security",
+      label: "Container Security",
+      icon: Box,
+      color: "text-cyan-500",
+      bg: "bg-cyan-500/10",
+      stat: containerStats ? `${containerStats.totalScans ?? 0} scans` : "–",
+      detail: containerStats ? `${containerStats.totalCritical ?? 0} critical CVEs` : "No data",
+      alert: (containerStats?.totalCritical ?? 0) > 0 ? `${containerStats.totalCritical} critical CVE(s)` : null,
+    },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-semibold">Security Modules</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {modules.map(mod => {
+          const Icon = mod.icon;
+          return (
+            <Link key={mod.href} href={mod.href}>
+              <Card className="cursor-pointer hover:border-primary/30 transition-colors group" data-testid={`module-card-${mod.label.toLowerCase().replace(/\s/g, "-")}`}>
+                <CardContent className="p-4">
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", mod.bg)}>
+                    <Icon className={cn("w-4 h-4", mod.color)} />
+                  </div>
+                  <div className="text-xs font-semibold text-foreground mb-0.5">{mod.label}</div>
+                  <div className="text-lg font-bold">{mod.stat}</div>
+                  <div className="text-xs text-muted-foreground">{mod.detail}</div>
+                  {mod.alert && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-xs text-red-500 truncate">{mod.alert}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

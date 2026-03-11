@@ -1,7 +1,7 @@
 # Sentinel Forge — Intelligent Autonomous Cybersecurity Platform
 
 ## Overview
-Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines vulnerability scanning, AI-assisted pentesting, cloud security posture management, threat intelligence, compliance automation, continuous DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, and security posture trending into a unified platform.
+Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines vulnerability scanning, AI-assisted pentesting, cloud security posture management, threat intelligence, compliance automation, continuous DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, security posture trending, security awareness training, vendor risk management, dark web monitoring, security roadmap planning, bug bounty management, and container/Kubernetes security into a unified enterprise platform.
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts
@@ -13,36 +13,38 @@ Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines 
 ## Project Structure
 ```
 client/src/
-  pages/          - All page components (19 pages + auth)
+  pages/          - All page components (26 pages + auth)
   components/     - Layout (6-group sidebar nav), ThemeProvider, shadcn/ui
   lib/            - auth, queryClient
   hooks/          - use-toast
 
 server/
   index.ts            - Express server entry point
-  routes.ts           - All API routes (auth + 17 feature modules)
+  routes.ts           - All API routes (auth + 24 feature modules)
   simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
-  storage.ts          - DatabaseStorage (IStorage interface, 25 tables)
+  storage.ts          - DatabaseStorage (IStorage interface, 33 tables)
   db.ts               - Database connection
   scan-worker.ts      - Security scan simulations (Semgrep, Trivy, Bandit, ZAP)
   report-generator.ts - Automated compliance report generation
 
 shared/
-  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (25 tables)
+  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (33 tables)
 ```
 
-## Database Tables (25 total)
-**Original (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
+## Database Tables (33 total)
+**Core (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
 
-**New SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
+**SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
+
+**New Modules (8):** training_records, phishing_campaigns, vendors, dark_web_alerts, remediation_tasks, bounty_reports, container_scans, container_findings
 
 ## Sidebar Navigation (6 groups)
-- **Overview**: Dashboard, Analytics, Security Posture Score
-- **Security**: Scans, AI Pentesting, Cloud Security, Threat Intel, Attack Surface, Secrets Scanning
-- **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM
-- **Governance**: Compliance, DevSecOps, Reports
-- **Assets**: Repositories, Documents
-- **Platform**: Integrations, Enterprise / SSO, Billing, API Keys, Settings
+- **Overview**: Dashboard, Analytics, Security Posture, Getting Started (/onboarding)
+- **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
+- **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty
+- **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
+- **Assets**: Repositories, Documents, Integrations
+- **Platform**: Team, Audit Logs, Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |
@@ -63,6 +65,13 @@ shared/
 | /compliance | SOC2/HIPAA/ISO27001/PCI-DSS/FedRAMP/GDPR compliance mapping |
 | /devsecops | DevSecOps pipelines, continuous monitoring, alert rules |
 | /reports | Report generation and export (PDF/JSON/CSV) |
+| /security-awareness | Phishing simulations + training records management |
+| /vendor-risk | Vendor assessment, risk scoring, compliance tracking |
+| /dark-web | Dark web leak scanning, alert management |
+| /security-roadmap | Kanban-style remediation task tracking with progress |
+| /bug-bounty | Bug bounty program — submit, triage, accept, reward |
+| /container-security | Container image & Kubernetes cluster vulnerability scanning |
+| /onboarding | 8-step getting started checklist with progress tracking |
 | /repositories | Repository management (GitHub/GitLab) |
 | /documents | Document upload and management |
 | /integrations | GitHub/GitLab/Slack/Jira integrations |
@@ -99,6 +108,13 @@ shared/
 - `GET/POST/PATCH /api/risks` — Risk Register
 - `GET/POST/PATCH /api/attack-surface` + discover — Attack Surface Management
 - `GET/POST /api/posture/scores` + current — Posture Score Trending
+- `GET/POST/DELETE /api/security-awareness/records` + campaigns + stats — Security Awareness
+- `GET/POST/DELETE /api/vendors` + assess + stats — Vendor Risk Management
+- `GET/POST/DELETE /api/dark-web/alerts` + scan + stats — Dark Web Monitoring
+- `GET/POST/PUT/DELETE /api/roadmap/tasks` + stats — Security Roadmap
+- `GET/POST/PUT/DELETE /api/bounty/reports` + stats — Bug Bounty
+- `GET/POST /api/containers/scans` + findings + scan + stats — Container Security
+- `GET/POST /api/onboarding` + complete step — Onboarding Checklist
 
 ## Key Notes
 - `apiRequest` returns `Promise<Response>` — must call `.json()` to parse body

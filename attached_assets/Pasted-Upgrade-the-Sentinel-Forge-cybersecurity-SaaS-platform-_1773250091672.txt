@@ -1,0 +1,366 @@
+Upgrade the Sentinel Forge cybersecurity SaaS platform by adding enterprise-grade security management capabilities.
+
+The platform must remain runnable with:
+
+python backend/main.py
+
+TECH STACK
+
+Backend
+Python
+FastAPI
+SQLAlchemy
+
+Frontend
+Next.js dashboard
+
+Queue
+Redis-based worker system
+
+Database
+SQLite for development
+PostgreSQL compatible schema
+
+--------------------------------------------------
+
+NEW ENTERPRISE MODULES
+
+Create modules for:
+
+Security Awareness & Phishing Simulation
+Vendor / Third Party Risk Management
+Notifications & Alert Routing
+Dark Web Monitoring
+Security Roadmap & Remediation Planning
+Bug Bounty Program Management
+Container / Kubernetes Security
+
+Add the following directories:
+
+backend/modules/
+
+security_awareness.py
+vendor_risk.py
+notification_center.py
+dark_web_monitor.py
+security_roadmap.py
+bug_bounty.py
+container_security.py
+
+--------------------------------------------------
+
+MODULE 1: SECURITY AWARENESS
+
+Track employee security training completion.
+
+Add database model:
+
+TrainingRecord
+
+id
+user_email
+course
+completed
+phishing_score
+
+Phishing simulation function:
+
+simulate_phishing_campaign()
+
+Track:
+
+clicked link
+reported email
+ignored email
+
+Generate human risk score.
+
+--------------------------------------------------
+
+MODULE 2: VENDOR RISK MANAGEMENT
+
+Create vendor database model.
+
+Vendor
+
+id
+name
+risk_score
+contact_email
+status
+
+Functions:
+
+add_vendor()
+assess_vendor_security()
+
+Track:
+
+security questionnaire
+compliance status
+risk rating
+
+--------------------------------------------------
+
+MODULE 3: NOTIFICATION CENTER
+
+Create centralized alert system.
+
+Notification model:
+
+id
+message
+severity
+destination
+timestamp
+
+Destinations supported:
+
+email
+slack
+webhook
+
+Endpoints:
+
+GET /notifications
+POST /notifications/send
+
+--------------------------------------------------
+
+MODULE 4: DARK WEB MONITORING
+
+Create monitoring module.
+
+Function:
+
+scan_leaked_credentials(domain)
+
+Check simulated sources for:
+
+credentials
+API keys
+emails
+
+Return alerts when company data appears.
+
+--------------------------------------------------
+
+MODULE 5: SECURITY ROADMAP
+
+Create remediation planning system.
+
+Database model:
+
+RemediationTask
+
+id
+title
+owner
+status
+priority
+target_date
+
+Workflow:
+
+open
+in_progress
+completed
+
+Track remediation progress across security issues.
+
+--------------------------------------------------
+
+MODULE 6: BUG BOUNTY MANAGEMENT
+
+Create bug bounty intake system.
+
+Model:
+
+BountyReport
+
+id
+researcher_email
+vulnerability
+severity
+reward
+
+Endpoints:
+
+POST /bounty/report
+GET /bounty/reports
+
+Allow analysts to triage submissions.
+
+--------------------------------------------------
+
+MODULE 7: CONTAINER SECURITY
+
+Create container security scanner.
+
+Functions:
+
+scan_container_image()
+scan_kubernetes_cluster()
+
+Detect:
+
+privileged containers
+open dashboards
+weak RBAC
+untrusted images
+
+--------------------------------------------------
+
+ENTERPRISE PLATFORM FEATURES
+
+--------------------------------------------------
+
+SSO AUTHENTICATION
+
+Integrate SSO providers.
+
+Support:
+
+Okta
+Google Workspace
+Azure AD
+
+Implement OAuth login endpoint.
+
+--------------------------------------------------
+
+SAAS BILLING
+
+Integrate Stripe billing.
+
+Plans:
+
+Startup
+Professional
+Enterprise
+
+Endpoints:
+
+POST /billing/subscribe
+GET /billing/status
+
+--------------------------------------------------
+
+API KEYS + PUBLIC API
+
+Create API key system.
+
+Model:
+
+APIKey
+
+id
+key
+organization
+created_at
+
+Endpoints:
+
+POST /api-key
+DELETE /api-key
+
+Allow API authentication.
+
+--------------------------------------------------
+
+SOC2 COMPLIANCE CONTROLS
+
+Create compliance tracking module.
+
+Model:
+
+Control
+
+id
+framework
+control_id
+status
+
+Framework:
+
+SOC2
+
+Map security events to SOC2 control coverage.
+
+--------------------------------------------------
+
+DISTRIBUTED SCAN WORKERS
+
+Create scalable worker architecture.
+
+workers/
+
+scan_worker.py
+queue_listener.py
+
+Workers pull jobs from Redis queue.
+
+Support:
+
+parallel scan execution
+horizontal scaling
+
+--------------------------------------------------
+
+UPDATE GETTING STARTED PAGE
+
+Add new onboarding checklist items.
+
+Steps:
+
+create organization
+invite team member
+enable SSO
+connect repository
+add cloud account
+run first scan
+enable billing
+generate API key
+
+When all steps complete display:
+
+Sentinel Forge platform fully operational.
+
+--------------------------------------------------
+
+DASHBOARD ENHANCEMENTS
+
+Add widgets for:
+
+phishing risk score
+vendor risk overview
+dark web alerts
+container security status
+bug bounty reports
+security roadmap progress
+
+--------------------------------------------------
+
+SUCCESS CRITERIA
+
+After implementation Sentinel Forge supports:
+
+enterprise SSO authentication
+multi-tenant organizations
+security awareness programs
+third-party risk tracking
+dark web monitoring
+security remediation planning
+bug bounty vulnerability intake
+container security posture
+distributed scanning infrastructure
+API integration
+SaaS billing
+
+The platform remains runnable with:
+
+python backend/main.py
+
+API documentation available at:
+
+/docs
