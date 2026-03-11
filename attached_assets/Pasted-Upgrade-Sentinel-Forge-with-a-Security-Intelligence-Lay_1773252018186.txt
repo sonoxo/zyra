@@ -1,0 +1,135 @@
+Upgrade Sentinel Forge with a Security Intelligence Layer.
+
+Add the following modules:
+
+CVE intelligence ingestion
+asset inventory graph
+attack path modeling
+threat hunting engine
+AI security copilot
+
+PROJECT STRUCTURE
+
+backend/modules/
+
+cve_intelligence.py
+asset_inventory.py
+attack_path_modeling.py
+threat_hunting.py
+security_copilot.py
+
+--------------------------------------------------
+
+CVE INTELLIGENCE
+
+Create system that pulls vulnerability data.
+
+Function:
+
+fetch_cve_database()
+
+Store:
+
+CVE ID
+severity
+affected packages
+fix versions
+
+Automatically correlate CVEs with:
+
+SBOM dependencies
+container images
+repositories
+
+--------------------------------------------------
+
+ASSET INVENTORY
+
+Track all discovered assets.
+
+Model:
+
+Asset
+
+id
+hostname
+ip
+cloud_provider
+asset_type
+
+Asset types:
+
+server
+container
+repository
+domain
+
+--------------------------------------------------
+
+ATTACK PATH MODELING
+
+Build graph showing how attacker could move through systems.
+
+Example path:
+
+public web app
+→ vulnerable dependency
+→ compromised container
+→ exposed database
+
+Generate attack risk score.
+
+--------------------------------------------------
+
+THREAT HUNTING ENGINE
+
+Create search capability across security data.
+
+Endpoint:
+
+GET /hunt
+
+Query examples:
+
+cve:log4j
+asset:production-db
+severity:critical
+
+--------------------------------------------------
+
+AI SECURITY COPILOT
+
+Create AI assistant that can answer questions.
+
+Examples:
+
+"What vulnerabilities affect our cloud assets?"
+
+"Which risks have the highest severity?"
+
+"Show open incidents from the last week"
+
+Return summarized responses using security data.
+
+--------------------------------------------------
+
+DASHBOARD ADDITIONS
+
+Add new panels:
+
+threat intelligence alerts
+attack path visualization
+asset inventory graph
+top CVEs affecting environment
+
+--------------------------------------------------
+
+SYSTEM GOAL
+
+Sentinel Forge should function as a unified security platform combining:
+
+DevSecOps scanning
+risk management
+incident response
+threat intelligence
+security operations

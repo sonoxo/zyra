@@ -37,6 +37,10 @@ import {
   type BountyReport, type InsertBountyReport,
   type ContainerScan, type InsertContainerScan,
   type ContainerFinding, type InsertContainerFinding,
+  type AssetInventoryItem, type InsertAssetInventoryItem,
+  type AttackPath, type InsertAttackPath,
+  type ThreatHuntQuery, type InsertThreatHuntQuery,
+  type CopilotConversation, type InsertCopilotConversation,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -47,6 +51,7 @@ import {
   notifications, inviteTokens, onboardingSteps,
   trainingRecords, phishingCampaigns, vendors, darkWebAlerts,
   remediationTasks, bountyReports, containerScans, containerFindings,
+  assetInventory, attackPaths, threatHuntQueries, copilotConversations,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -238,6 +243,29 @@ export interface IStorage {
   updateContainerScan(id: string, data: Partial<ContainerScan>): Promise<ContainerScan | undefined>;
   getContainerFindings(scanId: string): Promise<ContainerFinding[]>;
   createContainerFinding(f: InsertContainerFinding): Promise<ContainerFinding>;
+
+  // Asset Inventory
+  getAssets(orgId: string): Promise<AssetInventoryItem[]>;
+  getAsset(id: string, orgId: string): Promise<AssetInventoryItem | undefined>;
+  createAsset(a: InsertAssetInventoryItem): Promise<AssetInventoryItem>;
+  updateAsset(id: string, data: Partial<AssetInventoryItem>): Promise<AssetInventoryItem | undefined>;
+  deleteAsset(id: string, orgId: string): Promise<void>;
+
+  // Attack Paths
+  getAttackPaths(orgId: string): Promise<AttackPath[]>;
+  getAttackPath(id: string, orgId: string): Promise<AttackPath | undefined>;
+  createAttackPath(p: InsertAttackPath): Promise<AttackPath>;
+  updateAttackPath(id: string, data: Partial<AttackPath>): Promise<AttackPath | undefined>;
+  deleteAttackPath(id: string, orgId: string): Promise<void>;
+
+  // Threat Hunt Queries
+  getThreatHuntQueries(orgId: string): Promise<ThreatHuntQuery[]>;
+  createThreatHuntQuery(q: InsertThreatHuntQuery): Promise<ThreatHuntQuery>;
+  deleteThreatHuntQuery(id: string, orgId: string): Promise<void>;
+
+  // Copilot Conversations
+  getCopilotConversation(orgId: string, userId: string): Promise<CopilotConversation | undefined>;
+  upsertCopilotConversation(orgId: string, userId: string, messages: any[]): Promise<CopilotConversation>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -859,6 +887,78 @@ export class DatabaseStorage implements IStorage {
   }
   async createContainerFinding(f: InsertContainerFinding): Promise<ContainerFinding> {
     const [r] = await db.insert(containerFindings).values(f).returning();
+    return r;
+  }
+
+  // ── Asset Inventory ────────────────────────────────────────────────────────
+  async getAssets(orgId: string): Promise<AssetInventoryItem[]> {
+    return db.select().from(assetInventory).where(eq(assetInventory.organizationId, orgId)).orderBy(desc(assetInventory.createdAt));
+  }
+  async getAsset(id: string, orgId: string): Promise<AssetInventoryItem | undefined> {
+    const [r] = await db.select().from(assetInventory).where(and(eq(assetInventory.id, id), eq(assetInventory.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createAsset(a: InsertAssetInventoryItem): Promise<AssetInventoryItem> {
+    const [r] = await db.insert(assetInventory).values(a).returning();
+    return r;
+  }
+  async updateAsset(id: string, data: Partial<AssetInventoryItem>): Promise<AssetInventoryItem | undefined> {
+    const [r] = await db.update(assetInventory).set(data).where(eq(assetInventory.id, id)).returning();
+    return r;
+  }
+  async deleteAsset(id: string, orgId: string): Promise<void> {
+    await db.delete(assetInventory).where(and(eq(assetInventory.id, id), eq(assetInventory.organizationId, orgId)));
+  }
+
+  // ── Attack Paths ───────────────────────────────────────────────────────────
+  async getAttackPaths(orgId: string): Promise<AttackPath[]> {
+    return db.select().from(attackPaths).where(eq(attackPaths.organizationId, orgId)).orderBy(desc(attackPaths.createdAt));
+  }
+  async getAttackPath(id: string, orgId: string): Promise<AttackPath | undefined> {
+    const [r] = await db.select().from(attackPaths).where(and(eq(attackPaths.id, id), eq(attackPaths.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createAttackPath(p: InsertAttackPath): Promise<AttackPath> {
+    const [r] = await db.insert(attackPaths).values(p).returning();
+    return r;
+  }
+  async updateAttackPath(id: string, data: Partial<AttackPath>): Promise<AttackPath | undefined> {
+    const [r] = await db.update(attackPaths).set(data).where(eq(attackPaths.id, id)).returning();
+    return r;
+  }
+  async deleteAttackPath(id: string, orgId: string): Promise<void> {
+    await db.delete(attackPaths).where(and(eq(attackPaths.id, id), eq(attackPaths.organizationId, orgId)));
+  }
+
+  // ── Threat Hunt Queries ────────────────────────────────────────────────────
+  async getThreatHuntQueries(orgId: string): Promise<ThreatHuntQuery[]> {
+    return db.select().from(threatHuntQueries).where(eq(threatHuntQueries.organizationId, orgId)).orderBy(desc(threatHuntQueries.createdAt));
+  }
+  async createThreatHuntQuery(q: InsertThreatHuntQuery): Promise<ThreatHuntQuery> {
+    const [r] = await db.insert(threatHuntQueries).values(q).returning();
+    return r;
+  }
+  async deleteThreatHuntQuery(id: string, orgId: string): Promise<void> {
+    await db.delete(threatHuntQueries).where(and(eq(threatHuntQueries.id, id), eq(threatHuntQueries.organizationId, orgId)));
+  }
+
+  // ── Copilot Conversations ──────────────────────────────────────────────────
+  async getCopilotConversation(orgId: string, userId: string): Promise<CopilotConversation | undefined> {
+    const [r] = await db.select().from(copilotConversations)
+      .where(and(eq(copilotConversations.organizationId, orgId), eq(copilotConversations.userId, userId)))
+      .orderBy(desc(copilotConversations.updatedAt)).limit(1);
+    return r;
+  }
+  async upsertCopilotConversation(orgId: string, userId: string, messages: any[]): Promise<CopilotConversation> {
+    const existing = await this.getCopilotConversation(orgId, userId);
+    if (existing) {
+      const [r] = await db.update(copilotConversations)
+        .set({ messages, updatedAt: new Date() })
+        .where(eq(copilotConversations.id, existing.id))
+        .returning();
+      return r;
+    }
+    const [r] = await db.insert(copilotConversations).values({ organizationId: orgId, userId, messages }).returning();
     return r;
   }
 }

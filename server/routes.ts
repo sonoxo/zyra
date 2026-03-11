@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { runScanSimulation } from "./scan-worker";
 import { generateReport } from "./report-generator";
 import { runPentestSimulation, runCloudScanSimulation, refreshThreatIntel } from "./simulations";
+import { seedIntelligenceData, fetchCveDatabase, runThreatHunt, runSecurityCopilot } from "./intelligence";
 import {
   insertPentestSessionSchema,
   insertCloudScanTargetSchema,
@@ -1761,6 +1762,194 @@ export async function registerRoutes(
       totalHigh: completed.reduce((s, c) => s + c.highCount, 0),
       privilegedContainers: completed.reduce((s, c) => s + c.privilegedContainers, 0),
       weakRbac: completed.filter(c => c.weakRbac).length,
+    });
+  });
+
+  // ── Intelligence Layer: Seed on first access ─────────────────────────────
+  async function ensureIntelSeeded(orgId: string) {
+    await seedIntelligenceData(orgId);
+  }
+
+  // ── Asset Inventory ───────────────────────────────────────────────────────
+  app.get("/api/assets", requireAuth, async (req: Request, res: Response) => {
+    await ensureIntelSeeded(req.session.organizationId!);
+    const assets = await storage.getAssets(req.session.organizationId!);
+    res.json(assets);
+  });
+
+  app.get("/api/assets/stats", requireAuth, async (req: Request, res: Response) => {
+    await ensureIntelSeeded(req.session.organizationId!);
+    const assets = await storage.getAssets(req.session.organizationId!);
+    res.json({
+      total: assets.length,
+      byType: {
+        server: assets.filter(a => a.assetType === "server").length,
+        container: assets.filter(a => a.assetType === "container").length,
+        domain: assets.filter(a => a.assetType === "domain").length,
+        repository: assets.filter(a => a.assetType === "repository").length,
+      },
+      byEnvironment: {
+        production: assets.filter(a => a.environment === "production").length,
+        staging: assets.filter(a => a.environment === "staging").length,
+        development: assets.filter(a => a.environment === "development").length,
+      },
+      byCriticality: {
+        critical: assets.filter(a => a.criticality === "critical").length,
+        high: assets.filter(a => a.criticality === "high").length,
+        medium: assets.filter(a => a.criticality === "medium").length,
+        low: assets.filter(a => a.criticality === "low").length,
+      },
+      totalVulnerabilities: assets.reduce((s, a) => s + a.vulnerabilityCount, 0),
+      totalCves: assets.reduce((s, a) => s + a.cveCount, 0),
+    });
+  });
+
+  app.get("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
+    const asset = await storage.getAsset(req.params.id, req.session.organizationId!);
+    if (!asset) return res.status(404).json({ message: "Asset not found" });
+    res.json(asset);
+  });
+
+  app.post("/api/assets", requireAuth, async (req: Request, res: Response) => {
+    const asset = await storage.createAsset({ ...req.body, organizationId: req.session.organizationId! });
+    res.json(asset);
+  });
+
+  app.patch("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
+    const updated = await storage.updateAsset(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ message: "Asset not found" });
+    res.json(updated);
+  });
+
+  app.delete("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteAsset(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ── CVE Intelligence ──────────────────────────────────────────────────────
+  app.get("/api/cve/database", requireAuth, async (req: Request, res: Response) => {
+    const cves = await fetchCveDatabase(req.session.organizationId!);
+    res.json(cves);
+  });
+
+  app.get("/api/cve/stats", requireAuth, async (req: Request, res: Response) => {
+    const cves = await fetchCveDatabase(req.session.organizationId!);
+    res.json({
+      total: cves.length,
+      critical: cves.filter(c => c.severity === "critical").length,
+      high: cves.filter(c => c.severity === "high").length,
+      affectedInEnvironment: cves.filter(c => c.affectedInEnvironment).length,
+      avgCvss: parseFloat((cves.reduce((s, c) => s + c.cvssScore, 0) / cves.length).toFixed(1)),
+    });
+  });
+
+  // ── Attack Path Modeling ──────────────────────────────────────────────────
+  app.get("/api/attack-paths", requireAuth, async (req: Request, res: Response) => {
+    await ensureIntelSeeded(req.session.organizationId!);
+    const paths = await storage.getAttackPaths(req.session.organizationId!);
+    res.json(paths);
+  });
+
+  app.get("/api/attack-paths/stats", requireAuth, async (req: Request, res: Response) => {
+    await ensureIntelSeeded(req.session.organizationId!);
+    const paths = await storage.getAttackPaths(req.session.organizationId!);
+    res.json({
+      total: paths.length,
+      active: paths.filter(p => !p.mitigated).length,
+      mitigated: paths.filter(p => p.mitigated).length,
+      critical: paths.filter(p => p.severity === "critical").length,
+      high: paths.filter(p => p.severity === "high").length,
+      avgRiskScore: paths.length > 0 ? Math.round(paths.reduce((s, p) => s + p.riskScore, 0) / paths.length) : 0,
+    });
+  });
+
+  app.get("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
+    const path = await storage.getAttackPath(req.params.id, req.session.organizationId!);
+    if (!path) return res.status(404).json({ message: "Attack path not found" });
+    res.json(path);
+  });
+
+  app.patch("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
+    const updated = await storage.updateAttackPath(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ message: "Not found" });
+    res.json(updated);
+  });
+
+  app.delete("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteAttackPath(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ── Threat Hunting ────────────────────────────────────────────────────────
+  app.get("/api/hunt", requireAuth, async (req: Request, res: Response) => {
+    const query = (req.query.q as string) || "";
+    if (!query.trim()) return res.json({ results: [], count: 0, query });
+    const results = await runThreatHunt(query, req.session.organizationId!);
+    const saved = await storage.createThreatHuntQuery({
+      organizationId: req.session.organizationId!,
+      query,
+      queryType: "general",
+      resultsCount: results.length,
+      results,
+      savedByUserId: req.session.userId,
+    });
+    res.json({ results, count: results.length, query, queryId: saved.id });
+  });
+
+  app.get("/api/hunt/history", requireAuth, async (req: Request, res: Response) => {
+    const history = await storage.getThreatHuntQueries(req.session.organizationId!);
+    res.json(history);
+  });
+
+  app.delete("/api/hunt/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteThreatHuntQuery(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ── Security Copilot ──────────────────────────────────────────────────────
+  app.post("/api/copilot/chat", requireAuth, async (req: Request, res: Response) => {
+    const { message, conversationId } = req.body;
+    if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+
+    const existing = await storage.getCopilotConversation(req.session.organizationId!, req.session.userId!);
+    const messages: any[] = existing ? (existing.messages as any[]) : [];
+
+    messages.push({ role: "user", content: message, timestamp: new Date().toISOString() });
+
+    const response = await runSecurityCopilot(message, req.session.organizationId!);
+    messages.push({ role: "assistant", content: response, timestamp: new Date().toISOString() });
+
+    await storage.upsertCopilotConversation(req.session.organizationId!, req.session.userId!, messages);
+
+    res.json({ response, messages });
+  });
+
+  app.get("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {
+    const conv = await storage.getCopilotConversation(req.session.organizationId!, req.session.userId!);
+    res.json({ messages: conv ? (conv.messages as any[]) : [] });
+  });
+
+  app.delete("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {
+    await storage.upsertCopilotConversation(req.session.organizationId!, req.session.userId!, []);
+    res.json({ success: true });
+  });
+
+  // ── Intelligence Stats (Dashboard) ───────────────────────────────────────
+  app.get("/api/intelligence/stats", requireAuth, async (req: Request, res: Response) => {
+    await ensureIntelSeeded(req.session.organizationId!);
+    const [cves, assets, paths] = await Promise.all([
+      fetchCveDatabase(req.session.organizationId!),
+      storage.getAssets(req.session.organizationId!),
+      storage.getAttackPaths(req.session.organizationId!),
+    ]);
+    res.json({
+      totalAssets: assets.length,
+      criticalAssets: assets.filter(a => a.criticality === "critical").length,
+      totalCves: cves.length,
+      criticalCves: cves.filter(c => c.severity === "critical").length,
+      affectedCves: cves.filter(c => c.affectedInEnvironment).length,
+      activeAttackPaths: paths.filter(p => !p.mitigated).length,
+      highestRiskPath: paths.sort((a, b) => b.riskScore - a.riskScore)[0] || null,
     });
   });
 

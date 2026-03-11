@@ -560,6 +560,68 @@ export const bountyReports = pgTable("bounty_reports", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ── Asset Inventory ─────────────────────────────────────────────────────────
+export const assetInventory = pgTable("asset_inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  hostname: text("hostname").notNull(),
+  ip: text("ip"),
+  cloudProvider: text("cloud_provider"),
+  assetType: text("asset_type").notNull().default("server"),
+  environment: text("environment").notNull().default("production"),
+  region: text("region"),
+  os: text("os"),
+  criticality: text("criticality").notNull().default("medium"),
+  status: text("status").notNull().default("active"),
+  owner: text("owner"),
+  tags: text("tags").array().notNull().default(sql`'{}'`),
+  linkedRepositoryId: varchar("linked_repository_id"),
+  linkedContainerScanId: varchar("linked_container_scan_id"),
+  vulnerabilityCount: integer("vulnerability_count").notNull().default(0),
+  cveCount: integer("cve_count").notNull().default(0),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Attack Path Modeling ─────────────────────────────────────────────────────
+export const attackPaths = pgTable("attack_paths", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  entryPoint: text("entry_point").notNull(),
+  targetAsset: text("target_asset").notNull(),
+  riskScore: integer("risk_score").notNull().default(50),
+  severity: text("severity").notNull().default("high"),
+  steps: jsonb("steps").notNull().default(sql`'[]'`),
+  status: text("status").notNull().default("active"),
+  mitigated: boolean("mitigated").notNull().default(false),
+  mitigationNotes: text("mitigation_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── Threat Hunt Queries ──────────────────────────────────────────────────────
+export const threatHuntQueries = pgTable("threat_hunt_queries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  query: text("query").notNull(),
+  queryType: text("query_type").notNull().default("general"),
+  resultsCount: integer("results_count").notNull().default(0),
+  results: jsonb("results").notNull().default(sql`'[]'`),
+  savedByUserId: varchar("saved_by_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ── AI Copilot Conversations ─────────────────────────────────────────────────
+export const copilotConversations = pgTable("copilot_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  userId: varchar("user_id").references(() => users.id),
+  messages: jsonb("messages").notNull().default(sql`'[]'`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ── Container / Kubernetes Security ────────────────────────────────────────
 export const containerScans = pgTable("container_scans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -595,6 +657,20 @@ export const containerFindings = pgTable("container_findings", {
   status: text("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const insertAssetInventorySchema = createInsertSchema(assetInventory).omit({ id: true, createdAt: true, lastSeenAt: true });
+export const insertAttackPathSchema = createInsertSchema(attackPaths).omit({ id: true, createdAt: true });
+export const insertThreatHuntQuerySchema = createInsertSchema(threatHuntQueries).omit({ id: true, createdAt: true });
+export const insertCopilotConversationSchema = createInsertSchema(copilotConversations).omit({ id: true, createdAt: true, updatedAt: true });
+
+export type AssetInventoryItem = typeof assetInventory.$inferSelect;
+export type InsertAssetInventoryItem = z.infer<typeof insertAssetInventorySchema>;
+export type AttackPath = typeof attackPaths.$inferSelect;
+export type InsertAttackPath = z.infer<typeof insertAttackPathSchema>;
+export type ThreatHuntQuery = typeof threatHuntQueries.$inferSelect;
+export type InsertThreatHuntQuery = z.infer<typeof insertThreatHuntQuerySchema>;
+export type CopilotConversation = typeof copilotConversations.$inferSelect;
+export type InsertCopilotConversation = z.infer<typeof insertCopilotConversationSchema>;
 
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });

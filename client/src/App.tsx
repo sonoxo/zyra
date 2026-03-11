@@ -38,6 +38,11 @@ import SecurityRoadmapPage from "@/pages/security-roadmap";
 import BugBountyPage from "@/pages/bug-bounty";
 import ContainerSecurityPage from "@/pages/container-security";
 import OnboardingPage from "@/pages/onboarding";
+import AssetInventoryPage from "@/pages/asset-inventory";
+import AttackPathsPage from "@/pages/attack-paths";
+import ThreatHuntingPage from "@/pages/threat-hunting";
+import SecurityCopilotPage from "@/pages/security-copilot";
+import CveIntelligencePage from "@/pages/cve-intelligence";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -130,6 +135,11 @@ function Router() {
       <Route path="/bug-bounty">{() => <ProtectedRoute component={BugBountyPage} />}</Route>
       <Route path="/container-security">{() => <ProtectedRoute component={ContainerSecurityPage} />}</Route>
       <Route path="/onboarding">{() => <ProtectedRoute component={OnboardingPage} />}</Route>
+      <Route path="/asset-inventory">{() => <ProtectedRoute component={AssetInventoryPage} />}</Route>
+      <Route path="/attack-paths">{() => <ProtectedRoute component={AttackPathsPage} />}</Route>
+      <Route path="/threat-hunting">{() => <ProtectedRoute component={ThreatHuntingPage} />}</Route>
+      <Route path="/security-copilot">{() => <ProtectedRoute component={SecurityCopilotPage} />}</Route>
+      <Route path="/cve-intelligence">{() => <ProtectedRoute component={CveIntelligencePage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>

@@ -8,7 +8,8 @@ import {
   Cloud, Rss, GitMerge, Flame, Bug, Package,
   KeyRound, TriangleAlert, Radar, TrendingUp,
   Users, ClipboardList, Rocket, Check, X,
-  GraduationCap, Building, Eye, Map, Fish, Box
+  GraduationCap, Building, Eye, Map, Fish, Box,
+  Cpu, GitFork, ScanSearch, Bot, DatabaseZap
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,16 @@ const navGroups = [
       { href: "/reports", label: "Reports", icon: FileText },
       { href: "/security-awareness", label: "Security Awareness", icon: GraduationCap },
       { href: "/vendor-risk", label: "Vendor Risk", icon: Building },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { href: "/asset-inventory", label: "Asset Inventory", icon: Cpu },
+      { href: "/cve-intelligence", label: "CVE Intelligence", icon: DatabaseZap },
+      { href: "/attack-paths", label: "Attack Path Modeling", icon: GitFork },
+      { href: "/threat-hunting", label: "Threat Hunting", icon: ScanSearch },
+      { href: "/security-copilot", label: "Security Copilot", icon: Bot },
     ],
   },
   {

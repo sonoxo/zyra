@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Shield, AlertTriangle, CheckCircle, Clock, TrendingUp, TrendingDown,
   Activity, Target, Zap, FileText, RefreshCw, ArrowUpRight,
-  GraduationCap, Building, Eye, Map, Fish, Box
+  GraduationCap, Building, Eye, Map, Fish, Box,
+  Cpu, DatabaseZap, GitFork, ScanSearch, Bot, ArrowRight, Server
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -692,7 +693,105 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <IntelligenceSection />
         <NewModulesSection />
+      </div>
+    </div>
+  );
+}
+
+function IntelligenceSection() {
+  const { data: intelStats } = useQuery<any>({ queryKey: ["/api/intelligence/stats"] });
+
+  const tiles = [
+    {
+      href: "/asset-inventory",
+      label: "Asset Inventory",
+      icon: Cpu,
+      color: "text-indigo-500",
+      bg: "bg-indigo-500/10",
+      stat: intelStats ? `${intelStats.assets ?? 0} assets` : "–",
+      detail: intelStats ? `${intelStats.criticalAssets ?? 0} critical` : "Loading…",
+      alert: (intelStats?.criticalAssets ?? 0) > 0 ? `${intelStats.criticalAssets} critical asset(s)` : null,
+    },
+    {
+      href: "/cve-intelligence",
+      label: "CVE Intelligence",
+      icon: DatabaseZap,
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+      stat: intelStats ? `${intelStats.cves ?? 0} CVEs` : "–",
+      detail: intelStats ? `${intelStats.criticalCves ?? 0} critical` : "Loading…",
+      alert: (intelStats?.affectedCves ?? 0) > 0 ? `${intelStats.affectedCves} affect you` : null,
+    },
+    {
+      href: "/attack-paths",
+      label: "Attack Paths",
+      icon: GitFork,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+      stat: intelStats ? `${intelStats.attackPaths ?? 0} paths` : "–",
+      detail: intelStats ? `${intelStats.criticalPaths ?? 0} critical paths` : "Loading…",
+      alert: (intelStats?.criticalPaths ?? 0) > 0 ? `${intelStats.criticalPaths} critical path(s)` : null,
+    },
+    {
+      href: "/threat-hunting",
+      label: "Threat Hunting",
+      icon: ScanSearch,
+      color: "text-yellow-500",
+      bg: "bg-yellow-500/10",
+      stat: intelStats ? `${intelStats.huntQueries ?? 0} queries` : "–",
+      detail: intelStats ? `${intelStats.huntHits ?? 0} hits` : "Loading…",
+      alert: (intelStats?.huntHits ?? 0) > 0 ? `${intelStats.huntHits} threat(s) detected` : null,
+    },
+    {
+      href: "/security-copilot",
+      label: "AI Copilot",
+      icon: Bot,
+      color: "text-violet-500",
+      bg: "bg-violet-500/10",
+      stat: intelStats ? `${intelStats.copilotConversations ?? 0} sessions` : "–",
+      detail: "Ask anything",
+      alert: null,
+    },
+  ];
+
+  return (
+    <div data-testid="intelligence-section">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />Security Intelligence
+        </h2>
+        <Link href="/asset-inventory">
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground">
+            Explore <ArrowRight className="w-3 h-3" />
+          </Button>
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {tiles.map(mod => {
+          const Icon = mod.icon;
+          return (
+            <Link key={mod.href} href={mod.href}>
+              <Card className="cursor-pointer hover:border-primary/30 transition-colors group" data-testid={`intel-card-${mod.label.toLowerCase().replace(/\s+/g, "-")}`}>
+                <CardContent className="p-4">
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", mod.bg)}>
+                    <Icon className={cn("w-4 h-4", mod.color)} />
+                  </div>
+                  <div className="text-xs font-semibold text-foreground mb-0.5">{mod.label}</div>
+                  <div className="text-lg font-bold">{mod.stat}</div>
+                  <div className="text-xs text-muted-foreground">{mod.detail}</div>
+                  {mod.alert && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-xs text-red-500 truncate">{mod.alert}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
