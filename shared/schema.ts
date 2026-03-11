@@ -319,6 +319,7 @@ export const incidents = pgTable("incidents", {
   timeline: jsonb("timeline").notNull().default(sql`'[]'`),
   mttr: integer("mttr"),
   tags: text("tags").array().notNull().default(sql`'{}'`),
+  vulnerabilityId: varchar("vulnerability_id"),
   resolvedAt: timestamp("resolved_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -338,6 +339,8 @@ export const vulnerabilities = pgTable("vulnerabilities", {
   remediationSteps: text("remediation_steps"),
   dueDate: timestamp("due_date"),
   verifiedAt: timestamp("verified_at"),
+  incidentId: varchar("incident_id"),
+  riskId: varchar("risk_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -389,6 +392,7 @@ export const risks = pgTable("risks", {
   residualRisk: integer("residual_risk"),
   status: text("status").notNull().default("open"),
   dueDate: timestamp("due_date"),
+  vulnerabilityId: varchar("vulnerability_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -423,6 +427,41 @@ export const postureScores = pgTable("posture_scores", {
   incidentScore: integer("incident_score").notNull().default(100),
   vulnerabilityScore: integer("vulnerability_score").notNull().default(100),
   trend: text("trend").notNull().default("stable"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  userId: varchar("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull().default("info"),
+  severity: text("severity").notNull().default("info"),
+  resourceType: text("resource_type"),
+  resourceId: varchar("resource_id"),
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const inviteTokens = pgTable("invite_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  email: text("email").notNull(),
+  role: userRoleEnum("role").notNull().default("analyst"),
+  token: text("token").notNull().unique(),
+  invitedById: varchar("invited_by_id").references(() => users.id),
+  acceptedAt: timestamp("accepted_at"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const onboardingSteps = pgTable("onboarding_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  step: text("step").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -487,6 +526,17 @@ export type AttackSurfaceAsset = typeof attackSurfaceAssets.$inferSelect;
 export type InsertAttackSurfaceAsset = z.infer<typeof insertAttackSurfaceAssetSchema>;
 export type PostureScore = typeof postureScores.$inferSelect;
 export type InsertPostureScore = z.infer<typeof insertPostureScoreSchema>;
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
+export const insertInviteTokenSchema = createInsertSchema(inviteTokens).omit({ id: true, createdAt: true });
+export const insertOnboardingStepSchema = createInsertSchema(onboardingSteps).omit({ id: true, createdAt: true });
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type InviteToken = typeof inviteTokens.$inferSelect;
+export type InsertInviteToken = z.infer<typeof insertInviteTokenSchema>;
+export type OnboardingStep = typeof onboardingSteps.$inferSelect;
+export type InsertOnboardingStep = z.infer<typeof insertOnboardingStepSchema>;
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;

@@ -1,0 +1,301 @@
+Upgrade the Sentinel Forge platform to be launch-ready by adding:
+
+1) Team / User Management (RBAC + invites)
+2) In-App Notifications Center
+3) Dashboard wired to real data
+4) Audit Log page
+5) Cross-module linking
+6) Onboarding checklist
+
+TECH STACK
+Backend: Python + FastAPI + SQLAlchemy
+Frontend: Next.js
+Database: SQLite (Replit dev) with PostgreSQL-ready schema
+
+====================================================
+REPOSITORY CHANGES
+====================================================
+
+backend/
+  models/
+    user.py
+    organization.py
+    membership.py
+    notification.py
+    audit_log.py
+    onboarding.py
+
+  routes/
+    users.py
+    notifications.py
+    dashboard.py
+    audit_logs.py
+    onboarding.py
+
+frontend/nextjs-dashboard/
+  pages/
+    team.js
+    notifications.js
+    audit-log.js
+    onboarding.js
+    dashboard.js
+
+====================================================
+DATABASE MODELS
+====================================================
+
+Create the following SQLAlchemy models.
+
+User
+
+id
+email
+password_hash
+created_at
+
+Organization
+
+id
+name
+created_at
+
+Membership
+
+id
+user_id
+organization_id
+role
+
+Roles must support:
+
+Owner
+Admin
+Security Engineer
+Analyst
+Viewer
+
+Notification
+
+id
+user_id
+message
+severity
+read
+created_at
+
+AuditLog
+
+id
+user_id
+action
+resource_type
+resource_id
+timestamp
+
+OnboardingProgress
+
+id
+organization_id
+step
+completed
+
+====================================================
+TEAM MANAGEMENT API
+====================================================
+
+POST /users/invite
+Invite a user by email and assign role.
+
+GET /users/team
+Return list of organization members.
+
+DELETE /users/remove
+Remove a user from organization.
+
+Example response:
+
+{
+ "email": "analyst@company.com",
+ "role": "Analyst"
+}
+
+====================================================
+NOTIFICATIONS SYSTEM
+====================================================
+
+Create a notification service.
+
+Notifications triggered when:
+
+• scan completes
+• vulnerability discovered
+• incident assigned
+• critical CVE detected
+
+Endpoints:
+
+GET /notifications
+POST /notifications/read
+
+====================================================
+DASHBOARD API
+====================================================
+
+Create a dashboard stats endpoint.
+
+GET /dashboard/stats
+
+Return:
+
+{
+ "vulnerabilities": <count>,
+ "incidents": <count>,
+ "risks": <count>,
+ "security_score": <latest posture score>
+}
+
+Counts must be queried from database tables.
+
+====================================================
+AUDIT LOG SYSTEM
+====================================================
+
+Every major action must create an audit log entry.
+
+Example events:
+
+User invited
+Incident updated
+Vulnerability remediated
+Risk accepted
+
+Endpoint:
+
+GET /audit-logs
+
+Return paginated list of events.
+
+====================================================
+CROSS MODULE LINKING
+====================================================
+
+Update schemas so objects can reference each other.
+
+Vulnerability
+
+scan_id
+incident_id
+risk_id
+
+Incident
+
+vulnerability_id
+
+Risk
+
+vulnerability_id
+
+This allows navigation across modules.
+
+====================================================
+ONBOARDING CHECKLIST
+====================================================
+
+New organizations see a setup checklist.
+
+Steps:
+
+Create project
+Connect repository
+Run first scan
+Add cloud target
+Invite teammate
+
+Endpoint:
+
+GET /onboarding
+
+Return:
+
+[
+ {"step":"create_project","completed":true},
+ {"step":"connect_repo","completed":false}
+]
+
+====================================================
+FRONTEND IMPLEMENTATION
+====================================================
+
+TEAM PAGE
+
+Display team members table.
+
+Columns:
+
+Email
+Role
+Actions
+
+Include invite form.
+
+====================================================
+
+NOTIFICATIONS PAGE
+
+Add notification bell in top navbar.
+
+Dropdown shows recent alerts.
+
+Unread notifications highlighted.
+
+====================================================
+
+DASHBOARD PAGE
+
+Replace placeholder numbers with API data.
+
+Charts:
+
+• vulnerabilities by severity
+• incidents over time
+• posture score trend
+
+Fetch data from /dashboard/stats.
+
+====================================================
+
+AUDIT LOG PAGE
+
+Table with:
+
+Timestamp
+User
+Action
+Resource
+
+====================================================
+
+ONBOARDING PAGE
+
+Checklist UI with progress indicators.
+
+When all steps complete show:
+
+"Sentinel Forge is fully configured."
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+After implementation:
+
+• multiple users can collaborate
+• alerts appear in notifications center
+• dashboard shows real data
+• actions visible in audit log
+• modules linked together
+• new organizations guided by onboarding
+
+The platform must remain runnable with:
+
+python backend/main.py

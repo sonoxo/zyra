@@ -293,6 +293,30 @@ export async function registerRoutes(
 
       const monitoringActive = monitors.some(m => m.isEnabled);
 
+      const [allIncidents, allVulnerabilities, allRisks, latestPosture] = await Promise.all([
+        storage.getIncidents(orgId),
+        storage.getVulnerabilities(orgId),
+        storage.getRisks(orgId),
+        storage.getLatestPostureScore(orgId),
+      ]);
+
+      const incidentsStats = {
+        total: allIncidents.length,
+        open: allIncidents.filter(i => i.status !== "closed").length,
+        critical: allIncidents.filter(i => i.severity === "critical").length,
+      };
+      const vulnerabilitiesStats = {
+        total: allVulnerabilities.length,
+        open: allVulnerabilities.filter(v => v.status === "open").length,
+        critical: allVulnerabilities.filter(v => v.severity === "critical").length,
+        high: allVulnerabilities.filter(v => v.severity === "high").length,
+      };
+      const risksStats = {
+        total: allRisks.length,
+        critical: allRisks.filter(r => r.riskScore >= 20).length,
+        high: allRisks.filter(r => r.riskScore >= 12 && r.riskScore < 20).length,
+      };
+
       return res.json({
         totalScans: allScans.length,
         activeScans,
@@ -312,7 +336,11 @@ export async function registerRoutes(
         pentestStats,
         cloudStats,
         threatIntelStats,
-        monitoringActive
+        monitoringActive,
+        incidentsStats,
+        vulnerabilitiesStats,
+        risksStats,
+        latestPostureScore: latestPosture?.overallScore ?? null,
       });
     } catch (err: any) {
       console.error("Dashboard error:", err);
@@ -1041,8 +1069,11 @@ export async function registerRoutes(
     res.json(items);
   });
   app.post("/api/incidents", requireAuth, async (req: Request, res: Response) => {
-    const item = await storage.createIncident({ ...req.body, organizationId: req.session.organizationId! });
-    await storage.createAuditLog({ organizationId: req.session.organizationId!, userId: req.session.userId!, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
+    const orgId = req.session.organizationId!;
+    const item = await storage.createIncident({ ...req.body, organizationId: orgId });
+    await storage.createAuditLog({ organizationId: orgId, userId: req.session.userId!, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
+    const isCritical = item.severity === "critical";
+    await storage.createNotification({ organizationId: orgId, title: isCritical ? "Critical Incident Created" : "New Incident Created", message: `Incident "${item.title}" has been created with ${item.severity} severity.`, type: "incident", severity: item.severity, resourceType: "incident", resourceId: item.id });
     res.json(item);
   });
   app.put("/api/incidents/:id", requireAuth, async (req: Request, res: Response) => {
@@ -1082,7 +1113,11 @@ export async function registerRoutes(
     res.json(items);
   });
   app.post("/api/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
-    const item = await storage.createVulnerability({ ...req.body, organizationId: req.session.organizationId! });
+    const orgId = req.session.organizationId!;
+    const item = await storage.createVulnerability({ ...req.body, organizationId: orgId });
+    if (item.severity === "critical" || item.severity === "high") {
+      await storage.createNotification({ organizationId: orgId, title: `${item.severity === "critical" ? "Critical" : "High"} Vulnerability Discovered`, message: `${item.title}${item.cve ? ` (${item.cve})` : ""} — CVSS ${item.cvss ?? "N/A"}`, type: "vulnerability", severity: item.severity, resourceType: "vulnerability", resourceId: item.id });
+    }
     res.json(item);
   });
   app.put("/api/vulnerabilities/:id", requireAuth, async (req: Request, res: Response) => {
@@ -1285,6 +1320,145 @@ export async function registerRoutes(
       trend,
     });
     res.json(snapshot);
+  });
+
+  // ===== NOTIFICATIONS =====
+  app.get("/api/notifications", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const limit = parseInt(req.query.limit as string) || 30;
+    const items = await storage.getNotifications(orgId, limit);
+    const unreadCount = await storage.getUnreadCount(orgId);
+    res.json({ notifications: items, unreadCount });
+  });
+
+  app.post("/api/notifications/read", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const { id } = req.body;
+    if (id) {
+      await storage.markNotificationRead(id, orgId);
+    } else {
+      await storage.markAllNotificationsRead(orgId);
+    }
+    res.json({ ok: true });
+  });
+
+  // ===== TEAM MANAGEMENT =====
+  app.get("/api/team", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const [members, invites] = await Promise.all([
+      storage.getTeamMembers(orgId),
+      storage.getInviteTokens(orgId),
+    ]);
+    const safeMembers = members.map(m => ({ id: m.id, username: m.username, email: m.email, fullName: m.fullName, role: m.role, avatarUrl: m.avatarUrl, createdAt: m.createdAt }));
+    const pendingInvites = invites.filter(i => !i.acceptedAt && i.expiresAt > new Date());
+    res.json({ members: safeMembers, pendingInvites });
+  });
+
+  app.post("/api/team/invite", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.session.organizationId!;
+      const userId = req.session.userId!;
+      const { email, role = "analyst" } = req.body;
+      if (!email) return res.status(400).json({ message: "Email is required" });
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const invite = await storage.createInviteToken({ organizationId: orgId, email, role, token, invitedById: userId, expiresAt });
+
+      await logAudit(orgId, userId, "team.invite_sent", "user", undefined, { email, role }, req.ip);
+      await storage.upsertOnboardingStep(orgId, "invite_teammate", true);
+
+      res.json({ invite, inviteLink: `/accept-invite?token=${token}` });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to send invite" });
+    }
+  });
+
+  app.patch("/api/team/:userId/role", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const currentUserId = req.session.userId!;
+    const { userId } = req.params;
+    const { role } = req.body;
+    if (!role) return res.status(400).json({ message: "Role is required" });
+    const validRoles = ["owner", "admin", "analyst", "viewer"];
+    if (!validRoles.includes(role)) return res.status(400).json({ message: "Invalid role" });
+    if (userId === currentUserId) return res.status(400).json({ message: "Cannot change your own role" });
+    const updated = await storage.updateUserRole(userId, orgId, role);
+    if (!updated) return res.status(404).json({ message: "User not found" });
+    await logAudit(orgId, currentUserId, "team.role_changed", "user", userId, { newRole: role }, req.ip);
+    res.json({ id: updated.id, username: updated.username, email: updated.email, role: updated.role });
+  });
+
+  app.delete("/api/team/:userId", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const currentUserId = req.session.userId!;
+    const { userId } = req.params;
+    if (userId === currentUserId) return res.status(400).json({ message: "Cannot remove yourself" });
+    await storage.removeTeamMember(userId, orgId);
+    await logAudit(orgId, currentUserId, "team.member_removed", "user", userId, {}, req.ip);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/invite/:token", async (req: Request, res: Response) => {
+    const invite = await storage.getInviteByToken(req.params.token);
+    if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
+      return res.status(404).json({ message: "Invalid or expired invite" });
+    }
+    res.json({ email: invite.email, role: invite.role });
+  });
+
+  // ===== ONBOARDING =====
+  app.get("/api/onboarding", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    await storage.initOnboarding(orgId);
+    const rawSteps = await storage.getOnboardingSteps(orgId);
+
+    const stepOrder = ["create_project", "connect_repo", "run_first_scan", "add_cloud_target", "invite_teammate"];
+    const stepLabels: Record<string, { label: string; description: string }> = {
+      create_project: { label: "Create your project", description: "Your organization has been created and configured." },
+      connect_repo: { label: "Connect a repository", description: "Link a GitHub or GitLab repository to enable scanning." },
+      run_first_scan: { label: "Run your first scan", description: "Execute a security scan on a connected repository." },
+      add_cloud_target: { label: "Add a cloud target", description: "Connect an AWS, GCP, or Azure environment for CSPM." },
+      invite_teammate: { label: "Invite a teammate", description: "Bring in a colleague to collaborate on security operations." },
+    };
+
+    const [repos, scans, cloudTargets, teamMembers, invites] = await Promise.all([
+      storage.getRepositories(orgId),
+      storage.getScans(orgId),
+      storage.getCloudScanTargets(orgId),
+      storage.getTeamMembers(orgId),
+      storage.getInviteTokens(orgId),
+    ]);
+
+    const autoCompleted: Record<string, boolean> = {
+      create_project: true,
+      connect_repo: repos.length > 0,
+      run_first_scan: scans.some(s => s.status === "completed"),
+      add_cloud_target: cloudTargets.length > 0,
+      invite_teammate: teamMembers.length > 1 || invites.some(i => !i.acceptedAt),
+    };
+
+    for (const [step, completed] of Object.entries(autoCompleted)) {
+      if (completed) await storage.upsertOnboardingStep(orgId, step, true);
+    }
+
+    const stepsMap = Object.fromEntries(rawSteps.map(s => [s.step, s]));
+    const steps = stepOrder.map(key => ({
+      step: key,
+      label: stepLabels[key]?.label ?? key,
+      description: stepLabels[key]?.description ?? "",
+      completed: stepsMap[key]?.completed ?? autoCompleted[key] ?? false,
+      completedAt: stepsMap[key]?.completedAt ?? null,
+    }));
+
+    const allDone = steps.every(s => s.completed);
+    res.json({ steps, allDone, completedCount: steps.filter(s => s.completed).length, totalCount: steps.length });
+  });
+
+  app.post("/api/onboarding/:step/complete", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    await storage.upsertOnboardingStep(orgId, req.params.step, true);
+    res.json({ ok: true });
   });
 
   return httpServer;

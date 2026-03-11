@@ -6,21 +6,25 @@ import {
   Activity, Zap, Globe, Plug, Building2,
   CreditCard, Key, BarChart3, Crosshair,
   Cloud, Rss, GitMerge, Flame, Bug, Package,
-  KeyRound, TriangleAlert, Radar, TrendingUp
+  KeyRound, TriangleAlert, Radar, TrendingUp,
+  Users, ClipboardList, Rocket, Check, X
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger
+  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logout } from "@/lib/auth";
 import type { AuthUser } from "@/lib/auth";
 import { useLocation as useWouterLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import type { Notification } from "@shared/schema";
 
 const navGroups = [
   {
@@ -29,6 +33,7 @@ const navGroups = [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
       { href: "/posture", label: "Security Posture", icon: TrendingUp },
+      { href: "/onboarding", label: "Getting Started", icon: Rocket },
     ],
   },
   {
@@ -70,6 +75,8 @@ const navGroups = [
   {
     label: "Platform",
     items: [
+      { href: "/team", label: "Team", icon: Users },
+      { href: "/audit-logs", label: "Audit Logs", icon: ClipboardList },
       { href: "/enterprise", label: "Enterprise", icon: Building2 },
       { href: "/billing", label: "Billing", icon: CreditCard },
       { href: "/api-keys", label: "API Keys", icon: Key },
@@ -100,6 +107,94 @@ function NavItem({ href, label, icon: Icon }: { href: string; label: string; ico
         )}
       </div>
     </Link>
+  );
+}
+
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: "bg-red-500",
+  high: "bg-orange-500",
+  medium: "bg-yellow-500",
+  low: "bg-blue-500",
+  info: "bg-gray-400",
+};
+
+function NotificationBell({ orgId }: { orgId: string | undefined }) {
+  const qc = useQueryClient();
+
+  const { data } = useQuery<{ notifications: Notification[]; unreadCount: number }>({
+    queryKey: ["/api/notifications"],
+    refetchInterval: 30000,
+    enabled: !!orgId,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (id?: string) => apiRequest("POST", "/api/notifications/read", { id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/notifications"] }),
+  });
+
+  const unread = data?.unreadCount ?? 0;
+  const items = data?.notifications ?? [];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          data-testid="notification-bell"
+          className="relative p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors"
+        >
+          <Bell className="w-4 h-4 text-muted-foreground" />
+          {unread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="end" className="w-80 p-0" sideOffset={8}>
+        <div className="flex items-center justify-between px-3 py-2.5 border-b">
+          <DropdownMenuLabel className="p-0 text-sm font-semibold">Notifications</DropdownMenuLabel>
+          {unread > 0 && (
+            <button
+              onClick={() => markReadMutation.mutate(undefined)}
+              className="text-xs text-primary hover:underline"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+        <ScrollArea className="max-h-80">
+          {items.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              <Bell className="w-6 h-6 mx-auto mb-2 opacity-40" />
+              No notifications yet
+            </div>
+          ) : (
+            items.slice(0, 20).map(n => (
+              <div
+                key={n.id}
+                onClick={() => !n.read && markReadMutation.mutate(n.id)}
+                className={cn(
+                  "px-3 py-2.5 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors",
+                  !n.read && "bg-primary/5"
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", SEVERITY_COLORS[n.severity] ?? "bg-gray-400")} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-foreground truncate">{n.title}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{n.message}</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      {new Date(n.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                  {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
+                </div>
+              </div>
+            ))
+          )}
+        </ScrollArea>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -165,6 +260,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {user?.organization?.name || "Organization"}
               </span>
             </div>
+            <NotificationBell orgId={user?.organizationId} />
             <Badge variant="outline" className="text-xs h-4 px-1.5 shrink-0 border-green-500/30 text-green-600 dark:text-green-400">
               Active
             </Badge>

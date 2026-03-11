@@ -26,6 +26,9 @@ import {
   type Risk, type InsertRisk,
   type AttackSurfaceAsset, type InsertAttackSurfaceAsset,
   type PostureScore, type InsertPostureScore,
+  type Notification, type InsertNotification,
+  type InviteToken, type InsertInviteToken,
+  type OnboardingStep, type InsertOnboardingStep,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -33,6 +36,7 @@ import {
   threatIntelItems, monitoringConfigs, alertRules, pipelineConfigs,
   incidents, vulnerabilities, sbomItems, secretsFindings,
   risks, attackSurfaceAssets, postureScores,
+  notifications, inviteTokens, onboardingSteps,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -158,6 +162,27 @@ export interface IStorage {
   getPostureScores(orgId: string, limit?: number): Promise<PostureScore[]>;
   createPostureScore(s: InsertPostureScore): Promise<PostureScore>;
   getLatestPostureScore(orgId: string): Promise<PostureScore | undefined>;
+
+  // Notifications
+  getNotifications(orgId: string, limit?: number): Promise<Notification[]>;
+  getUnreadCount(orgId: string): Promise<number>;
+  createNotification(n: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: string, orgId: string): Promise<void>;
+  markAllNotificationsRead(orgId: string): Promise<void>;
+
+  // Team / Invite tokens
+  getTeamMembers(orgId: string): Promise<User[]>;
+  updateUserRole(id: string, orgId: string, role: string): Promise<User | undefined>;
+  removeTeamMember(id: string, orgId: string): Promise<void>;
+  getInviteTokens(orgId: string): Promise<InviteToken[]>;
+  createInviteToken(t: InsertInviteToken): Promise<InviteToken>;
+  getInviteByToken(token: string): Promise<InviteToken | undefined>;
+  acceptInvite(token: string): Promise<InviteToken | undefined>;
+
+  // Onboarding
+  getOnboardingSteps(orgId: string): Promise<OnboardingStep[]>;
+  upsertOnboardingStep(orgId: string, step: string, completed: boolean): Promise<OnboardingStep>;
+  initOnboarding(orgId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -584,6 +609,72 @@ export class DatabaseStorage implements IStorage {
   async getLatestPostureScore(orgId: string): Promise<PostureScore | undefined> {
     const [r] = await db.select().from(postureScores).where(eq(postureScores.organizationId, orgId)).orderBy(desc(postureScores.createdAt)).limit(1);
     return r;
+  }
+
+  async getNotifications(orgId: string, limit = 50): Promise<Notification[]> {
+    return db.select().from(notifications).where(eq(notifications.organizationId, orgId)).orderBy(desc(notifications.createdAt)).limit(limit);
+  }
+  async getUnreadCount(orgId: string): Promise<number> {
+    const res = await db.select({ count: sql<number>`count(*)` }).from(notifications).where(and(eq(notifications.organizationId, orgId), eq(notifications.read, false)));
+    return Number(res[0]?.count ?? 0);
+  }
+  async createNotification(n: InsertNotification): Promise<Notification> {
+    const [r] = await db.insert(notifications).values(n).returning();
+    return r;
+  }
+  async markNotificationRead(id: string, orgId: string): Promise<void> {
+    await db.update(notifications).set({ read: true }).where(and(eq(notifications.id, id), eq(notifications.organizationId, orgId)));
+  }
+  async markAllNotificationsRead(orgId: string): Promise<void> {
+    await db.update(notifications).set({ read: true }).where(and(eq(notifications.organizationId, orgId), eq(notifications.read, false)));
+  }
+
+  async getTeamMembers(orgId: string): Promise<User[]> {
+    return db.select().from(users).where(eq(users.organizationId, orgId)).orderBy(users.createdAt);
+  }
+  async updateUserRole(id: string, orgId: string, role: string): Promise<User | undefined> {
+    const [r] = await db.update(users).set({ role: role as any }).where(and(eq(users.id, id), eq(users.organizationId, orgId))).returning();
+    return r;
+  }
+  async removeTeamMember(id: string, orgId: string): Promise<void> {
+    await db.delete(users).where(and(eq(users.id, id), eq(users.organizationId, orgId)));
+  }
+  async getInviteTokens(orgId: string): Promise<InviteToken[]> {
+    return db.select().from(inviteTokens).where(eq(inviteTokens.organizationId, orgId)).orderBy(desc(inviteTokens.createdAt));
+  }
+  async createInviteToken(t: InsertInviteToken): Promise<InviteToken> {
+    const [r] = await db.insert(inviteTokens).values(t).returning();
+    return r;
+  }
+  async getInviteByToken(token: string): Promise<InviteToken | undefined> {
+    const [r] = await db.select().from(inviteTokens).where(eq(inviteTokens.token, token)).limit(1);
+    return r;
+  }
+  async acceptInvite(token: string): Promise<InviteToken | undefined> {
+    const [r] = await db.update(inviteTokens).set({ acceptedAt: new Date() }).where(eq(inviteTokens.token, token)).returning();
+    return r;
+  }
+
+  async getOnboardingSteps(orgId: string): Promise<OnboardingStep[]> {
+    return db.select().from(onboardingSteps).where(eq(onboardingSteps.organizationId, orgId)).orderBy(onboardingSteps.createdAt);
+  }
+  async upsertOnboardingStep(orgId: string, step: string, completed: boolean): Promise<OnboardingStep> {
+    const existing = await db.select().from(onboardingSteps).where(and(eq(onboardingSteps.organizationId, orgId), eq(onboardingSteps.step, step))).limit(1);
+    if (existing.length > 0) {
+      const [r] = await db.update(onboardingSteps).set({ completed, completedAt: completed ? new Date() : null }).where(and(eq(onboardingSteps.organizationId, orgId), eq(onboardingSteps.step, step))).returning();
+      return r;
+    }
+    const [r] = await db.insert(onboardingSteps).values({ organizationId: orgId, step, completed, completedAt: completed ? new Date() : undefined }).returning();
+    return r;
+  }
+  async initOnboarding(orgId: string): Promise<void> {
+    const steps = ["create_project", "connect_repo", "run_first_scan", "add_cloud_target", "invite_teammate"];
+    for (const step of steps) {
+      const existing = await db.select().from(onboardingSteps).where(and(eq(onboardingSteps.organizationId, orgId), eq(onboardingSteps.step, step))).limit(1);
+      if (existing.length === 0) {
+        await db.insert(onboardingSteps).values({ organizationId: orgId, step, completed: false });
+      }
+    }
   }
 }
 
