@@ -4,7 +4,8 @@ import {
   FileText, GitBranch, FolderOpen, Settings,
   Bell, Sun, Moon, LogOut, ChevronDown,
   Activity, Zap, Globe, Plug, Building2,
-  CreditCard, Key, BarChart3
+  CreditCard, Key, BarChart3, Crosshair,
+  Cloud, Rss, GitMerge
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -20,19 +21,48 @@ import type { AuthUser } from "@/lib/auth";
 import { useLocation as useWouterLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/scans", label: "Security Scans", icon: Search },
-  { href: "/compliance", label: "Compliance", icon: CheckSquare },
-  { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/repositories", label: "Repositories", icon: GitBranch },
-  { href: "/documents", label: "Documents", icon: FolderOpen },
-  { href: "/integrations", label: "Integrations", icon: Plug },
-  { href: "/enterprise", label: "Enterprise", icon: Building2 },
-  { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/api-keys", label: "API Keys", icon: Key },
-  { href: "/settings", label: "Settings", icon: Settings },
+const navGroups = [
+  {
+    label: "Overview",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Security",
+    items: [
+      { href: "/scans", label: "Security Scans", icon: Search },
+      { href: "/pentest", label: "AI Pentesting", icon: Crosshair },
+      { href: "/cloud-security", label: "Cloud Security", icon: Cloud },
+      { href: "/threat-intel", label: "Threat Intel", icon: Rss },
+      { href: "/compliance", label: "Compliance", icon: CheckSquare },
+    ],
+  },
+  {
+    label: "Automation",
+    items: [
+      { href: "/devsecops", label: "DevSecOps", icon: GitMerge },
+      { href: "/reports", label: "Reports", icon: FileText },
+    ],
+  },
+  {
+    label: "Assets",
+    items: [
+      { href: "/repositories", label: "Repositories", icon: GitBranch },
+      { href: "/documents", label: "Documents", icon: FolderOpen },
+      { href: "/integrations", label: "Integrations", icon: Plug },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { href: "/enterprise", label: "Enterprise", icon: Building2 },
+      { href: "/billing", label: "Billing", icon: CreditCard },
+      { href: "/api-keys", label: "API Keys", icon: Key },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 function NavItem({ href, label, icon: Icon }: { href: string; label: string; icon: any }) {
@@ -99,12 +129,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-            Navigation
-          </div>
-          {navItems.map((item) => (
-            <NavItem key={item.href} {...item} />
+        <div className="flex-1 overflow-y-auto p-2 space-y-3">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {group.label}
+              </div>
+              <div className="space-y-0.5">
+                {group.items.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 

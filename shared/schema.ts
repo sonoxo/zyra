@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, jsonb, pgEnum, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -185,6 +185,128 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const pentestSessions = pgTable("pentest_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  targetUrl: text("target_url").notNull(),
+  targetDescription: text("target_description"),
+  status: text("status").notNull().default("pending"),
+  testTypes: text("test_types").array().notNull().default(sql`'{}'`),
+  authorizedBy: text("authorized_by").notNull(),
+  authorizationNote: text("authorization_note"),
+  summary: jsonb("summary"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdById: varchar("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const pentestFindings = pgTable("pentest_findings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => pentestSessions.id),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  testType: text("test_type").notNull(),
+  severity: text("severity").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  payload: text("payload"),
+  responseSnippet: text("response_snippet"),
+  evidence: text("evidence"),
+  cvssScore: real("cvss_score"),
+  remediationSteps: text("remediation_steps"),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const cloudScanTargets = pgTable("cloud_scan_targets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  provider: text("provider").notNull(),
+  region: text("region").notNull().default("us-east-1"),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastScannedAt: timestamp("last_scanned_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const cloudScanResults = pgTable("cloud_scan_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  targetId: varchar("target_id").notNull().references(() => cloudScanTargets.id),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  checkName: text("check_name").notNull(),
+  category: text("category").notNull(),
+  severity: text("severity").notNull(),
+  resourceId: text("resource_id"),
+  resourceType: text("resource_type"),
+  description: text("description").notNull(),
+  recommendation: text("recommendation"),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const threatIntelItems = pgTable("threat_intel_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  cveId: text("cve_id").notNull(),
+  title: text("title").notNull(),
+  severity: text("severity").notNull(),
+  cvssScore: real("cvss_score"),
+  description: text("description").notNull(),
+  affectedPackages: text("affected_packages").array().notNull().default(sql`'{}'`),
+  affectedVersions: text("affected_versions").array().notNull().default(sql`'{}'`),
+  patchedVersions: text("patched_versions").array().notNull().default(sql`'{}'`),
+  publishedAt: timestamp("published_at"),
+  source: text("source").notNull().default("nvd"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const monitoringConfigs = pgTable("monitoring_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  targetType: text("target_type").notNull().default("all"),
+  isEnabled: boolean("is_enabled").notNull().default(false),
+  schedule: text("schedule"),
+  lastRunAt: timestamp("last_run_at"),
+  nextRunAt: timestamp("next_run_at"),
+  config: jsonb("config"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const alertRules = pgTable("alert_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  trigger: text("trigger").notNull(),
+  channels: text("channels").array().notNull().default(sql`'{}'`),
+  webhookUrl: text("webhook_url"),
+  slackChannel: text("slack_channel"),
+  isActive: boolean("is_active").notNull().default(true),
+  config: jsonb("config"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const pipelineConfigs = pgTable("pipeline_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  provider: text("provider").notNull(),
+  repositoryUrl: text("repository_url"),
+  branch: text("branch").notNull().default("main"),
+  scanTypes: text("scan_types").array().notNull().default(sql`'{}'`),
+  failOnCritical: boolean("fail_on_critical").notNull().default(true),
+  failOnHigh: boolean("fail_on_high").notNull().default(false),
+  webhookSecret: text("webhook_secret"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastTriggeredAt: timestamp("last_triggered_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertRepositorySchema = createInsertSchema(repositories).omit({ id: true, createdAt: true });
@@ -215,6 +337,14 @@ export const insertSettingSchema = createInsertSchema(settings).omit({ id: true,
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
 export const insertApiKeySchema = createInsertSchema(apiKeys).omit({ id: true, createdAt: true });
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, createdAt: true });
+export const insertPentestSessionSchema = createInsertSchema(pentestSessions).omit({ id: true, createdAt: true });
+export const insertPentestFindingSchema = createInsertSchema(pentestFindings).omit({ id: true, createdAt: true });
+export const insertCloudScanTargetSchema = createInsertSchema(cloudScanTargets).omit({ id: true, createdAt: true });
+export const insertCloudScanResultSchema = createInsertSchema(cloudScanResults).omit({ id: true, createdAt: true });
+export const insertThreatIntelItemSchema = createInsertSchema(threatIntelItems).omit({ id: true, createdAt: true });
+export const insertMonitoringConfigSchema = createInsertSchema(monitoringConfigs).omit({ id: true, createdAt: true });
+export const insertAlertRuleSchema = createInsertSchema(alertRules).omit({ id: true, createdAt: true });
+export const insertPipelineConfigSchema = createInsertSchema(pipelineConfigs).omit({ id: true, createdAt: true });
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
@@ -224,3 +354,19 @@ export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type PentestSession = typeof pentestSessions.$inferSelect;
+export type InsertPentestSession = z.infer<typeof insertPentestSessionSchema>;
+export type PentestFinding = typeof pentestFindings.$inferSelect;
+export type InsertPentestFinding = z.infer<typeof insertPentestFindingSchema>;
+export type CloudScanTarget = typeof cloudScanTargets.$inferSelect;
+export type InsertCloudScanTarget = z.infer<typeof insertCloudScanTargetSchema>;
+export type CloudScanResult = typeof cloudScanResults.$inferSelect;
+export type InsertCloudScanResult = z.infer<typeof insertCloudScanResultSchema>;
+export type ThreatIntelItem = typeof threatIntelItems.$inferSelect;
+export type InsertThreatIntelItem = z.infer<typeof insertThreatIntelItemSchema>;
+export type MonitoringConfig = typeof monitoringConfigs.$inferSelect;
+export type InsertMonitoringConfig = z.infer<typeof insertMonitoringConfigSchema>;
+export type AlertRule = typeof alertRules.$inferSelect;
+export type InsertAlertRule = z.infer<typeof insertAlertRuleSchema>;
+export type PipelineConfig = typeof pipelineConfigs.$inferSelect;
+export type InsertPipelineConfig = z.infer<typeof insertPipelineConfigSchema>;

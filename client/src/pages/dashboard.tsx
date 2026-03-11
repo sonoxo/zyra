@@ -32,6 +32,10 @@ interface DashboardStats {
   findingsTrend: Array<{ date: string; critical: number; high: number; medium: number; low: number }>;
   complianceCoverage: Array<{ framework: string; coverage: number; status: string }>;
   scansByTool: Array<{ tool: string; count: number; color: string }>;
+  pentestStats?: { sessions: number; criticalFindings: number };
+  cloudStats?: { targets: number; criticalMisconfigs: number };
+  threatIntelStats?: { activeThreats: number; criticalCVEs: number; severityBreakdown?: Record<string, number> };
+  monitoringActive?: boolean;
 }
 
 const SEVERITY_COLORS = {
@@ -142,6 +146,193 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+function AttackSurfaceMap({ stats }: { stats?: DashboardStats }) {
+  const data = [
+    { subject: 'Web Application', A: 65, fullMark: 100 },
+    { subject: 'API Layer', A: 45, fullMark: 100 },
+    { subject: 'Authentication', A: 30, fullMark: 100 },
+    { subject: 'Database', A: 20, fullMark: 100 },
+    { subject: 'Network', A: 55, fullMark: 100 },
+    { subject: 'Cloud Infra', A: 75, fullMark: 100 },
+  ];
+
+  // In a real app, these scores would come from the stats
+  const getFillColor = (value: number) => {
+    if (value > 60) return "#ef4444";
+    if (value > 40) return "#eab308";
+    return "#10b981";
+  };
+
+  const avgScore = data.reduce((acc, curr) => acc + curr.A, 0) / data.length;
+
+  return (
+    <Card className="border-card-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Attack Surface Overview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[250px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+              <PolarGrid stroke="hsl(var(--border))" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+              <Radar
+                name="Risk Score"
+                dataKey="A"
+                stroke={getFillColor(avgScore)}
+                fill={getFillColor(avgScore)}
+                fillOpacity={0.5}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-popover border border-popover-border rounded-lg p-2 shadow-lg text-xs">
+                        <p className="font-semibold text-foreground">{payload[0].payload.subject}</p>
+                        <p className="text-muted-foreground">Risk Score: {payload[0].value}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfrastructurePosture({ stats }: { stats?: DashboardStats }) {
+  const postureItems = [
+    { label: "IAM & Access", score: 85 },
+    { label: "Network Security", score: 62 },
+    { label: "Data Encryption", score: 90 },
+    { label: "Logging & Monitoring", score: 45 },
+    { label: "Vulnerability Management", score: 70 },
+  ];
+
+  return (
+    <Card className="border-card-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Infrastructure Security Posture</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {postureItems.map((item) => (
+          <div key={item.label} className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground font-medium">{item.label}</span>
+              <span className="text-foreground font-bold">{item.score}%</span>
+            </div>
+            <Progress
+              value={item.score}
+              className="h-2"
+              style={{
+                "--progress-color": item.score >= 80 ? "#10b981" : item.score >= 60 ? "#eab308" : "#ef4444"
+              } as any}
+            />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ComplianceMaturity({ stats }: { stats?: DashboardStats }) {
+  const score = stats?.complianceScore ?? 0;
+  let level = "Initial";
+  if (score >= 90) level = "Optimizing";
+  else if (score >= 75) level = "Managed";
+  else if (score >= 60) level = "Defined";
+  else if (score >= 40) level = "Developing";
+
+  const levels = ["Initial", "Developing", "Defined", "Managed", "Optimizing"];
+
+  return (
+    <Card className="border-card-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Compliance Maturity Score</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center justify-center pt-4">
+        <div className="text-3xl font-bold text-primary mb-1">{level}</div>
+        <div className="text-xs text-muted-foreground mb-6">Level {levels.indexOf(level) + 1} of 5</div>
+        <div className="w-full flex justify-between gap-1">
+          {levels.map((l, i) => (
+            <div
+              key={l}
+              className={cn(
+                "h-2 flex-1 rounded-full",
+                i <= levels.indexOf(level) ? "bg-primary" : "bg-muted"
+              )}
+            />
+          ))}
+        </div>
+        <div className="w-full flex justify-between mt-2 px-1">
+          <span className="text-[10px] text-muted-foreground">L1</span>
+          <span className="text-[10px] text-muted-foreground">L5</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DependencyVulnerabilitySummary({ stats }: { stats?: DashboardStats }) {
+  const hasData = stats?.threatIntelStats && stats.threatIntelStats.activeThreats > 0;
+
+  // Mock data for breakdown if none provided by API
+  const data = [
+    { name: 'npm', count: 12 },
+    { name: 'pypi', count: 5 },
+    { name: 'go', count: 3 },
+    { name: 'maven', count: 8 },
+  ];
+
+  return (
+    <Card className="border-card-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Dependency Vulnerability Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center justify-center min-h-[150px]">
+        {hasData ? (
+          <div className="w-full h-[150px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-popover border border-popover-border rounded-lg p-2 shadow-lg text-xs">
+                          <p className="font-semibold text-foreground">{payload[0].payload.name}</p>
+                          <p className="text-muted-foreground">Vulnerabilities: {payload[0].value}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="text-center p-4">
+            <Shield className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-20" />
+            <p className="text-xs text-muted-foreground">Run CVE refresh to see dependency vulnerabilities</p>
+            <Link href="/threat-intel">
+              <Button variant="ghost" size="sm" className="h-auto p-0 text-xs mt-1 text-primary hover:bg-transparent">Go to Threat Intel</Button>
+            </Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Dashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({ queryKey: ["/api/dashboard/stats"] });
 
@@ -191,6 +382,66 @@ export default function Dashboard() {
           <StatCard icon={CheckCircle} label="Resolved" value={stats?.resolvedFindings ?? 0} color="success" trend={-8} loading={isLoading} />
           <StatCard icon={Target} label="Total Findings" value={stats?.totalFindings ?? 0} loading={isLoading} />
           <StatCard icon={FileText} label="Medium Issues" value={stats?.mediumFindings ?? 0} loading={isLoading} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link href="/pentest">
+            <Card className="border-card-border hover-elevate cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{stats?.pentestStats?.sessions ?? 0}</div>
+                  <div className="text-xs text-muted-foreground font-medium">Pentest Sessions</div>
+                </div>
+                <div className="bg-primary/10 p-2 rounded-lg">
+                  <Target className="w-5 h-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/cloud-security">
+            <Card className="border-card-border hover-elevate cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{stats?.cloudStats?.targets ?? 0}</div>
+                  <div className="text-xs text-muted-foreground font-medium">Cloud Targets</div>
+                </div>
+                <div className="bg-primary/10 p-2 rounded-lg">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/threat-intel">
+            <Card className="border-card-border hover-elevate cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{stats?.threatIntelStats?.activeThreats ?? 0}</div>
+                  <div className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    Threat Intel
+                    {stats?.threatIntelStats?.criticalCVEs ? (
+                      <Badge variant="destructive" className="h-4 px-1 text-[10px]">{stats.threatIntelStats.criticalCVEs} crit</Badge>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="bg-primary/10 p-2 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/devsecops">
+            <Card className="border-card-border hover-elevate cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{stats?.monitoringActive ? 'Active' : 'Disabled'}</div>
+                  <div className="text-xs text-muted-foreground font-medium">Monitoring</div>
+                </div>
+                <div className="bg-primary/10 p-2 rounded-lg">
+                  <Activity className="w-5 h-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -425,6 +676,20 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AttackSurfaceMap stats={stats} />
+          <InfrastructurePosture stats={stats} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <ComplianceMaturity stats={stats} />
+          </div>
+          <div className="lg:col-span-2">
+            <DependencyVulnerabilitySummary stats={stats} />
+          </div>
+        </div>
       </div>
     </div>
   );

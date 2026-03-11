@@ -19,6 +19,10 @@ import Enterprise from "@/pages/enterprise";
 import Billing from "@/pages/billing";
 import ApiKeysPage from "@/pages/api-keys";
 import Analytics from "@/pages/analytics";
+import PentestPage from "@/pages/pentest";
+import CloudSecurityPage from "@/pages/cloud-security";
+import ThreatIntelPage from "@/pages/threat-intel";
+import DevSecOpsPage from "@/pages/devsecops";
 import SettingsPage from "@/pages/settings";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
@@ -89,6 +93,10 @@ function Router() {
       <Route path="/repositories">{() => <ProtectedRoute component={Repositories} />}</Route>
       <Route path="/documents">{() => <ProtectedRoute component={Documents} />}</Route>
       <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
+      <Route path="/pentest">{() => <ProtectedRoute component={PentestPage} />}</Route>
+      <Route path="/cloud-security">{() => <ProtectedRoute component={CloudSecurityPage} />}</Route>
+      <Route path="/threat-intel">{() => <ProtectedRoute component={ThreatIntelPage} />}</Route>
+      <Route path="/devsecops">{() => <ProtectedRoute component={DevSecOpsPage} />}</Route>
       <Route path="/integrations">{() => <ProtectedRoute component={Integrations} />}</Route>
       <Route path="/enterprise">{() => <ProtectedRoute component={Enterprise} />}</Route>
       <Route path="/billing">{() => <ProtectedRoute component={Billing} />}</Route>
