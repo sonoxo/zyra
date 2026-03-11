@@ -19,11 +19,20 @@ import {
   type MonitoringConfig, type InsertMonitoringConfig,
   type AlertRule, type InsertAlertRule,
   type PipelineConfig, type InsertPipelineConfig,
+  type Incident, type InsertIncident,
+  type Vulnerability, type InsertVulnerability,
+  type SbomItem, type InsertSbomItem,
+  type SecretsFinding, type InsertSecretsFinding,
+  type Risk, type InsertRisk,
+  type AttackSurfaceAsset, type InsertAttackSurfaceAsset,
+  type PostureScore, type InsertPostureScore,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
   pentestSessions, pentestFindings, cloudScanTargets, cloudScanResults,
   threatIntelItems, monitoringConfigs, alertRules, pipelineConfigs,
+  incidents, vulnerabilities, sbomItems, secretsFindings,
+  risks, attackSurfaceAssets, postureScores,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -112,6 +121,43 @@ export interface IStorage {
   createPipelineConfig(p: InsertPipelineConfig): Promise<PipelineConfig>;
   updatePipelineConfig(id: string, data: Partial<PipelineConfig>): Promise<PipelineConfig | undefined>;
   deletePipelineConfig(id: string, orgId: string): Promise<void>;
+
+  getIncidents(orgId: string): Promise<Incident[]>;
+  getIncident(id: string, orgId: string): Promise<Incident | undefined>;
+  createIncident(i: InsertIncident): Promise<Incident>;
+  updateIncident(id: string, data: Partial<Incident>): Promise<Incident | undefined>;
+  deleteIncident(id: string, orgId: string): Promise<void>;
+
+  getVulnerabilities(orgId: string): Promise<Vulnerability[]>;
+  getVulnerability(id: string, orgId: string): Promise<Vulnerability | undefined>;
+  createVulnerability(v: InsertVulnerability): Promise<Vulnerability>;
+  updateVulnerability(id: string, data: Partial<Vulnerability>): Promise<Vulnerability | undefined>;
+  deleteVulnerability(id: string, orgId: string): Promise<void>;
+
+  getSbomItems(orgId: string): Promise<SbomItem[]>;
+  createSbomItem(i: InsertSbomItem): Promise<SbomItem>;
+  updateSbomItem(id: string, data: Partial<SbomItem>): Promise<SbomItem | undefined>;
+  deleteSbomItem(id: string, orgId: string): Promise<void>;
+
+  getSecretsFindings(orgId: string): Promise<SecretsFinding[]>;
+  createSecretsFinding(f: InsertSecretsFinding): Promise<SecretsFinding>;
+  updateSecretsFinding(id: string, data: Partial<SecretsFinding>): Promise<SecretsFinding | undefined>;
+  deleteSecretsFinding(id: string, orgId: string): Promise<void>;
+
+  getRisks(orgId: string): Promise<Risk[]>;
+  getRisk(id: string, orgId: string): Promise<Risk | undefined>;
+  createRisk(r: InsertRisk): Promise<Risk>;
+  updateRisk(id: string, data: Partial<Risk>): Promise<Risk | undefined>;
+  deleteRisk(id: string, orgId: string): Promise<void>;
+
+  getAttackSurfaceAssets(orgId: string): Promise<AttackSurfaceAsset[]>;
+  createAttackSurfaceAsset(a: InsertAttackSurfaceAsset): Promise<AttackSurfaceAsset>;
+  updateAttackSurfaceAsset(id: string, data: Partial<AttackSurfaceAsset>): Promise<AttackSurfaceAsset | undefined>;
+  deleteAttackSurfaceAsset(id: string, orgId: string): Promise<void>;
+
+  getPostureScores(orgId: string, limit?: number): Promise<PostureScore[]>;
+  createPostureScore(s: InsertPostureScore): Promise<PostureScore>;
+  getLatestPostureScore(orgId: string): Promise<PostureScore | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -424,6 +470,120 @@ export class DatabaseStorage implements IStorage {
   }
   async deletePipelineConfig(id: string, orgId: string): Promise<void> {
     await db.delete(pipelineConfigs).where(and(eq(pipelineConfigs.id, id), eq(pipelineConfigs.organizationId, orgId)));
+  }
+
+  async getIncidents(orgId: string): Promise<Incident[]> {
+    return db.select().from(incidents).where(eq(incidents.organizationId, orgId)).orderBy(desc(incidents.createdAt));
+  }
+  async getIncident(id: string, orgId: string): Promise<Incident | undefined> {
+    const [r] = await db.select().from(incidents).where(and(eq(incidents.id, id), eq(incidents.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createIncident(i: InsertIncident): Promise<Incident> {
+    const [r] = await db.insert(incidents).values(i).returning();
+    return r;
+  }
+  async updateIncident(id: string, data: Partial<Incident>): Promise<Incident | undefined> {
+    const [r] = await db.update(incidents).set(data).where(eq(incidents.id, id)).returning();
+    return r;
+  }
+  async deleteIncident(id: string, orgId: string): Promise<void> {
+    await db.delete(incidents).where(and(eq(incidents.id, id), eq(incidents.organizationId, orgId)));
+  }
+
+  async getVulnerabilities(orgId: string): Promise<Vulnerability[]> {
+    return db.select().from(vulnerabilities).where(eq(vulnerabilities.organizationId, orgId)).orderBy(desc(vulnerabilities.createdAt));
+  }
+  async getVulnerability(id: string, orgId: string): Promise<Vulnerability | undefined> {
+    const [r] = await db.select().from(vulnerabilities).where(and(eq(vulnerabilities.id, id), eq(vulnerabilities.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createVulnerability(v: InsertVulnerability): Promise<Vulnerability> {
+    const [r] = await db.insert(vulnerabilities).values(v).returning();
+    return r;
+  }
+  async updateVulnerability(id: string, data: Partial<Vulnerability>): Promise<Vulnerability | undefined> {
+    const [r] = await db.update(vulnerabilities).set(data).where(eq(vulnerabilities.id, id)).returning();
+    return r;
+  }
+  async deleteVulnerability(id: string, orgId: string): Promise<void> {
+    await db.delete(vulnerabilities).where(and(eq(vulnerabilities.id, id), eq(vulnerabilities.organizationId, orgId)));
+  }
+
+  async getSbomItems(orgId: string): Promise<SbomItem[]> {
+    return db.select().from(sbomItems).where(eq(sbomItems.organizationId, orgId)).orderBy(desc(sbomItems.createdAt));
+  }
+  async createSbomItem(i: InsertSbomItem): Promise<SbomItem> {
+    const [r] = await db.insert(sbomItems).values(i).returning();
+    return r;
+  }
+  async updateSbomItem(id: string, data: Partial<SbomItem>): Promise<SbomItem | undefined> {
+    const [r] = await db.update(sbomItems).set(data).where(eq(sbomItems.id, id)).returning();
+    return r;
+  }
+  async deleteSbomItem(id: string, orgId: string): Promise<void> {
+    await db.delete(sbomItems).where(and(eq(sbomItems.id, id), eq(sbomItems.organizationId, orgId)));
+  }
+
+  async getSecretsFindings(orgId: string): Promise<SecretsFinding[]> {
+    return db.select().from(secretsFindings).where(eq(secretsFindings.organizationId, orgId)).orderBy(desc(secretsFindings.createdAt));
+  }
+  async createSecretsFinding(f: InsertSecretsFinding): Promise<SecretsFinding> {
+    const [r] = await db.insert(secretsFindings).values(f).returning();
+    return r;
+  }
+  async updateSecretsFinding(id: string, data: Partial<SecretsFinding>): Promise<SecretsFinding | undefined> {
+    const [r] = await db.update(secretsFindings).set(data).where(eq(secretsFindings.id, id)).returning();
+    return r;
+  }
+  async deleteSecretsFinding(id: string, orgId: string): Promise<void> {
+    await db.delete(secretsFindings).where(and(eq(secretsFindings.id, id), eq(secretsFindings.organizationId, orgId)));
+  }
+
+  async getRisks(orgId: string): Promise<Risk[]> {
+    return db.select().from(risks).where(eq(risks.organizationId, orgId)).orderBy(desc(risks.createdAt));
+  }
+  async getRisk(id: string, orgId: string): Promise<Risk | undefined> {
+    const [r] = await db.select().from(risks).where(and(eq(risks.id, id), eq(risks.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createRisk(r: InsertRisk): Promise<Risk> {
+    const [created] = await db.insert(risks).values(r).returning();
+    return created;
+  }
+  async updateRisk(id: string, data: Partial<Risk>): Promise<Risk | undefined> {
+    const [r] = await db.update(risks).set(data).where(eq(risks.id, id)).returning();
+    return r;
+  }
+  async deleteRisk(id: string, orgId: string): Promise<void> {
+    await db.delete(risks).where(and(eq(risks.id, id), eq(risks.organizationId, orgId)));
+  }
+
+  async getAttackSurfaceAssets(orgId: string): Promise<AttackSurfaceAsset[]> {
+    return db.select().from(attackSurfaceAssets).where(eq(attackSurfaceAssets.organizationId, orgId)).orderBy(desc(attackSurfaceAssets.createdAt));
+  }
+  async createAttackSurfaceAsset(a: InsertAttackSurfaceAsset): Promise<AttackSurfaceAsset> {
+    const [r] = await db.insert(attackSurfaceAssets).values(a).returning();
+    return r;
+  }
+  async updateAttackSurfaceAsset(id: string, data: Partial<AttackSurfaceAsset>): Promise<AttackSurfaceAsset | undefined> {
+    const [r] = await db.update(attackSurfaceAssets).set(data).where(eq(attackSurfaceAssets.id, id)).returning();
+    return r;
+  }
+  async deleteAttackSurfaceAsset(id: string, orgId: string): Promise<void> {
+    await db.delete(attackSurfaceAssets).where(and(eq(attackSurfaceAssets.id, id), eq(attackSurfaceAssets.organizationId, orgId)));
+  }
+
+  async getPostureScores(orgId: string, limit = 30): Promise<PostureScore[]> {
+    return db.select().from(postureScores).where(eq(postureScores.organizationId, orgId)).orderBy(desc(postureScores.createdAt)).limit(limit);
+  }
+  async createPostureScore(s: InsertPostureScore): Promise<PostureScore> {
+    const [r] = await db.insert(postureScores).values(s).returning();
+    return r;
+  }
+  async getLatestPostureScore(orgId: string): Promise<PostureScore | undefined> {
+    const [r] = await db.select().from(postureScores).where(eq(postureScores.organizationId, orgId)).orderBy(desc(postureScores.createdAt)).limit(1);
+    return r;
   }
 }
 

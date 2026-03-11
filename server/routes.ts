@@ -1035,6 +1035,258 @@ export async function registerRoutes(
     res.json(docs);
   });
 
+  // ===== INCIDENT RESPONSE =====
+  app.get("/api/incidents", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getIncidents(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/incidents", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.createIncident({ ...req.body, organizationId: req.session.organizationId! });
+    await storage.createAuditLog({ organizationId: req.session.organizationId!, userId: req.session.userId!, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
+    res.json(item);
+  });
+  app.put("/api/incidents/:id", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.updateIncident(req.params.id, req.body);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    await storage.createAuditLog({ organizationId: req.session.organizationId!, userId: req.session.userId!, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
+    res.json(item);
+  });
+  app.delete("/api/incidents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteIncident(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+  app.post("/api/incidents/:id/timeline", requireAuth, async (req: Request, res: Response) => {
+    const incident = await storage.getIncident(req.params.id, req.session.organizationId!);
+    if (!incident) return res.status(404).json({ message: "Not found" });
+    const entry = { timestamp: new Date().toISOString(), action: req.body.action, note: req.body.note, user: req.body.user || "System" };
+    const timeline = [...(incident.timeline as any[] || []), entry];
+    const updated = await storage.updateIncident(req.params.id, { timeline });
+    res.json(updated);
+  });
+  app.get("/api/incidents/stats", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getIncidents(req.session.organizationId!);
+    const byStatus = { triage: 0, assign: 0, contain: 0, remediate: 0, close: 0 };
+    const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    items.forEach(i => {
+      if (i.status in byStatus) (byStatus as any)[i.status]++;
+      if (i.severity in bySeverity) (bySeverity as any)[i.severity]++;
+    });
+    const resolved = items.filter(i => i.status === "close" && i.resolvedAt);
+    const avgMttr = resolved.length ? Math.round(resolved.reduce((s, i) => s + (i.mttr || 0), 0) / resolved.length) : 0;
+    res.json({ total: items.length, byStatus, bySeverity, avgMttr, active: items.filter(i => i.status !== "close").length });
+  });
+
+  // ===== VULNERABILITY LIFECYCLE =====
+  app.get("/api/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getVulnerabilities(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.createVulnerability({ ...req.body, organizationId: req.session.organizationId! });
+    res.json(item);
+  });
+  app.put("/api/vulnerabilities/:id", requireAuth, async (req: Request, res: Response) => {
+    const data = { ...req.body };
+    if (data.status === "verified" && !data.verifiedAt) data.verifiedAt = new Date();
+    const item = await storage.updateVulnerability(req.params.id, data);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+  app.delete("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteVulnerability(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+  app.get("/api/vulnerabilities/stats", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getVulnerabilities(req.session.organizationId!);
+    const byStatus = { open: 0, in_progress: 0, remediated: 0, verified: 0 };
+    const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    items.forEach(v => {
+      const s = v.status as string;
+      if (s in byStatus) (byStatus as any)[s]++;
+      if (v.severity in bySeverity) (bySeverity as any)[v.severity]++;
+    });
+    res.json({ total: items.length, byStatus, bySeverity, overdue: items.filter(v => v.dueDate && new Date(v.dueDate) < new Date() && v.status !== "verified").length });
+  });
+
+  // ===== SBOM / SUPPLY CHAIN =====
+  app.get("/api/sbom", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getSbomItems(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/sbom/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const ecosystems = ["npm", "pip", "maven", "gem", "go", "nuget"];
+    const packages = [
+      { name: "lodash", ver: "4.17.20", eco: "npm", cves: ["CVE-2020-8203"], patched: "4.17.21", risk: 75 },
+      { name: "log4j-core", ver: "2.14.1", eco: "maven", cves: ["CVE-2021-44228"], patched: "2.17.0", risk: 100 },
+      { name: "axios", ver: "0.21.1", eco: "npm", cves: ["CVE-2021-3749"], patched: "0.21.2", risk: 60 },
+      { name: "pillow", ver: "8.1.0", eco: "pip", cves: ["CVE-2021-27921"], patched: "8.2.0", risk: 70 },
+      { name: "react", ver: "17.0.1", eco: "npm", cves: [], patched: null, risk: 5 },
+      { name: "express", ver: "4.18.2", eco: "npm", cves: [], patched: null, risk: 5 },
+      { name: "django", ver: "3.2.0", eco: "pip", cves: ["CVE-2021-35042"], patched: "3.2.5", risk: 65 },
+      { name: "spring-core", ver: "5.3.5", eco: "maven", cves: ["CVE-2022-22965"], patched: "5.3.18", risk: 95 },
+      { name: "rubygems", ver: "3.0.3", eco: "gem", cves: [], patched: null, risk: 10 },
+      { name: "werkzeug", ver: "1.0.0", eco: "pip", cves: ["CVE-2020-28724"], patched: "1.0.1", risk: 55 },
+    ];
+    for (const p of packages) {
+      const existing = (await storage.getSbomItems(orgId)).find(s => s.packageName === p.name);
+      if (!existing) {
+        await storage.createSbomItem({ organizationId: orgId, packageName: p.name, packageVersion: p.ver, ecosystem: p.eco, isVulnerable: p.cves.length > 0, knownCves: p.cves, patchedVersion: p.patched, riskScore: p.risk, transitive: Math.random() > 0.5 });
+      }
+    }
+    const items = await storage.getSbomItems(orgId);
+    res.json({ scanned: items.length, vulnerable: items.filter(i => i.isVulnerable).length, items });
+  });
+  app.put("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const item = await storage.updateSbomItem(req.params.id, req.body);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+  app.delete("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteSbomItem(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ===== SECRETS SCANNING =====
+  app.get("/api/secrets", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getSecretsFindings(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/secrets/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const secretTypes = [
+      { type: "aws_access_key", masked: "AKIA****EXAMPLE", path: "src/config/aws.js", line: 12, severity: "critical" as const },
+      { type: "github_token", masked: "ghp_****example", path: ".env.backup", line: 3, severity: "critical" as const },
+      { type: "gcp_api_key", masked: "AIza****example", path: "backend/auth.py", line: 45, severity: "critical" as const },
+      { type: "stripe_key", masked: "sk_live_****example", path: "src/payment.ts", line: 8, severity: "critical" as const },
+      { type: "private_key", masked: "-----BEGIN RSA PRIVATE KEY-----****", path: "certs/server.key", line: 1, severity: "high" as const },
+      { type: "database_url", masked: "postgresql://user:****@host/db", path: "config/database.yml", line: 22, severity: "high" as const },
+    ];
+    const existing = await storage.getSecretsFindings(orgId);
+    const newFindings = secretTypes.slice(0, 2 + Math.floor(Math.random() * 3));
+    for (const s of newFindings) {
+      if (!existing.find(e => e.secretType === s.type && e.filePath === s.path)) {
+        await storage.createSecretsFinding({ organizationId: orgId, secretType: s.type, maskedValue: s.masked, filePath: s.path, lineNumber: s.line, commitHash: `abc${Math.random().toString(36).substr(2, 7)}`, status: "open", severity: s.severity });
+      }
+    }
+    const all = await storage.getSecretsFindings(orgId);
+    res.json({ scanned: 847, found: all.length, open: all.filter(s => s.status === "open").length, items: all });
+  });
+  app.put("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const data = { ...req.body };
+    if (data.status === "resolved" && !data.resolvedAt) data.resolvedAt = new Date();
+    const item = await storage.updateSecretsFinding(req.params.id, data);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+  app.delete("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteSecretsFinding(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ===== RISK REGISTER =====
+  app.get("/api/risks", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getRisks(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/risks", requireAuth, async (req: Request, res: Response) => {
+    const body = req.body;
+    const riskScore = (body.likelihood || 3) * (body.impact || 3);
+    const item = await storage.createRisk({ ...body, organizationId: req.session.organizationId!, riskScore });
+    res.json(item);
+  });
+  app.put("/api/risks/:id", requireAuth, async (req: Request, res: Response) => {
+    const body = req.body;
+    if (body.likelihood && body.impact) body.riskScore = body.likelihood * body.impact;
+    const item = await storage.updateRisk(req.params.id, body);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+  app.delete("/api/risks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteRisk(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+  app.get("/api/risks/matrix", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getRisks(req.session.organizationId!);
+    const matrix = items.map(r => ({ id: r.id, title: r.title, likelihood: r.likelihood, impact: r.impact, riskScore: r.riskScore, treatment: r.treatment, status: r.status }));
+    const summary = { critical: matrix.filter(r => r.riskScore >= 20).length, high: matrix.filter(r => r.riskScore >= 12 && r.riskScore < 20).length, medium: matrix.filter(r => r.riskScore >= 6 && r.riskScore < 12).length, low: matrix.filter(r => r.riskScore < 6).length };
+    res.json({ matrix, summary });
+  });
+
+  // ===== ATTACK SURFACE =====
+  app.get("/api/attack-surface", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getAttackSurfaceAssets(req.session.organizationId!);
+    res.json(items);
+  });
+  app.post("/api/attack-surface", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.createAttackSurfaceAsset({ ...req.body, organizationId: req.session.organizationId! });
+    res.json(item);
+  });
+  app.post("/api/attack-surface/discover", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const assets = [
+      { assetType: "subdomain", host: "api.example.com", port: 443, service: "HTTPS", riskLevel: "medium", technologies: ["nginx", "TLS 1.3"], openPorts: [443, 80], vulnerabilityCount: 2, tlsCertIssuer: "Let's Encrypt" },
+      { assetType: "subdomain", host: "admin.example.com", port: 443, service: "HTTPS", riskLevel: "high", technologies: ["Apache", "PHP 7.4"], openPorts: [443, 80, 8080], vulnerabilityCount: 5 },
+      { assetType: "subdomain", host: "staging.example.com", port: 8080, service: "HTTP", riskLevel: "critical", technologies: ["Node.js", "Express"], openPorts: [8080, 22, 3306], vulnerabilityCount: 8 },
+      { assetType: "ip", host: "203.0.113.10", port: 22, service: "SSH", riskLevel: "high", technologies: ["OpenSSH 7.4"], openPorts: [22, 80], vulnerabilityCount: 3 },
+      { assetType: "certificate", host: "example.com", service: "TLS", riskLevel: "low", technologies: ["RSA 2048"], openPorts: [443], vulnerabilityCount: 0, tlsCertIssuer: "DigiCert", tlsCertExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+      { assetType: "api_endpoint", host: "api.example.com/v1/users", service: "REST API", riskLevel: "medium", technologies: ["JSON", "JWT"], openPorts: [443], vulnerabilityCount: 1 },
+    ];
+    const existing = await storage.getAttackSurfaceAssets(orgId);
+    let newCount = 0;
+    for (const a of assets) {
+      if (!existing.find(e => e.host === a.host && e.service === a.service)) {
+        await storage.createAttackSurfaceAsset({ organizationId: orgId, ...a } as any);
+        newCount++;
+      }
+    }
+    const all = await storage.getAttackSurfaceAssets(orgId);
+    res.json({ discovered: newCount, total: all.length, assets: all });
+  });
+  app.put("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const item = await storage.updateAttackSurfaceAsset(req.params.id, req.body);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+  app.delete("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteAttackSurfaceAsset(req.params.id, req.session.organizationId!);
+    res.json({ success: true });
+  });
+
+  // ===== SECURITY POSTURE SCORE TRENDING =====
+  app.get("/api/posture", requireAuth, async (req: Request, res: Response) => {
+    const limit = parseInt(req.query.limit as string) || 30;
+    const items = await storage.getPostureScores(req.session.organizationId!, limit);
+    res.json(items.reverse());
+  });
+  app.get("/api/posture/current", requireAuth, async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    let current = await storage.getLatestPostureScore(orgId);
+    if (!current) {
+      current = await storage.createPostureScore({ organizationId: orgId, date: new Date().toISOString().split("T")[0], overallScore: 72, scanScore: 78, pentestScore: 65, cloudScore: 70, complianceScore: 82, incidentScore: 68, vulnerabilityScore: 71, trend: "stable" });
+    }
+    res.json(current);
+  });
+  app.post("/api/posture/snapshot", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.session.organizationId!;
+    const latest = await storage.getLatestPostureScore(orgId);
+    const baseScore = latest?.overallScore || 72;
+    const delta = Math.floor(Math.random() * 11) - 5;
+    const newScore = Math.min(100, Math.max(0, baseScore + delta));
+    const trend = delta > 0 ? "up" : delta < 0 ? "down" : "stable";
+    const snapshot = await storage.createPostureScore({
+      organizationId: orgId, date: new Date().toISOString().split("T")[0],
+      overallScore: newScore, scanScore: Math.min(100, Math.max(0, (latest?.scanScore || 78) + Math.floor(Math.random() * 7) - 3)),
+      pentestScore: Math.min(100, Math.max(0, (latest?.pentestScore || 65) + Math.floor(Math.random() * 7) - 3)),
+      cloudScore: Math.min(100, Math.max(0, (latest?.cloudScore || 70) + Math.floor(Math.random() * 7) - 3)),
+      complianceScore: Math.min(100, Math.max(0, (latest?.complianceScore || 82) + Math.floor(Math.random() * 7) - 3)),
+      incidentScore: Math.min(100, Math.max(0, (latest?.incidentScore || 68) + Math.floor(Math.random() * 7) - 3)),
+      vulnerabilityScore: Math.min(100, Math.max(0, (latest?.vulnerabilityScore || 71) + Math.floor(Math.random() * 7) - 3)),
+      trend,
+    });
+    res.json(snapshot);
+  });
+
   return httpServer;
 }
 

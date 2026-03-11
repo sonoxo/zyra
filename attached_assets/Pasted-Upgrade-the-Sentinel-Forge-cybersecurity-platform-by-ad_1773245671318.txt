@@ -1,0 +1,353 @@
+Upgrade the Sentinel Forge cybersecurity platform by adding enterprise-grade security operations modules.
+
+The platform must support the following systems:
+
+Incident Response Management
+Vulnerability Lifecycle Tracking
+Supply Chain SBOM Tracking
+Secrets Scanning
+Risk Register
+Attack Surface Management
+Security Posture Score Trending
+
+Use Python with FastAPI and SQLAlchemy.
+
+The system must run with:
+
+python backend/main.py
+
+--------------------------------------------------
+
+PROJECT STRUCTURE
+
+sentinel-forge/
+
+backend/
+  main.py
+  database.py
+  models.py
+
+  modules/
+    incident_response.py
+    vulnerability_lifecycle.py
+    sbom_scanner.py
+    secrets_scanner.py
+    risk_register.py
+    attack_surface.py
+    posture_score.py
+
+requirements.txt
+
+--------------------------------------------------
+
+requirements.txt
+
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+requests
+
+--------------------------------------------------
+
+backend/database.py
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+
+DATABASE_URL = "sqlite:///sentinelforge.db"
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(bind=engine)
+
+Base = declarative_base()
+
+--------------------------------------------------
+
+backend/models.py
+
+from sqlalchemy import Column, Integer, String
+from backend.database import Base
+
+class Incident(Base):
+
+    __tablename__ = "incidents"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    severity = Column(String)
+    status = Column(String)
+    assigned_to = Column(String)
+
+class Vulnerability(Base):
+
+    __tablename__ = "vulnerabilities"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    severity = Column(String)
+    status = Column(String)
+
+class Risk(Base):
+
+    __tablename__ = "risks"
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String)
+    likelihood = Column(Integer)
+    impact = Column(Integer)
+    owner = Column(String)
+
+--------------------------------------------------
+
+MODULE 1: INCIDENT RESPONSE MANAGEMENT
+
+backend/modules/incident_response.py
+
+def create_incident(title, severity):
+
+    return {
+        "incident": title,
+        "severity": severity,
+        "status": "triage"
+    }
+
+Incident workflow:
+
+triage
+assign
+contain
+remediate
+close
+
+Track:
+
+severity classification
+team assignment
+incident timeline
+MTTR metrics
+
+--------------------------------------------------
+
+MODULE 2: VULNERABILITY LIFECYCLE TRACKING
+
+backend/modules/vulnerability_lifecycle.py
+
+def create_vulnerability(issue):
+
+    return {
+        "issue": issue,
+        "status": "open"
+    }
+
+Workflow states:
+
+Open
+In Progress
+Remediated
+Verified
+
+Support:
+
+engineer assignment
+remediation SLA
+fix verification
+
+--------------------------------------------------
+
+MODULE 3: SBOM SUPPLY CHAIN TRACKING
+
+backend/modules/sbom_scanner.py
+
+def scan_dependencies(dependencies):
+
+    findings = []
+
+    for dep in dependencies:
+
+        if dep == "log4j":
+
+            findings.append({
+                "dependency": dep,
+                "severity": "critical",
+                "cve": "CVE-2021-44228"
+            })
+
+    return findings
+
+This module must:
+
+catalog third-party dependencies
+map packages to CVE databases
+alert when a dependency receives a new CVE
+
+--------------------------------------------------
+
+MODULE 4: SECRETS SCANNING
+
+backend/modules/secrets_scanner.py
+
+import re
+
+patterns = [
+    r"AKIA[0-9A-Z]{16}",
+    r"AIza[0-9A-Za-z\\-_]{35}"
+]
+
+def scan_for_secrets(code):
+
+    findings = []
+
+    for pattern in patterns:
+
+        matches = re.findall(pattern, code)
+
+        for m in matches:
+
+            findings.append({
+                "secret": m,
+                "severity": "critical"
+            })
+
+    return findings
+
+Detect:
+
+API keys
+tokens
+passwords
+private keys
+
+--------------------------------------------------
+
+MODULE 5: RISK REGISTER
+
+backend/modules/risk_register.py
+
+def calculate_risk(likelihood, impact):
+
+    score = likelihood * impact
+
+    return {
+        "risk_score": score
+    }
+
+Track:
+
+risk owner
+treatment plan
+mitigation strategy
+residual risk
+
+--------------------------------------------------
+
+MODULE 6: ATTACK SURFACE MANAGEMENT
+
+backend/modules/attack_surface.py
+
+import socket
+
+def discover_ports(host):
+
+    open_ports = []
+
+    for port in [80,443,22,8080]:
+
+        s = socket.socket()
+
+        try:
+            s.connect((host, port))
+            open_ports.append(port)
+        except:
+            pass
+
+    return open_ports
+
+Track:
+
+subdomains
+IP ranges
+open ports
+certificate expiration
+exposed services
+
+--------------------------------------------------
+
+MODULE 7: SECURITY POSTURE SCORE TRENDING
+
+backend/modules/posture_score.py
+
+def calculate_security_score(vulns, incidents):
+
+    score = 100
+
+    score -= vulns * 5
+    score -= incidents * 3
+
+    return score
+
+Track daily posture scores.
+
+Store historical scores.
+
+Generate trend graphs.
+
+--------------------------------------------------
+
+backend/main.py
+
+from fastapi import FastAPI
+from backend.modules.incident_response import create_incident
+from backend.modules.vulnerability_lifecycle import create_vulnerability
+from backend.modules.posture_score import calculate_security_score
+
+app = FastAPI(title="Sentinel Forge")
+
+@app.get("/")
+def home():
+
+    return {
+        "platform":"Sentinel Forge",
+        "modules":[
+            "Incident Response",
+            "Vulnerability Lifecycle",
+            "SBOM Supply Chain",
+            "Secrets Scanning",
+            "Risk Register",
+            "Attack Surface",
+            "Security Posture"
+        ]
+    }
+
+@app.post("/incident")
+
+def new_incident(title:str,severity:str):
+
+    return create_incident(title,severity)
+
+@app.post("/vulnerability")
+
+def new_vulnerability(issue:str):
+
+    return create_vulnerability(issue)
+
+@app.get("/security-score")
+
+def security_score(vulns:int,incidents:int):
+
+    return {
+        "score":calculate_security_score(vulns,incidents)
+    }
+
+--------------------------------------------------
+
+RUN PLATFORM
+
+pip install -r requirements.txt
+
+python backend/main.py
+
+API docs available at
+
+http://localhost:8000/docs

@@ -5,7 +5,8 @@ import {
   Bell, Sun, Moon, LogOut, ChevronDown,
   Activity, Zap, Globe, Plug, Building2,
   CreditCard, Key, BarChart3, Crosshair,
-  Cloud, Rss, GitMerge
+  Cloud, Rss, GitMerge, Flame, Bug, Package,
+  KeyRound, TriangleAlert, Radar, TrendingUp
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const navGroups = [
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/posture", label: "Security Posture", icon: TrendingUp },
     ],
   },
   {
@@ -36,12 +38,23 @@ const navGroups = [
       { href: "/pentest", label: "AI Pentesting", icon: Crosshair },
       { href: "/cloud-security", label: "Cloud Security", icon: Cloud },
       { href: "/threat-intel", label: "Threat Intel", icon: Rss },
-      { href: "/compliance", label: "Compliance", icon: CheckSquare },
+      { href: "/attack-surface", label: "Attack Surface", icon: Radar },
+      { href: "/secrets", label: "Secrets Scanning", icon: KeyRound },
     ],
   },
   {
-    label: "Automation",
+    label: "Operations",
     items: [
+      { href: "/incidents", label: "Incident Response", icon: Flame },
+      { href: "/vulnerabilities", label: "Vulnerabilities", icon: Bug },
+      { href: "/risks", label: "Risk Register", icon: TriangleAlert },
+      { href: "/sbom", label: "Supply Chain", icon: Package },
+    ],
+  },
+  {
+    label: "Governance",
+    items: [
+      { href: "/compliance", label: "Compliance", icon: CheckSquare },
       { href: "/devsecops", label: "DevSecOps", icon: GitMerge },
       { href: "/reports", label: "Reports", icon: FileText },
     ],

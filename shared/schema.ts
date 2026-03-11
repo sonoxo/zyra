@@ -307,6 +307,125 @@ export const pipelineConfigs = pgTable("pipeline_configs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const incidents = pgTable("incidents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  severity: severityEnum("severity").notNull().default("medium"),
+  status: text("status").notNull().default("triage"),
+  assignedTo: text("assigned_to"),
+  affectedSystems: text("affected_systems").array().notNull().default(sql`'{}'`),
+  timeline: jsonb("timeline").notNull().default(sql`'[]'`),
+  mttr: integer("mttr"),
+  tags: text("tags").array().notNull().default(sql`'{}'`),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const vulnerabilities = pgTable("vulnerabilities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  severity: severityEnum("severity").notNull().default("medium"),
+  status: text("status").notNull().default("open"),
+  assignedTo: text("assigned_to"),
+  source: text("source").notNull().default("manual"),
+  cve: text("cve"),
+  cvss: real("cvss"),
+  affectedComponent: text("affected_component"),
+  remediationSteps: text("remediation_steps"),
+  dueDate: timestamp("due_date"),
+  verifiedAt: timestamp("verified_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const sbomItems = pgTable("sbom_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  repositoryId: varchar("repository_id"),
+  packageName: text("package_name").notNull(),
+  packageVersion: text("package_version").notNull(),
+  ecosystem: text("ecosystem").notNull().default("npm"),
+  license: text("license"),
+  isVulnerable: boolean("is_vulnerable").notNull().default(false),
+  knownCves: text("known_cves").array().notNull().default(sql`'{}'`),
+  patchedVersion: text("patched_version"),
+  riskScore: integer("risk_score").notNull().default(0),
+  transitive: boolean("transitive").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const secretsFindings = pgTable("secrets_findings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  repositoryId: varchar("repository_id"),
+  secretType: text("secret_type").notNull(),
+  maskedValue: text("masked_value"),
+  filePath: text("file_path").notNull(),
+  lineNumber: integer("line_number"),
+  commitHash: text("commit_hash"),
+  status: text("status").notNull().default("open"),
+  severity: severityEnum("severity").notNull().default("critical"),
+  suppressedReason: text("suppressed_reason"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const risks = pgTable("risks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull().default("technical"),
+  likelihood: integer("likelihood").notNull().default(3),
+  impact: integer("impact").notNull().default(3),
+  riskScore: integer("risk_score").notNull().default(9),
+  owner: text("owner"),
+  treatment: text("treatment").notNull().default("mitigate"),
+  mitigationPlan: text("mitigation_plan"),
+  residualRisk: integer("residual_risk"),
+  status: text("status").notNull().default("open"),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const attackSurfaceAssets = pgTable("attack_surface_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  assetType: text("asset_type").notNull(),
+  host: text("host").notNull(),
+  port: integer("port"),
+  service: text("service"),
+  status: text("status").notNull().default("active"),
+  riskLevel: text("risk_level").notNull().default("low"),
+  tlsCertExpiry: timestamp("tls_cert_expiry"),
+  tlsCertIssuer: text("tls_cert_issuer"),
+  openPorts: integer("open_ports").array().notNull().default(sql`'{}'`),
+  technologies: text("technologies").array().notNull().default(sql`'{}'`),
+  vulnerabilityCount: integer("vulnerability_count").notNull().default(0),
+  firstDiscoveredAt: timestamp("first_discovered_at").notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const postureScores = pgTable("posture_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  date: text("date").notNull(),
+  overallScore: integer("overall_score").notNull(),
+  scanScore: integer("scan_score").notNull().default(100),
+  pentestScore: integer("pentest_score").notNull().default(100),
+  cloudScore: integer("cloud_score").notNull().default(100),
+  complianceScore: integer("compliance_score").notNull().default(100),
+  incidentScore: integer("incident_score").notNull().default(100),
+  vulnerabilityScore: integer("vulnerability_score").notNull().default(100),
+  trend: text("trend").notNull().default("stable"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertOrganizationSchema = createInsertSchema(organizations).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertRepositorySchema = createInsertSchema(repositories).omit({ id: true, createdAt: true });
@@ -345,6 +464,29 @@ export const insertThreatIntelItemSchema = createInsertSchema(threatIntelItems).
 export const insertMonitoringConfigSchema = createInsertSchema(monitoringConfigs).omit({ id: true, createdAt: true });
 export const insertAlertRuleSchema = createInsertSchema(alertRules).omit({ id: true, createdAt: true });
 export const insertPipelineConfigSchema = createInsertSchema(pipelineConfigs).omit({ id: true, createdAt: true });
+
+export const insertIncidentSchema = createInsertSchema(incidents).omit({ id: true, createdAt: true });
+export const insertVulnerabilitySchema = createInsertSchema(vulnerabilities).omit({ id: true, createdAt: true });
+export const insertSbomItemSchema = createInsertSchema(sbomItems).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertSecretsFindingSchema = createInsertSchema(secretsFindings).omit({ id: true, createdAt: true });
+export const insertRiskSchema = createInsertSchema(risks).omit({ id: true, createdAt: true });
+export const insertAttackSurfaceAssetSchema = createInsertSchema(attackSurfaceAssets).omit({ id: true, createdAt: true });
+export const insertPostureScoreSchema = createInsertSchema(postureScores).omit({ id: true, createdAt: true });
+
+export type Incident = typeof incidents.$inferSelect;
+export type InsertIncident = z.infer<typeof insertIncidentSchema>;
+export type Vulnerability = typeof vulnerabilities.$inferSelect;
+export type InsertVulnerability = z.infer<typeof insertVulnerabilitySchema>;
+export type SbomItem = typeof sbomItems.$inferSelect;
+export type InsertSbomItem = z.infer<typeof insertSbomItemSchema>;
+export type SecretsFinding = typeof secretsFindings.$inferSelect;
+export type InsertSecretsFinding = z.infer<typeof insertSecretsFindingSchema>;
+export type Risk = typeof risks.$inferSelect;
+export type InsertRisk = z.infer<typeof insertRiskSchema>;
+export type AttackSurfaceAsset = typeof attackSurfaceAssets.$inferSelect;
+export type InsertAttackSurfaceAsset = z.infer<typeof insertAttackSurfaceAssetSchema>;
+export type PostureScore = typeof postureScores.$inferSelect;
+export type InsertPostureScore = z.infer<typeof insertPostureScoreSchema>;
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;

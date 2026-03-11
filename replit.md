@@ -1,7 +1,7 @@
 # Sentinel Forge — Intelligent Autonomous Cybersecurity Platform
 
 ## Overview
-Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines vulnerability scanning, AI-assisted pentesting, cloud security posture management, threat intelligence, compliance automation, and continuous DevSecOps monitoring into a unified platform.
+Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines vulnerability scanning, AI-assisted pentesting, cloud security posture management, threat intelligence, compliance automation, continuous DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, and security posture trending into a unified platform.
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts
@@ -13,36 +13,53 @@ Sentinel Forge is a globally scalable, AI-powered SecOps platform that combines 
 ## Project Structure
 ```
 client/src/
-  pages/          - All page components (12 pages + auth)
-  components/     - Layout (grouped nav sidebar), ThemeProvider, shadcn/ui
+  pages/          - All page components (19 pages + auth)
+  components/     - Layout (6-group sidebar nav), ThemeProvider, shadcn/ui
   lib/            - auth, queryClient
   hooks/          - use-toast
 
 server/
   index.ts            - Express server entry point
-  routes.ts           - All API routes (auth + 10 feature modules)
+  routes.ts           - All API routes (auth + 17 feature modules)
   simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
-  storage.ts          - DatabaseStorage (IStorage interface, 18 tables)
+  storage.ts          - DatabaseStorage (IStorage interface, 25 tables)
   db.ts               - Database connection
   scan-worker.ts      - Security scan simulations (Semgrep, Trivy, Bandit, ZAP)
   report-generator.ts - Automated compliance report generation
 
 shared/
-  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (18 tables)
+  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (25 tables)
 ```
 
-## Database Tables (18 total)
-organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
+## Database Tables (25 total)
+**Original (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
+
+**New SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
+
+## Sidebar Navigation (6 groups)
+- **Overview**: Dashboard, Analytics, Security Posture Score
+- **Security**: Scans, AI Pentesting, Cloud Security, Threat Intel, Attack Surface, Secrets Scanning
+- **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM
+- **Governance**: Compliance, DevSecOps, Reports
+- **Assets**: Repositories, Documents
+- **Platform**: Integrations, Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |
 |------|------|
 | /dashboard | Security posture dashboard with attack surface radar, compliance maturity |
 | /analytics | Advanced vulnerability analytics with MTTR, risk score, CVSS distribution |
+| /posture | Security Posture Score Trending with gauge, category bars, snapshot history |
 | /scans | Security scan management (Semgrep/Trivy/Bandit/ZAP) |
 | /pentest | AI Pentesting Agent with simulated SQL injection, XSS, CSRF, auth tests |
 | /cloud-security | Cloud Security Posture (AWS/GCP/Azure targets + scan results) |
 | /threat-intel | Threat Intelligence with CVE database, refresh, acknowledge/resolve |
+| /attack-surface | Attack Surface Management (auto-discovery, asset tracking, risk scoring) |
+| /secrets | Secrets Scanning (AWS keys, GitHub tokens, DB creds across repos) |
+| /incidents | Incident Response Management (triage, investigate, contain, resolve, close) |
+| /vulnerabilities | Vulnerability Lifecycle Tracking (CVE, CVSS, status, severity) |
+| /risks | Risk Register (likelihood × impact matrix, heat map, treatment workflow) |
+| /sbom | Supply Chain / SBOM (dependency scanning, vulnerability mapping) |
 | /compliance | SOC2/HIPAA/ISO27001/PCI-DSS/FedRAMP/GDPR compliance mapping |
 | /devsecops | DevSecOps pipelines, continuous monitoring, alert rules |
 | /reports | Report generation and export (PDF/JSON/CSV) |
@@ -56,18 +73,16 @@ organizations, users, repositories, documents, scans, scan_findings, compliance_
 
 ## API Endpoints (grouped by module)
 - `POST/GET /api/auth/*` — Authentication
-- `GET /api/dashboard/stats` — Enhanced dashboard (includes pentest/cloud/threat counts)
+- `GET /api/dashboard/stats` — Dashboard stats
 - `GET/POST /api/scans` + findings — Security scan management
 - `GET/POST /api/pentest/sessions` + findings — AI pentest sessions
-- `GET/POST/DELETE /api/cloud-security/targets` + results — Cloud security posture
-- `POST /api/cloud-security/targets/:id/scan` — Run cloud security simulation
-- `GET/POST/PUT /api/threat-intel` — CVE threat intelligence
-- `POST /api/threat-intel/refresh` — Refresh CVE database
+- `GET/POST/DELETE /api/cloud-security/targets` + results + scan — Cloud security
+- `GET/POST/PUT /api/threat-intel` + refresh — CVE threat intelligence
 - `GET/PUT /api/monitoring/configs` + trigger — Continuous monitoring
-- `GET/POST/PUT/DELETE /api/alerts/rules` — Alert rule management
+- `GET/POST/PUT/DELETE /api/alerts/rules` — Alert rules
 - `GET/POST/PUT/DELETE /api/pipelines` — DevSecOps pipeline configs
 - `GET /api/compliance` — Compliance framework mappings
-- `GET/POST /api/reports` + export — Report management (PDF/CSV)
+- `GET/POST /api/reports` + export — Report management
 - `GET/POST/DELETE /api/repositories` — Repository management
 - `GET/POST/DELETE /api/documents` — Document management
 - `GET/PUT /api/settings` — Settings management
@@ -77,20 +92,17 @@ organizations, users, repositories, documents, scans, scan_findings, compliance_
 - `GET/PUT /api/sso/config` — SSO configuration
 - `GET /api/analytics/vulnerabilities` — Advanced analytics
 - `GET /api/deployment/regions` + config — Multi-region deployment
+- `GET/POST/PATCH /api/incidents` + timeline — Incident Response
+- `GET/POST/PATCH /api/vulnerabilities` — Vulnerability Lifecycle
+- `GET/POST /api/sbom` + scan — Supply Chain SBOM
+- `GET/POST/PATCH /api/secrets` + scan — Secrets Scanning
+- `GET/POST/PATCH /api/risks` — Risk Register
+- `GET/POST/PATCH /api/attack-surface` + discover — Attack Surface Management
+- `GET/POST /api/posture/scores` + current — Posture Score Trending
 
-## Key Features
-1. **AI Pentesting Agent** — Authorized simulated testing: SQL injection, XSS, CSRF, auth weaknesses, API security, access control
-2. **Cloud Security Posture** — AWS/GCP/Azure target management with IAM, storage, network, and firewall checks
-3. **Threat Intelligence** — CVE database with severity scoring, package tracking, acknowledge/resolve workflow
-4. **DevSecOps Automation** — GitHub Actions, GitLab CI, Bitbucket, Jenkins, Docker pipeline integrations
-5. **Continuous Monitoring** — Real-time, daily, weekly, monthly scan scheduling with alert rules
-6. **Security Alerting** — Email, Slack, Webhook, SIEM channels with configurable triggers
-7. **Compliance Mapping** — SOC2, HIPAA, ISO27001, PCI-DSS, FedRAMP, GDPR with maturity scoring
-8. **Advanced Analytics** — MTTR, risk scoring, CVSS distribution, attack surface radar
-9. **Enterprise SSO** — SAML, OIDC, Azure AD, Okta configuration
-10. **API Key Management** — SHA-256 hashed keys with permissions and expiration
-11. **Billing & Subscriptions** — Starter/Professional/Enterprise plans
-12. **Multi-tenant RBAC** — owner/admin/analyst/viewer roles throughout
-
-## Demo Account
-Username: `demo` / Password: `password123`
+## Key Notes
+- `apiRequest` returns `Promise<Response>` — must call `.json()` to parse body
+- CVSS score auto-maps to severity in vulnerability form (≥9=critical, ≥7=high, ≥4=medium)
+- Risk score = likelihood × impact (both 1–5 via Select dropdowns)
+- All 7 new SecOps tables use UUID primary keys (`varchar` with `gen_random_uuid()`)
+- Demo account: `demo` / `password123`

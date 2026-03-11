@@ -24,6 +24,13 @@ import CloudSecurityPage from "@/pages/cloud-security";
 import ThreatIntelPage from "@/pages/threat-intel";
 import DevSecOpsPage from "@/pages/devsecops";
 import SettingsPage from "@/pages/settings";
+import IncidentsPage from "@/pages/incidents";
+import VulnerabilitiesPage from "@/pages/vulnerabilities";
+import SbomPage from "@/pages/sbom";
+import SecretsPage from "@/pages/secrets";
+import RisksPage from "@/pages/risks";
+import AttackSurfacePage from "@/pages/attack-surface";
+import PosturePage from "@/pages/posture";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -102,6 +109,13 @@ function Router() {
       <Route path="/billing">{() => <ProtectedRoute component={Billing} />}</Route>
       <Route path="/api-keys">{() => <ProtectedRoute component={ApiKeysPage} />}</Route>
       <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
+      <Route path="/incidents">{() => <ProtectedRoute component={IncidentsPage} />}</Route>
+      <Route path="/vulnerabilities">{() => <ProtectedRoute component={VulnerabilitiesPage} />}</Route>
+      <Route path="/sbom">{() => <ProtectedRoute component={SbomPage} />}</Route>
+      <Route path="/secrets">{() => <ProtectedRoute component={SecretsPage} />}</Route>
+      <Route path="/risks">{() => <ProtectedRoute component={RisksPage} />}</Route>
+      <Route path="/attack-surface">{() => <ProtectedRoute component={AttackSurfacePage} />}</Route>
+      <Route path="/posture">{() => <ProtectedRoute component={PosturePage} />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>
