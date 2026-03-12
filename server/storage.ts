@@ -52,6 +52,8 @@ import {
   type OncallSchedule, type InsertOncallSchedule,
   type EscalationPolicy, type InsertEscalationPolicy,
   type ApprovalRequest, type InsertApprovalRequest,
+  type ExposureAlert, type InsertExposureAlert,
+  type RemediationAction, type InsertRemediationAction,
   type SiemConfig, type InsertSiemConfig,
   type RetentionPolicy, type InsertRetentionPolicy,
   type Workspace, type InsertWorkspace,
@@ -69,6 +71,7 @@ import {
   securityEvents, soarPlaybooks, soarExecutions, graphNodes, graphEdges,
   caasmIdentities,
   incidentComments, teamActivities, oncallSchedules, escalationPolicies, approvalRequests,
+  exposureAlerts, remediationActions,
   siemConfigs, retentionPolicies, workspaces,
 } from "@shared/schema";
 import { db } from "./db";
@@ -344,6 +347,14 @@ export interface IStorage {
   deleteRetentionPolicy(id: string, orgId: string): Promise<void>;
 
   // Workspaces
+  getExposureAlerts(orgId: string): Promise<ExposureAlert[]>;
+  createExposureAlert(alert: InsertExposureAlert): Promise<ExposureAlert>;
+  updateExposureAlert(id: string, data: Partial<ExposureAlert>, orgId?: string): Promise<ExposureAlert | undefined>;
+
+  getRemediationActions(orgId: string): Promise<RemediationAction[]>;
+  createRemediationAction(action: InsertRemediationAction): Promise<RemediationAction>;
+  updateRemediationAction(id: string, data: Partial<RemediationAction>, orgId?: string): Promise<RemediationAction | undefined>;
+
   getWorkspaces(orgId: string): Promise<Workspace[]>;
   getWorkspace(id: string, orgId: string): Promise<Workspace | undefined>;
   createWorkspace(w: InsertWorkspace): Promise<Workspace>;
@@ -1233,6 +1244,34 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteRetentionPolicy(id: string, orgId: string): Promise<void> {
     await db.delete(retentionPolicies).where(and(eq(retentionPolicies.id, id), eq(retentionPolicies.organizationId, orgId)));
+  }
+
+  // Exposure Alerts
+  async getExposureAlerts(orgId: string): Promise<ExposureAlert[]> {
+    return db.select().from(exposureAlerts).where(eq(exposureAlerts.organizationId, orgId)).orderBy(desc(exposureAlerts.createdAt));
+  }
+  async createExposureAlert(alert: InsertExposureAlert): Promise<ExposureAlert> {
+    const [r] = await db.insert(exposureAlerts).values(alert).returning();
+    return r;
+  }
+  async updateExposureAlert(id: string, data: Partial<ExposureAlert>, orgId?: string): Promise<ExposureAlert | undefined> {
+    const cond = orgId ? and(eq(exposureAlerts.id, id), eq(exposureAlerts.organizationId, orgId)) : eq(exposureAlerts.id, id);
+    const [r] = await db.update(exposureAlerts).set(data).where(cond).returning();
+    return r;
+  }
+
+  // Remediation Actions
+  async getRemediationActions(orgId: string): Promise<RemediationAction[]> {
+    return db.select().from(remediationActions).where(eq(remediationActions.organizationId, orgId)).orderBy(desc(remediationActions.createdAt));
+  }
+  async createRemediationAction(action: InsertRemediationAction): Promise<RemediationAction> {
+    const [r] = await db.insert(remediationActions).values(action).returning();
+    return r;
+  }
+  async updateRemediationAction(id: string, data: Partial<RemediationAction>, orgId?: string): Promise<RemediationAction | undefined> {
+    const cond = orgId ? and(eq(remediationActions.id, id), eq(remediationActions.organizationId, orgId)) : eq(remediationActions.id, id);
+    const [r] = await db.update(remediationActions).set(data).where(cond).returning();
+    return r;
   }
 
   // Workspaces

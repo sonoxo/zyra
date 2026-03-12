@@ -80,7 +80,7 @@ const navGroups = [
       { href: "/caasm", label: "CAASM", icon: Layers },
       { href: "/asset-inventory", label: "Asset Inventory", icon: Cpu },
       { href: "/cve-intelligence", label: "CVE Intelligence", icon: DatabaseZap },
-      { href: "/attack-paths", label: "Attack Path Modeling", icon: GitFork },
+      { href: "/attack-paths", label: "Exposure Management", icon: GitFork },
       { href: "/threat-hunting", label: "Threat Hunting", icon: ScanSearch },
       { href: "/security-copilot", label: "Security Copilot", icon: Bot },
       { href: "/security-events", label: "Security Data Lake", icon: Database },

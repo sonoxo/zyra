@@ -1871,6 +1871,8 @@ export async function registerRoutes(
   {
     const { registerExposureRoutes } = await import("./exposure");
     await registerExposureRoutes(app);
+    const { registerExposureManagerRoutes } = await import("./exposure-manager");
+    await registerExposureManagerRoutes(app);
   }
 
   app.get("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {

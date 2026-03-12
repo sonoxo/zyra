@@ -967,6 +967,43 @@ export const approvalRequests = pgTable("approval_requests", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ── Exposure Management ──────────────────────────────────────────────────────
+export const exposureAlerts = pgTable("exposure_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  trigger: text("trigger").notNull(),
+  severity: text("severity").notNull().default("medium"),
+  title: text("title").notNull(),
+  description: text("description"),
+  assetId: varchar("asset_id"),
+  assetName: text("asset_name"),
+  riskScore: integer("risk_score").notNull().default(0),
+  status: text("status").notNull().default("open"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const remediationActions = pgTable("remediation_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  alertId: varchar("alert_id"),
+  actionType: text("action_type").notNull(),
+  target: text("target").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("pending"),
+  executedAt: timestamp("executed_at"),
+  result: jsonb("result"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertExposureAlertSchema = createInsertSchema(exposureAlerts).omit({ id: true, createdAt: true, resolvedAt: true });
+export const insertRemediationActionSchema = createInsertSchema(remediationActions).omit({ id: true, createdAt: true, executedAt: true });
+
+export type ExposureAlert = typeof exposureAlerts.$inferSelect;
+export type InsertExposureAlert = z.infer<typeof insertExposureAlertSchema>;
+export type RemediationAction = typeof remediationActions.$inferSelect;
+export type InsertRemediationAction = z.infer<typeof insertRemediationActionSchema>;
+
 // ── Enterprise Readiness ─────────────────────────────────────────────────────
 export const siemConfigs = pgTable("siem_configs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
