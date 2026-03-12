@@ -22,8 +22,9 @@ server/
   index.ts            - Express server entry point
   routes.ts           - All API routes (auth + 24 feature modules); exports requireAuth
   simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
-  storage.ts          - DatabaseStorage (IStorage interface, 44 tables)
+  storage.ts          - DatabaseStorage (IStorage interface, 47 tables)
   team-ops.ts         - Security Team Operations: RBAC permissions matrix, activity feed, incident comments, on-call scheduling, escalation policies, approval workflows
+  enterprise.ts       - Enterprise Readiness: SIEM integration (Splunk/Elastic/Sentinel/QRadar export), data retention controls with purge, multi-tenant workspaces
   db.ts               - Database connection
   scan-worker.ts      - Security scan simulations (Semgrep, Trivy, Bandit, ZAP)
   report-generator.ts - Automated compliance report generation
@@ -34,10 +35,10 @@ server/
   exposure.ts         - Attack Path Risk Prioritization engine: exposure scoring, exploitability detection, critical path detection, composite risk scoring, remediation generation
 
 shared/
-  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (44 tables)
+  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (47 tables)
 ```
 
-## Database Tables (44 total)
+## Database Tables (47 total)
 **Core (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
 
 **SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
@@ -50,6 +51,8 @@ shared/
 
 **Team Operations (5):** incident_comments, team_activities, oncall_schedules, escalation_policies, approval_requests
 
+**Enterprise Readiness (3):** siem_configs, retention_policies, workspaces
+
 ## Sidebar Navigation (6 groups)
 - **Overview**: Dashboard, Analytics, Security Posture, Getting Started (/onboarding)
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
@@ -57,7 +60,7 @@ shared/
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
 - **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Attack Path Modeling, Threat Hunting, Security Copilot, Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
-- **Platform**: Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise / SSO, Billing, API Keys, Settings
+- **Platform**: Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise Readiness (SIEM / Retention / Workspaces), Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |

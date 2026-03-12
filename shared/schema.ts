@@ -967,6 +967,54 @@ export const approvalRequests = pgTable("approval_requests", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ── Enterprise Readiness ─────────────────────────────────────────────────────
+export const siemConfigs = pgTable("siem_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  provider: text("provider").notNull(),
+  endpoint: text("endpoint").notNull(),
+  apiKey: text("api_key"),
+  index: text("index"),
+  enabled: boolean("enabled").notNull().default(true),
+  lastExportAt: timestamp("last_export_at"),
+  eventsExported: integer("events_exported").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const retentionPolicies = pgTable("retention_policies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  dataType: text("data_type").notNull(),
+  retentionDays: integer("retention_days").notNull(),
+  lastPurgedAt: timestamp("last_purged_at"),
+  purgedCount: integer("purged_count").notNull().default(0),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const workspaces = pgTable("workspaces", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color").notNull().default("#6366f1"),
+  assetCount: integer("asset_count").notNull().default(0),
+  memberCount: integer("member_count").notNull().default(0),
+  createdById: varchar("created_by_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertSiemConfigSchema = createInsertSchema(siemConfigs).omit({ id: true, createdAt: true, lastExportAt: true, eventsExported: true });
+export const insertRetentionPolicySchema = createInsertSchema(retentionPolicies).omit({ id: true, createdAt: true, lastPurgedAt: true, purgedCount: true });
+export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({ id: true, createdAt: true, assetCount: true, memberCount: true });
+
+export type SiemConfig = typeof siemConfigs.$inferSelect;
+export type InsertSiemConfig = z.infer<typeof insertSiemConfigSchema>;
+export type RetentionPolicy = typeof retentionPolicies.$inferSelect;
+export type InsertRetentionPolicy = z.infer<typeof insertRetentionPolicySchema>;
+export type Workspace = typeof workspaces.$inferSelect;
+export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
+
 export const insertIncidentCommentSchema = createInsertSchema(incidentComments).omit({ id: true, createdAt: true });
 export const insertTeamActivitySchema = createInsertSchema(teamActivities).omit({ id: true, createdAt: true });
 export const insertOncallScheduleSchema = createInsertSchema(oncallSchedules).omit({ id: true, createdAt: true });

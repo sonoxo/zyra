@@ -1979,6 +1979,8 @@ export async function registerRoutes(
   await registerCaasmRoutes(app);
   const { registerTeamOpsRoutes } = await import("./team-ops");
   await registerTeamOpsRoutes(app);
+  const { registerEnterpriseRoutes } = await import("./enterprise");
+  await registerEnterpriseRoutes(app);
 
   return httpServer;
 }

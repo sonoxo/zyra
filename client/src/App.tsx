@@ -49,6 +49,7 @@ import SecurityEventsPage from "@/pages/security-events";
 import SecurityGraphPage from "@/pages/security-graph";
 import PlatformMetricsPage from "@/pages/platform-metrics";
 import TeamPage from "@/pages/team";
+import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -152,6 +153,7 @@ function Router() {
       <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
+      <Route path="/enterprise-readiness">{() => <ProtectedRoute component={EnterpriseReadinessPage} />}</Route>
       <Route path="/team-activity">{() => <Redirect to="/team" />}</Route>
       <Route path="/oncall-schedule">{() => <Redirect to="/team" />}</Route>
       <Route path="/approvals">{() => <Redirect to="/team" />}</Route>

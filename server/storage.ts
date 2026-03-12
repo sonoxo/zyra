@@ -52,6 +52,9 @@ import {
   type OncallSchedule, type InsertOncallSchedule,
   type EscalationPolicy, type InsertEscalationPolicy,
   type ApprovalRequest, type InsertApprovalRequest,
+  type SiemConfig, type InsertSiemConfig,
+  type RetentionPolicy, type InsertRetentionPolicy,
+  type Workspace, type InsertWorkspace,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -66,6 +69,7 @@ import {
   securityEvents, soarPlaybooks, soarExecutions, graphNodes, graphEdges,
   caasmIdentities,
   incidentComments, teamActivities, oncallSchedules, escalationPolicies, approvalRequests,
+  siemConfigs, retentionPolicies, workspaces,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -325,6 +329,26 @@ export interface IStorage {
   updateGraphNode(id: string, data: Partial<GraphNode>): Promise<GraphNode | undefined>;
   getGraphEdges(orgId: string): Promise<GraphEdge[]>;
   createGraphEdge(e: InsertGraphEdge): Promise<GraphEdge>;
+
+  // SIEM
+  getSiemConfigs(orgId: string): Promise<SiemConfig[]>;
+  getSiemConfig(id: string, orgId: string): Promise<SiemConfig | undefined>;
+  createSiemConfig(c: InsertSiemConfig): Promise<SiemConfig>;
+  updateSiemConfig(id: string, data: Partial<SiemConfig>): Promise<SiemConfig | undefined>;
+  deleteSiemConfig(id: string, orgId: string): Promise<void>;
+
+  // Retention Policies
+  getRetentionPolicies(orgId: string): Promise<RetentionPolicy[]>;
+  createRetentionPolicy(p: InsertRetentionPolicy): Promise<RetentionPolicy>;
+  updateRetentionPolicy(id: string, data: Partial<RetentionPolicy>): Promise<RetentionPolicy | undefined>;
+  deleteRetentionPolicy(id: string, orgId: string): Promise<void>;
+
+  // Workspaces
+  getWorkspaces(orgId: string): Promise<Workspace[]>;
+  getWorkspace(id: string, orgId: string): Promise<Workspace | undefined>;
+  createWorkspace(w: InsertWorkspace): Promise<Workspace>;
+  updateWorkspace(id: string, data: Partial<Workspace>): Promise<Workspace | undefined>;
+  deleteWorkspace(id: string, orgId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1171,6 +1195,65 @@ export class DatabaseStorage implements IStorage {
   async updateApprovalRequest(id: string, data: Partial<ApprovalRequest>): Promise<ApprovalRequest | undefined> {
     const [r] = await db.update(approvalRequests).set(data).where(eq(approvalRequests.id, id)).returning();
     return r;
+  }
+
+  // SIEM
+  async getSiemConfigs(orgId: string): Promise<SiemConfig[]> {
+    return db.select().from(siemConfigs).where(eq(siemConfigs.organizationId, orgId)).orderBy(desc(siemConfigs.createdAt));
+  }
+  async getSiemConfig(id: string, orgId: string): Promise<SiemConfig | undefined> {
+    const [r] = await db.select().from(siemConfigs).where(and(eq(siemConfigs.id, id), eq(siemConfigs.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createSiemConfig(c: InsertSiemConfig): Promise<SiemConfig> {
+    const [r] = await db.insert(siemConfigs).values(c).returning();
+    return r;
+  }
+  async updateSiemConfig(id: string, data: Partial<SiemConfig>, orgId?: string): Promise<SiemConfig | undefined> {
+    const cond = orgId ? and(eq(siemConfigs.id, id), eq(siemConfigs.organizationId, orgId)) : eq(siemConfigs.id, id);
+    const [r] = await db.update(siemConfigs).set(data).where(cond).returning();
+    return r;
+  }
+  async deleteSiemConfig(id: string, orgId: string): Promise<void> {
+    await db.delete(siemConfigs).where(and(eq(siemConfigs.id, id), eq(siemConfigs.organizationId, orgId)));
+  }
+
+  // Retention Policies
+  async getRetentionPolicies(orgId: string): Promise<RetentionPolicy[]> {
+    return db.select().from(retentionPolicies).where(eq(retentionPolicies.organizationId, orgId)).orderBy(desc(retentionPolicies.createdAt));
+  }
+  async createRetentionPolicy(p: InsertRetentionPolicy): Promise<RetentionPolicy> {
+    const [r] = await db.insert(retentionPolicies).values(p).returning();
+    return r;
+  }
+  async updateRetentionPolicy(id: string, data: Partial<RetentionPolicy>, orgId?: string): Promise<RetentionPolicy | undefined> {
+    const cond = orgId ? and(eq(retentionPolicies.id, id), eq(retentionPolicies.organizationId, orgId)) : eq(retentionPolicies.id, id);
+    const [r] = await db.update(retentionPolicies).set(data).where(cond).returning();
+    return r;
+  }
+  async deleteRetentionPolicy(id: string, orgId: string): Promise<void> {
+    await db.delete(retentionPolicies).where(and(eq(retentionPolicies.id, id), eq(retentionPolicies.organizationId, orgId)));
+  }
+
+  // Workspaces
+  async getWorkspaces(orgId: string): Promise<Workspace[]> {
+    return db.select().from(workspaces).where(eq(workspaces.organizationId, orgId)).orderBy(desc(workspaces.createdAt));
+  }
+  async getWorkspace(id: string, orgId: string): Promise<Workspace | undefined> {
+    const [r] = await db.select().from(workspaces).where(and(eq(workspaces.id, id), eq(workspaces.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createWorkspace(w: InsertWorkspace): Promise<Workspace> {
+    const [r] = await db.insert(workspaces).values(w).returning();
+    return r;
+  }
+  async updateWorkspace(id: string, data: Partial<Workspace>, orgId?: string): Promise<Workspace | undefined> {
+    const cond = orgId ? and(eq(workspaces.id, id), eq(workspaces.organizationId, orgId)) : eq(workspaces.id, id);
+    const [r] = await db.update(workspaces).set(data).where(cond).returning();
+    return r;
+  }
+  async deleteWorkspace(id: string, orgId: string): Promise<void> {
+    await db.delete(workspaces).where(and(eq(workspaces.id, id), eq(workspaces.organizationId, orgId)));
   }
 }
 
