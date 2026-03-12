@@ -10,7 +10,8 @@ import {
   Users, ClipboardList, Rocket, Check, X,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2, Layers
+  Share2, Database, BarChart2, Layers,
+  Clock, CheckSquare2
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,9 @@ const navGroups = [
     label: "Platform",
     items: [
       { href: "/team", label: "Team", icon: Users },
+      { href: "/team-activity", label: "Team Activity", icon: Activity },
+      { href: "/oncall-schedule", label: "On-Call Schedule", icon: Clock },
+      { href: "/approvals", label: "Approvals", icon: CheckSquare2 },
       { href: "/audit-logs", label: "Audit Logs", icon: ClipboardList },
       { href: "/platform-metrics", label: "Platform Metrics", icon: BarChart2 },
       { href: "/enterprise", label: "Enterprise", icon: Building2 },

@@ -47,6 +47,11 @@ import {
   type GraphNode, type InsertGraphNode,
   type GraphEdge, type InsertGraphEdge,
   type CaasmIdentity, type InsertCaasmIdentity,
+  type IncidentComment, type InsertIncidentComment,
+  type TeamActivity, type InsertTeamActivity,
+  type OncallSchedule, type InsertOncallSchedule,
+  type EscalationPolicy, type InsertEscalationPolicy,
+  type ApprovalRequest, type InsertApprovalRequest,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -60,6 +65,7 @@ import {
   assetInventory, attackPaths, threatHuntQueries, copilotConversations,
   securityEvents, soarPlaybooks, soarExecutions, graphNodes, graphEdges,
   caasmIdentities,
+  incidentComments, teamActivities, oncallSchedules, escalationPolicies, approvalRequests,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -265,6 +271,23 @@ export interface IStorage {
   createCaasmIdentity(i: InsertCaasmIdentity): Promise<CaasmIdentity>;
   updateCaasmIdentity(id: string, data: Partial<CaasmIdentity>): Promise<CaasmIdentity | undefined>;
   deleteCaasmIdentity(id: string, orgId: string): Promise<void>;
+
+  // Team Operations
+  getIncidentComments(orgId: string, incidentId: string): Promise<IncidentComment[]>;
+  createIncidentComment(c: InsertIncidentComment): Promise<IncidentComment>;
+  deleteIncidentComment(id: string, orgId: string): Promise<void>;
+  getTeamActivities(orgId: string, limit?: number): Promise<TeamActivity[]>;
+  createTeamActivity(a: InsertTeamActivity): Promise<TeamActivity>;
+  getOncallSchedules(orgId: string): Promise<OncallSchedule[]>;
+  createOncallSchedule(s: InsertOncallSchedule): Promise<OncallSchedule>;
+  deleteOncallSchedule(id: string, orgId: string): Promise<void>;
+  getEscalationPolicies(orgId: string): Promise<EscalationPolicy[]>;
+  createEscalationPolicy(p: InsertEscalationPolicy): Promise<EscalationPolicy>;
+  updateEscalationPolicy(id: string, data: Partial<EscalationPolicy>): Promise<EscalationPolicy | undefined>;
+  deleteEscalationPolicy(id: string, orgId: string): Promise<void>;
+  getApprovalRequests(orgId: string): Promise<ApprovalRequest[]>;
+  createApprovalRequest(r: InsertApprovalRequest): Promise<ApprovalRequest>;
+  updateApprovalRequest(id: string, data: Partial<ApprovalRequest>): Promise<ApprovalRequest | undefined>;
 
   // Attack Paths
   getAttackPaths(orgId: string): Promise<AttackPath[]>;
@@ -1091,6 +1114,63 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteCaasmIdentity(id: string, orgId: string): Promise<void> {
     await db.delete(caasmIdentities).where(and(eq(caasmIdentities.id, id), eq(caasmIdentities.organizationId, orgId)));
+  }
+
+  async getIncidentComments(orgId: string, incidentId: string): Promise<IncidentComment[]> {
+    return db.select().from(incidentComments).where(and(eq(incidentComments.organizationId, orgId), eq(incidentComments.incidentId, incidentId))).orderBy(incidentComments.createdAt);
+  }
+  async createIncidentComment(c: InsertIncidentComment): Promise<IncidentComment> {
+    const [r] = await db.insert(incidentComments).values(c).returning();
+    return r;
+  }
+  async deleteIncidentComment(id: string, orgId: string): Promise<void> {
+    await db.delete(incidentComments).where(and(eq(incidentComments.id, id), eq(incidentComments.organizationId, orgId)));
+  }
+
+  async getTeamActivities(orgId: string, limit = 100): Promise<TeamActivity[]> {
+    return db.select().from(teamActivities).where(eq(teamActivities.organizationId, orgId)).orderBy(desc(teamActivities.createdAt)).limit(limit);
+  }
+  async createTeamActivity(a: InsertTeamActivity): Promise<TeamActivity> {
+    const [r] = await db.insert(teamActivities).values(a).returning();
+    return r;
+  }
+
+  async getOncallSchedules(orgId: string): Promise<OncallSchedule[]> {
+    return db.select().from(oncallSchedules).where(eq(oncallSchedules.organizationId, orgId)).orderBy(oncallSchedules.startTime);
+  }
+  async createOncallSchedule(s: InsertOncallSchedule): Promise<OncallSchedule> {
+    const [r] = await db.insert(oncallSchedules).values(s).returning();
+    return r;
+  }
+  async deleteOncallSchedule(id: string, orgId: string): Promise<void> {
+    await db.delete(oncallSchedules).where(and(eq(oncallSchedules.id, id), eq(oncallSchedules.organizationId, orgId)));
+  }
+
+  async getEscalationPolicies(orgId: string): Promise<EscalationPolicy[]> {
+    return db.select().from(escalationPolicies).where(eq(escalationPolicies.organizationId, orgId)).orderBy(desc(escalationPolicies.createdAt));
+  }
+  async createEscalationPolicy(p: InsertEscalationPolicy): Promise<EscalationPolicy> {
+    const [r] = await db.insert(escalationPolicies).values(p).returning();
+    return r;
+  }
+  async updateEscalationPolicy(id: string, data: Partial<EscalationPolicy>): Promise<EscalationPolicy | undefined> {
+    const [r] = await db.update(escalationPolicies).set(data).where(eq(escalationPolicies.id, id)).returning();
+    return r;
+  }
+  async deleteEscalationPolicy(id: string, orgId: string): Promise<void> {
+    await db.delete(escalationPolicies).where(and(eq(escalationPolicies.id, id), eq(escalationPolicies.organizationId, orgId)));
+  }
+
+  async getApprovalRequests(orgId: string): Promise<ApprovalRequest[]> {
+    return db.select().from(approvalRequests).where(eq(approvalRequests.organizationId, orgId)).orderBy(desc(approvalRequests.createdAt));
+  }
+  async createApprovalRequest(r: InsertApprovalRequest): Promise<ApprovalRequest> {
+    const [row] = await db.insert(approvalRequests).values(r).returning();
+    return row;
+  }
+  async updateApprovalRequest(id: string, data: Partial<ApprovalRequest>): Promise<ApprovalRequest | undefined> {
+    const [r] = await db.update(approvalRequests).set(data).where(eq(approvalRequests.id, id)).returning();
+    return r;
   }
 }
 

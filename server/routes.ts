@@ -1977,6 +1977,8 @@ export async function registerRoutes(
   await registerMetricsRoutes(app);
   const { registerCaasmRoutes } = await import("./caasm");
   await registerCaasmRoutes(app);
+  const { registerTeamOpsRoutes } = await import("./team-ops");
+  await registerTeamOpsRoutes(app);
 
   return httpServer;
 }

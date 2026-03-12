@@ -904,3 +904,82 @@ export type InsertGraphEdge = z.infer<typeof insertGraphEdgeSchema>;
 export const insertCaasmIdentitySchema = createInsertSchema(caasmIdentities).omit({ id: true, createdAt: true });
 export type CaasmIdentity = typeof caasmIdentities.$inferSelect;
 export type InsertCaasmIdentity = z.infer<typeof insertCaasmIdentitySchema>;
+
+// ── Security Team Operations ──────────────────────────────────────────────────
+
+export const incidentComments = pgTable("incident_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  incidentId: varchar("incident_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  authorName: text("author_name").notNull(),
+  parentId: varchar("parent_id"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const teamActivities = pgTable("team_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  userId: varchar("user_id"),
+  userName: text("user_name").notNull(),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: varchar("resource_id"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const oncallSchedules = pgTable("oncall_schedules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name").notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  label: text("label").notNull().default("Primary On-Call"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const escalationPolicies = pgTable("escalation_policies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  conditions: jsonb("conditions").notNull(),
+  actions: jsonb("actions").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const approvalRequests = pgTable("approval_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull(),
+  requesterId: varchar("requester_id").notNull(),
+  requesterName: text("requester_name").notNull(),
+  approverId: varchar("approver_id"),
+  approverName: text("approver_name"),
+  actionType: text("action_type").notNull(),
+  actionDetails: jsonb("action_details").notNull(),
+  status: text("status").notNull().default("pending"),
+  reason: text("reason"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertIncidentCommentSchema = createInsertSchema(incidentComments).omit({ id: true, createdAt: true });
+export const insertTeamActivitySchema = createInsertSchema(teamActivities).omit({ id: true, createdAt: true });
+export const insertOncallScheduleSchema = createInsertSchema(oncallSchedules).omit({ id: true, createdAt: true });
+export const insertEscalationPolicySchema = createInsertSchema(escalationPolicies).omit({ id: true, createdAt: true });
+export const insertApprovalRequestSchema = createInsertSchema(approvalRequests).omit({ id: true, createdAt: true });
+
+export type IncidentComment = typeof incidentComments.$inferSelect;
+export type InsertIncidentComment = z.infer<typeof insertIncidentCommentSchema>;
+export type TeamActivity = typeof teamActivities.$inferSelect;
+export type InsertTeamActivity = z.infer<typeof insertTeamActivitySchema>;
+export type OncallSchedule = typeof oncallSchedules.$inferSelect;
+export type InsertOncallSchedule = z.infer<typeof insertOncallScheduleSchema>;
+export type EscalationPolicy = typeof escalationPolicies.$inferSelect;
+export type InsertEscalationPolicy = z.infer<typeof insertEscalationPolicySchema>;
+export type ApprovalRequest = typeof approvalRequests.$inferSelect;
+export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
