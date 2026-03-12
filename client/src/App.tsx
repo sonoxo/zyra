@@ -48,9 +48,7 @@ import SoarPage from "@/pages/soar";
 import SecurityEventsPage from "@/pages/security-events";
 import SecurityGraphPage from "@/pages/security-graph";
 import PlatformMetricsPage from "@/pages/platform-metrics";
-import TeamActivityPage from "@/pages/team-activity";
-import OnCallSchedulePage from "@/pages/oncall-schedule";
-import ApprovalsPage from "@/pages/approvals";
+import TeamPage from "@/pages/team";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -153,9 +151,10 @@ function Router() {
       <Route path="/security-events">{() => <ProtectedRoute component={SecurityEventsPage} />}</Route>
       <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
-      <Route path="/team-activity">{() => <ProtectedRoute component={TeamActivityPage} />}</Route>
-      <Route path="/oncall-schedule">{() => <ProtectedRoute component={OnCallSchedulePage} />}</Route>
-      <Route path="/approvals">{() => <ProtectedRoute component={ApprovalsPage} />}</Route>
+      <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
+      <Route path="/team-activity">{() => <Redirect to="/team" />}</Route>
+      <Route path="/oncall-schedule">{() => <Redirect to="/team" />}</Route>
+      <Route path="/approvals">{() => <Redirect to="/team" />}</Route>
       <Route path="/">{() => <Redirect to="/dashboard" />}</Route>
       <Route component={NotFound} />
     </Switch>

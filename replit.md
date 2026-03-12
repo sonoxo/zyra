@@ -57,7 +57,7 @@ shared/
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
 - **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Attack Path Modeling, Threat Hunting, Security Copilot, Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
-- **Platform**: Team, Team Activity, On-Call Schedule, Approvals, Audit Logs, Platform Metrics, Enterprise / SSO, Billing, API Keys, Settings
+- **Platform**: Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |
