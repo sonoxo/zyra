@@ -30,6 +30,7 @@ server/
   metrics.ts          - Prometheus metrics, request middleware, threat correlation, event seeding
   graph.ts            - Security graph seeding (14 nodes, 15 edges) and query functions
   caasm.ts            - CAASM engine: risk scoring, correlation, identity seeding, API routes
+  exposure.ts         - Attack Path Risk Prioritization engine: exposure scoring, exploitability detection, critical path detection, composite risk scoring, remediation generation
 
 shared/
   schema.ts       - Drizzle ORM schema + Zod + TypeScript types (39 tables)

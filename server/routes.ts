@@ -1868,6 +1868,11 @@ export async function registerRoutes(
     });
   });
 
+  {
+    const { registerExposureRoutes } = await import("./exposure");
+    await registerExposureRoutes(app);
+  }
+
   app.get("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
     const path = await storage.getAttackPath(req.params.id, req.session.organizationId!);
     if (!path) return res.status(404).json({ message: "Attack path not found" });
@@ -1875,6 +1880,8 @@ export async function registerRoutes(
   });
 
   app.patch("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
+    const existing = await storage.getAttackPath(req.params.id, req.session.organizationId!);
+    if (!existing) return res.status(404).json({ message: "Not found" });
     const updated = await storage.updateAttackPath(req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: "Not found" });
     res.json(updated);
