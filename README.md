@@ -1,16 +1,15 @@
-## Hi there 👋
+# Sonoxo
 
-<!--
-**sonoxo/sonoxo** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+This is repo for Almyghty Sonoxo.
 
-Here are some ideas to get you started:
+Name: Douglas Brown 
+Education: Studying Psichology
+Hobbies: Behavioral Health
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+Interests:
+- Music
+- AI
+- Crypto
+- Creative Arts, Fashion (Thinksの Name: Almighty Sonoxo)
+
+Site: https://github.com/sonoxo/sonoxo
