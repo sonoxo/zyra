@@ -1,15 +1,38 @@
-# Sonoxo
+# Zyra
 
-This is repo for Almyghty Sonoxo.
+**AI-native cybersecurity platform** — built for scale.
 
-Name: Douglas Brown 
-Education: Studying Psichology
-Hobbies: Behavioral Health
+## About
 
-Interests:
-- Music
-- AI
-- Crypto
-- Creative Arts, Fashion (Thinksの Name: Almighty Sonoxo)
+Zyra is a market-ready, enterprise-grade AI security platform designed for modern organizations. Clean UX/UI, minimal aesthetic, powerful protection.
 
-Site: https://github.com/sonoxo/sonoxo
+## Vision
+
+- Lead the AI-powered security space
+- Scalable SaaS for enterprise & growth companies
+- Premium, futuristic product experience
+
+## Tech Stack
+
+- Next.js 14
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide Icons
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+## Contact
+
+- **Founder:** DJ (Almighty Sonoxo)
+- **Company:** 24k-Media Productions
+- **Mission:** "Art is important" — supporting the music landscape
+
+---
+
+*Building the future of AI-native security.* 🛡️
