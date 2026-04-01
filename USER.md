@@ -4,6 +4,7 @@
 - **What to call them:** DJ
 - **Timezone:** Eastern Time (ET)
 - **Company:** 24k-Media Productions
+- **Email:** zyra.localhost@gmail.com
 
 ---
 
