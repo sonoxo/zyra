@@ -1,0 +1,29 @@
+{
+  "name": "apps/api",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/websocket": "^10.0.1",
+    "@prisma/client": "^5.10.0",
+    "@zyra/config": "workspace:*",
+    "@zyra/types": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.26.0",
+    "jsonwebtoken": "^9.0.2",
+    "stripe": "^14.17.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
