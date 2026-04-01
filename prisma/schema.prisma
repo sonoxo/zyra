@@ -3,40 +3,27 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ============== USER & AUTH ==============
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  avatar        String?
-  password      String
-  role          Role      @default(VIEWER)
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  avatar      String?
+  password    String
+  role        String    @default("VIEWER")
+  isVerified  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  // Relations
-  profile       Profile?
-  organization  Organization?
-  sessions      Session[]
-  oauthAccounts OAuthAccount[]
-  followings    Follow[]  @relation("following")
-  followers     Follow[]  @relation("followers")
-  streams       Stream[]
-  payments      Payment[]
-  comments      Comment[]
+  profile     Profile?
+  sessions    Session[]
+  streams     Stream[]
+  payments    Payment[]
   notifications Notification[]
-}
-
-enum Role {
-  ADMIN
-  ANALYST
-  VIEWER
-  CREATOR
 }
 
 model Profile {
@@ -59,42 +46,15 @@ model Profile {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  token        String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  userAgent    String?
-  ip           String?
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ip        String?
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model OAuthAccount {
-  id           String   @id @default(cuid())
-  userId       String
-  provider     String   // github, google, twitter
-  providerId   String
-  accessToken  String?
-  refreshToken String?
-  createdAt    DateTime @default(now())
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerId])
-}
-
-// ============== SOCIAL ==============
-model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followingId String
-  createdAt   DateTime @default(now())
-
-  follower    User     @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ============== STREAMING ==============
@@ -115,7 +75,6 @@ model Stream {
   updatedAt    DateTime @updatedAt
 
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assets       Asset[]
   chatMessages ChatMessage[]
 }
 
@@ -132,199 +91,26 @@ model ChatMessage {
 
 // ============== MONETIZATION ==============
 model Payment {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   userId          String
-  stripePaymentId String        @unique
-  stripeCustomerId String?
-  amount          Int           // in cents
-  currency        String        @default("usd")
-  status          PaymentStatus
+  stripePaymentId String   @unique
+  amount          Int
+  currency        String   @default("usd")
+  status          String   // PENDING, COMPLETED, FAILED, REFUNDED
   description     String?
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime @default(now())
 
-  user            User          @relation(fields: [userId], references: [id], onDelete: SetNull)
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-model Subscription {
-  id               String   @id @default(cuid())
-  userId           String
-  stripeSubId      String   @unique
-  stripeCustomerId String
-  plan             Plan
-  status           SubStatus
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  createdAt        DateTime @default(now())
-  canceledAt       DateTime?
-
-  @@unique([userId])
-}
-
-enum SubStatus {
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  TRIALING
-}
-
-// ============== SECURITY (from before) ==============
-model Organization {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  stripeCustId String? @unique
-  plan        Plan     @default(FREE)
-  createdAt   DateTime @default(now())
-
-  assets      Asset[]
-  scans       Scan[]
-  incidents   Incident[]
-  users       User[]
-}
-
-enum Plan {
-  FREE
-  PRO
-  ENTERPRISE
-}
-
-model Asset {
-  id            String       @id @default(cuid())
-  name          String
-  type          AssetType
-  url           String?
-  ip            String?
-  status        AssetStatus  @default(ACTIVE)
-  organization  Organization @relation(fields: [orgId], references: [id])
-  orgId         String
-  stream        Stream?      @relation(fields: [streamId], references: [id])
-  streamId      String?
-  threats       Threat[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-}
-
-enum AssetType {
-  WEBSITE
-  API
-  SERVER
-  DATABASE
-  CONTAINER
-}
-
-enum AssetStatus {
-  ACTIVE
-  SCANNING
-  ISOLATED
-  OFFLINE
-}
-
-model Scan {
-  id            String     @id @default(cuid())
-  type          ScanType
-  status        ScanStatus @default(PENDING)
-  score         Int?
-  organization  Organization @relation(fields: [orgId], references: [id])
-  orgId         String
-  results       Json?
-  createdAt     DateTime   @default(now())
-}
-
-enum ScanType {
-  FULL
-  QUICK
-  SPECIFIC
-}
-
-enum ScanStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
-model Threat {
-  id          String        @id @default(cuid())
-  severity    Severity
-  title       String
-  description String?
-  cve         String?
-  status      ThreatStatus  @default(OPEN)
-  asset       Asset         @relation(fields: [assetId], references: [id])
-  assetId     String
-  createdAt   DateTime      @default(now())
-  resolvedAt  DateTime?
-}
-
-enum Severity {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum ThreatStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  FALSE_POSITIVE
-}
-
-model Incident {
-  id          String          @id @default(cuid())
-  title       String
-  description String
-  status      IncidentStatus  @default(OPEN)
-  priority    Priority
-  organization Organization   @relation(fields: [orgId], references: [id])
-  orgId       String
-  assignedTo  User?           @relation(fields: [userId], references: [id])
-  userId      String?
-  comments    Comment[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-}
-
-enum IncidentStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-model Comment {
-  id          String   @id @default(cuid())
-  content     String
-  incident    Incident @relation(fields: [incidentId], references: [id])
-  incidentId  String
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    String
-  createdAt   DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ============== NOTIFICATIONS ==============
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // follow, stream, payment, system
+  type      String
   title     String
   message   String?
   isRead    Boolean  @default(false)
-  data      Json?
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
