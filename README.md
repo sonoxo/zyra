@@ -2,6 +2,36 @@
 
 Enterprise-grade AI security platform built for scale, automation, and revenue.
 
+## 🧠 How Zyra Works
+
+Zyra is an AI-native security ecosystem designed to protect organizations through intelligent automation:
+
+### 1. Connect Your Assets
+- Add websites, APIs, servers, databases, containers
+- Zyra automatically discovers and monitors each asset
+
+### 2. AI-Powered Scanning
+- Automated vulnerability detection
+- Continuous monitoring with real-time alerts
+- Security scoring (0-100) based on asset health
+
+### 3. Threat Intelligence
+- AI agents detect anomalies in real-time
+- Threats are prioritized by severity
+- Automated incident response when critical issues arise
+
+### 4. Unified Dashboard
+- Single pane of glass for all security data
+- Live threat feed via WebSocket
+- Actionable recommendations with one-click fixes
+
+### 5. Monetization Ready
+- Stripe integration for subscriptions
+- Tiered pricing (Free/Pro/Enterprise)
+- Usage-based billing for API access
+
+---
+
 ## 🏗️ Architecture
 
 ```
