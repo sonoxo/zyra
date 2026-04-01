@@ -1,5 +1,5 @@
 {
-  "name": "apps/web",
+  "name": "@zyra/web",
   "version": "1.0.0",
   "private": true,
   "scripts": {

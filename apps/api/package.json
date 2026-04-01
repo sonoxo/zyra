@@ -1,7 +1,6 @@
 {
-  "name": "apps/api",
+  "name": "@zyra/api",
   "version": "1.0.0",
-  "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
