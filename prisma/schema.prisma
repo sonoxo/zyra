@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          Role     @default(VIEWER)
+  organization  Organization? @relation(fields: [orgId], references: [id])
+  orgId         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  stripeCustId String? @unique
+  plan        Plan     @default(FREE)
+  assets      Asset[]
+  scans       Scan[]
+  incidents   Incident[]
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Asset {
+  id            String    @id @default(cuid())
+  name          String
+  type          AssetType
+  url           String?
+  ip            String?
+  status        AssetStatus @default(ACTIVE)
+  organization  Organization @relation(fields: [orgId], references: [id])
+  orgId         String
+  threats       Threat[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum AssetType {
+  WEBSITE
+  API
+  SERVER
+  DATABASE
+  CONTAINER
+}
+
+enum AssetStatus {
+  ACTIVE
+  SCANNING
+  ISOLATED
+  OFFLINE
+}
+
+model Scan {
+  id            String    @id @default(cuid())
+  type          ScanType
+  status        ScanStatus @default(PENDING)
+  score         Int?
+  organization  Organization @relation(fields: [orgId], references: [id])
+  orgId         String
+  results       Json?
+  createdAt     DateTime  @default(now())
+}
+
+enum ScanType {
+  FULL
+  QUICK
+  SPECIFIC
+}
+
+enum ScanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Threat {
+  id            String    @id @default(cuid())
+  severity      Severity
+  title         String
+  description   String
+  cve           String?
+  status        ThreatStatus @default(OPEN)
+  asset         Asset      @relation(fields: [assetId], references: [id])
+  assetId       String
+  createdAt     DateTime  @default(now())
+  resolvedAt    DateTime?
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ThreatStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  FALSE_POSITIVE
+}
+
+model Incident {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  status        IncidentStatus @default(OPEN)
+  priority      Priority
+  organization  Organization @relation(fields: [orgId], references: [id])
+  orgId         String
+  assignedTo    User?     @relation(fields: [userId], references: [id])
+  userId        String?
+  comments      Comment[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  content     String
+  incident    Incident  @relation(fields: [incidentId], references: [id])
+  incidentId  String
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String
+  createdAt   DateTime  @default(now())
+}
