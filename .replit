@@ -1,0 +1,7 @@
+run = "npm run start"
+modules = ["nodejs-20"]
+
+[deployment]
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
+ignore = ["node_modules", ".git", "*.md"]
