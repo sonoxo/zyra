@@ -1,6 +1,6 @@
 # USER.md - About Your Human
 
-- **Name:** DJ (Almighty Sonoxo)
+- **Name:** DJ (Sono / Almighty Sonoxo)
 - **What to call them:** DJ
 - **Timezone:** Eastern Time (ET)
 - **Company:** 24k-Media Productions
