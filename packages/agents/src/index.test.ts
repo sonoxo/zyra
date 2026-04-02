@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
-import { strictEqual, deepStrictEqual, ok } from 'node:assert'
+import { strictEqual, ok } from 'node:assert'
+import type { Threat, Incident } from '@zyra/types'
 import { PentestAgent, ThreatDetectionAgent, IncidentResponseAgent, AutomationAgent, AICopilot } from './index.js'
 
 describe('PentestAgent', () => {
@@ -26,7 +27,7 @@ describe('ThreatDetectionAgent', () => {
 
   it('should return array of threats', async () => {
     const agent = new ThreatDetectionAgent()
-    const result = await agent.analyzeTraffic({})
+    const result = await agent.analyzeTraffic({ source: 'test' })
     ok(Array.isArray(result))
   })
 })
@@ -39,8 +40,16 @@ describe('IncidentResponseAgent', () => {
 
   it('should respond to incident without error', async () => {
     const agent = new IncidentResponseAgent()
-    const incident = { id: 'inc-1', title: 'Test', description: 'Test', status: 'OPEN', priority: 'HIGH', orgId: 'org-1', createdAt: new Date(), updatedAt: new Date() }
-    // Should not throw
+    const incident: Incident = { 
+      id: 'inc-1', 
+      title: 'Test', 
+      description: 'Test', 
+      status: 'OPEN', 
+      priority: 'HIGH', 
+      orgId: 'org-1', 
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    }
     await agent.respond(incident, 'alert')
     ok(true)
   })
@@ -56,14 +65,22 @@ describe('AutomationAgent', () => {
 describe('AICopilot', () => {
   it('should explain threat', async () => {
     const copilot = new AICopilot()
-    const threat = { id: 't1', severity: 'HIGH', title: 'SQL Injection', description: 'SQL injection vulnerability', status: 'OPEN', assetId: 'a1', createdAt: new Date() }
+    const threat: Threat = { 
+      id: 't1', 
+      severity: 'HIGH', 
+      title: 'SQL Injection', 
+      description: 'SQL injection vulnerability', 
+      status: 'OPEN', 
+      assetId: 'a1', 
+      createdAt: new Date() 
+    }
     const explanation = await copilot.explain(threat)
     ok(explanation.includes('HIGH'))
   })
 
   it('should prioritize threats by severity', async () => {
     const copilot = new AICopilot()
-    const threats = [
+    const threats: Threat[] = [
       { id: '1', severity: 'LOW', title: 't', description: 'd', status: 'OPEN', assetId: 'a', createdAt: new Date() },
       { id: '2', severity: 'CRITICAL', title: 't', description: 'd', status: 'OPEN', assetId: 'a', createdAt: new Date() },
       { id: '3', severity: 'MEDIUM', title: 't', description: 'd', status: 'OPEN', assetId: 'a', createdAt: new Date() },
@@ -75,7 +92,15 @@ describe('AICopilot', () => {
 
   it('should suggest fix', async () => {
     const copilot = new AICopilot()
-    const threat = { id: 't1', severity: 'HIGH', title: 'Open Port', description: 'Port 22 open', status: 'OPEN', assetId: 'a1', createdAt: new Date() }
+    const threat: Threat = { 
+      id: 't1', 
+      severity: 'HIGH', 
+      title: 'Open Port', 
+      description: 'Port 22 open', 
+      status: 'OPEN', 
+      assetId: 'a1', 
+      createdAt: new Date() 
+    }
     const suggestions = await copilot.suggestFix(threat)
     ok(suggestions.length > 0)
   })
