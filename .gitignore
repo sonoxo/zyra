@@ -5,3 +5,14 @@ out
 -e 
 .env
 .vercel
+-e 
+# Build artifacts
+apps/web/.next
+apps/web/out
+-e 
+# TypeScript
+*.ts
+!*.d.ts
+
+# Database
+prisma/dev.db
