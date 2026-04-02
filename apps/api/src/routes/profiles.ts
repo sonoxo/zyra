@@ -1,96 +1,77 @@
 import type { FastifyInstance } from 'fastify'
-
-interface Profile {
-  id: string
-  userId: string
-  displayName?: string
-  bio?: string
-  website?: string
-  twitter?: string
-  instagram?: string
-  location?: string
-  isPublic: boolean
-  followerCount: number
-  followingCount: number
-  streamCount: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-// In-memory store (replace with Prisma)
-const profiles: Profile[] = []
+import { prisma } from '../lib/prisma.js'
+import { authMiddleware } from '../middleware/auth.js'
 
 export default async function profileRoutes(fastify: FastifyInstance) {
-  
-  // GET /api/profiles/:id
-  fastify.get('/:id', async (req, reply) => {
-    const { id } = req.params as any
-    const profile = profiles.find(p => p.id === id || p.userId === id)
-    
-    if (!profile) {
-      return reply.status(404).send({ success: false, error: 'Profile not found' })
+  await fastify.addHook('onRequest', async (req, reply) => {
+    await authMiddleware(req, reply)
+  })
+
+  // GET /api/profiles/me - get current user's profile
+  fastify.get('/me', async (req, reply) => {
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { userId: req.user!.id },
+      })
+      return reply.send({ success: true, data: profile })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
-    
-    return reply.send({ success: true, data: profile })
   })
 
-  // PUT /api/profiles/:id
-  fastify.put('/:id', async (req, reply) => {
-    const { id } = req.params as any
-    const updates = req.body as Partial<Profile>
-    
-    const index = profiles.findIndex(p => p.id === id)
-    
-    if (index > -1) {
-      profiles[index] = { ...profiles[index], ...updates, updatedAt: new Date() }
-      return reply.send({ success: true, data: profiles[index] })
+  // PATCH /api/profiles/me - update current user's profile
+  fastify.patch('/me', async (req, reply) => {
+    const { displayName, bio, website, twitter, instagram, location, isPublic } = req.body as any
+
+    try {
+      const profile = await prisma.profile.upsert({
+        where: { userId: req.user!.id },
+        update: {
+          ...(displayName && { displayName }),
+          ...(bio !== undefined && { bio }),
+          ...(website !== undefined && { website }),
+          ...(twitter !== undefined && { twitter }),
+          ...(instagram !== undefined && { instagram }),
+          ...(location !== undefined && { location }),
+          ...(isPublic !== undefined && { isPublic }),
+        },
+        create: {
+          userId: req.user!.id,
+          displayName: displayName || req.user!.name,
+          bio,
+          website,
+          twitter,
+          instagram,
+          location,
+          isPublic: isPublic ?? true,
+        },
+      })
+      return reply.send({ success: true, data: profile })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
-    
-    // Create new profile
-    const newProfile: Profile = {
-      id: `profile_${Date.now()}`,
-      userId: id,
-      displayName: updates.displayName,
-      bio: updates.bio,
-      website: updates.website,
-      twitter: updates.twitter,
-      instagram: updates.instagram,
-      location: updates.location,
-      isPublic: true,
-      followerCount: 0,
-      followingCount: 0,
-      streamCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  })
+
+  // GET /api/profiles/:userId - get another user's public profile
+  fastify.get('/:userId', async (req, reply) => {
+    const { userId } = req.params as { userId: string }
+
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+      })
+
+      if (!profile) {
+        return reply.status(404).send({ success: false, error: 'Profile not found' })
+      }
+
+      if (!profile.isPublic) {
+        return reply.status(403).send({ success: false, error: 'Profile is private' })
+      }
+
+      return reply.send({ success: true, data: profile })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
-    
-    profiles.push(newProfile)
-    return reply.status(201).send({ success: true, data: newProfile })
-  })
-
-  // GET /api/profiles/:id/followers
-  fastify.get('/:id/followers', async (req, reply) => {
-    // Return followers list
-    return reply.send({ success: true, data: [], total: 0 })
-  })
-
-  // GET /api/profiles/:id/following
-  fastify.get('/:id/following', async (req, reply) => {
-    // Return following list
-    return reply.send({ success: true, data: [], total: 0 })
-  })
-
-  // POST /api/profiles/:id/follow
-  fastify.post('/:id/follow', async (req, reply) => {
-    const { id } = req.params as any
-    // Follow logic
-    return reply.send({ success: true, message: 'Followed successfully' })
-  })
-
-  // DELETE /api/profiles/:id/follow
-  fastify.delete('/:id/follow', async (req, reply) => {
-    const { id } = req.params as any
-    // Unfollow logic
-    return reply.send({ success: true, message: 'Unfollowed successfully' })
   })
 }

@@ -4,12 +4,20 @@ import websocket from '@fastify/websocket'
 import { config } from '@zyra/config'
 import './env.js' // Validate env vars on startup
 import { errorMiddleware } from './middleware/error.js'
+
+// Sentry error monitoring (optional)
+import * as Sentry from '@sentry/node'
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+  })
+}
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
 import jobRoutes from './routes/jobs.js'
 import orgRoutes from './routes/orgs.js'
 import webhookRoutes from './routes/webhooks.js'
-import jobRoutes from './routes/jobs.js'
 import activityRoutes from './routes/activities.js'
 import assetRoutes from './routes/assets.js'
 import scanRoutes from './routes/scan.js'
