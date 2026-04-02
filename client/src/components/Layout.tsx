@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useLocation as useWouterLocation } from "wouter";
 import {
-  Shield, LayoutDashboard, Search, CheckSquare,
+  LayoutDashboard, Search, CheckSquare,
   FileText, GitBranch, FolderOpen, Settings,
   Bell, Sun, Moon, LogOut, ChevronDown, Menu,
   Activity, Zap, Globe, Plug, Building2,
@@ -11,8 +11,9 @@ import {
   Users, ClipboardList, Rocket, Check, X, ListTodo,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck
+  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck, Shield
 } from "lucide-react";
+import zyraLogo from "@assets/ChatGPT_Image_Mar_30,_2026,_05_28_39_PM_1775166956477.png";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -259,9 +260,7 @@ function SidebarContent({ user, subscription, initials, isTrialing, isExpired, i
       <div className="p-4 border-b border-sidebar-border">
         <Link href="/dashboard">
           <div onClick={onNavigate} className="flex items-center gap-2.5 cursor-pointer group">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm shrink-0">
-              <Shield className="w-4.5 h-4.5 text-primary-foreground" />
-            </div>
+            <img src={zyraLogo} alt="Zyra" className="w-8 h-8 rounded-lg object-cover shrink-0" />
             <div>
               <div className="text-sm font-bold text-sidebar-foreground tracking-tight">Zyra</div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -415,9 +414,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-primary-foreground" />
-            </div>
+            <img src={zyraLogo} alt="Zyra" className="w-7 h-7 rounded-lg object-cover" />
             <span className="font-bold text-sm">Zyra</span>
           </div>
           <div className="ml-auto">

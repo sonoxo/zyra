@@ -3,7 +3,8 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Shield, Eye, EyeOff, ArrowRight, ChevronRight, Mail, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ChevronRight, Mail, Loader2 } from "lucide-react";
+import zyraLogo from "@assets/ChatGPT_Image_Mar_30,_2026,_05_28_39_PM_1775166956477.png";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,9 +114,7 @@ export default function AuthPage() {
 
         <div className="relative">
           <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-              <Shield className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={zyraLogo} alt="Zyra" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
             <div>
               <div className="font-bold text-lg text-foreground tracking-tight">Zyra</div>
               <div className="text-xs text-muted-foreground">AI-Native Cybersecurity Platform</div>
@@ -163,9 +162,7 @@ export default function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Shield className="w-4.5 h-4.5 text-primary-foreground" />
-            </div>
+            <img src={zyraLogo} alt="Zyra" className="w-9 h-9 rounded-xl object-cover" />
             <div className="font-bold text-lg tracking-tight">Zyra</div>
           </div>
 
