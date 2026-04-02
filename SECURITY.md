@@ -6,7 +6,7 @@ Thank you for helping keep Zyra secure! If you find a security vulnerability, pl
 
 ### How to Report
 
-1. **Email**: security@zyra.host
+1. **Email**: Zyra.localhost@gmail.com
 2. **GitHub Security Advisories**: Use the "Security" tab to report
 3. **Do NOT** open public issues for security bugs
 
