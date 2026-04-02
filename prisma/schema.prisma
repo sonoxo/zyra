@@ -137,6 +137,7 @@ model Organization {
   incidents   Incident[]
   activities  Activity[]
   webhooks    Webhook[]
+  jobs       Job[]
 }
 
 model OrganizationUser {
@@ -267,6 +268,23 @@ model Webhook {
   events      String
   secret      String?
   active      Boolean  @default(true)
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== JOBS / TASK QUEUE ==============
+model Job {
+  id          String   @id @default(cuid())
+  type        String   // SCAN, NOTIFY, WEBHOOK
+  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  payload     String   // JSON string
+  result      String?  // JSON string result
+  scheduledAt DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
   orgId       String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
