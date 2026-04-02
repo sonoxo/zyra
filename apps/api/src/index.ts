@@ -6,6 +6,7 @@ import './env.js' // Validate env vars on startup
 import { errorMiddleware } from './middleware/error.js'
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
+import jobRoutes from './routes/jobs.js'
 import orgRoutes from './routes/orgs.js'
 import webhookRoutes from './routes/webhooks.js'
 import jobRoutes from './routes/jobs.js'
@@ -58,6 +59,7 @@ await server.register(apiKeyRoutes, { prefix: '/api/keys' })
 await server.register(passwordResetRoutes, { prefix: '/api/password' })
 await server.register(notificationRoutes, { prefix: '/api/notifications' })
 await server.register(webhookRoutes, { prefix: '/api/webhooks' })
+await server.register(jobRoutes, { prefix: '/api/jobs' })
 await server.register(jobRoutes, { prefix: '/api/jobs' })
 
 // WebSocket

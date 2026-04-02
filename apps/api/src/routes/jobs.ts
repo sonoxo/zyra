@@ -1,6 +1,23 @@
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { sendToOrg } from '../websocket/index.js'
+
+// In-memory job queue (for production, use Bull/Redis)
+interface Job {
+  id: string
+  type: string
+  data: any
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  orgId: string
+  createdAt: Date
+  startedAt?: Date
+  completedAt?: Date
+  result?: any
+  error?: string
+}
+
+const jobQueue: Job[] = []
 
 export default async function jobRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
@@ -14,80 +31,99 @@ export default async function jobRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ success: false, error: 'No org selected' })
     }
 
-    try {
-      const jobs = await prisma.job.findMany({
-        where: { orgId },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      })
-      return reply.send({ success: true, data: jobs })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
-    }
+    const jobs = jobQueue.filter(j => j.orgId === orgId).slice(-50)
+    return reply.send({ success: true, data: jobs })
   })
 
-  // GET /api/jobs/:id - get job details
-  fastify.get('/:id', async (req, reply) => {
-    const { id } = req.params as { id: string }
-
-    try {
-      const job = await prisma.job.findUnique({ where: { id } })
-      if (!job) {
-        return reply.status(404).send({ success: false, error: 'Job not found' })
-      }
-      return reply.send({ success: true, data: job })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
-    }
-  })
-
-  // POST /api/jobs - create a job (queue)
+  // POST /api/jobs - create a job
   fastify.post('/', async (req, reply) => {
-    const { type, payload } = req.body as any
+    const { type, data } = req.body as any
     const orgId = req.user?.orgId
+    const userId = req.user?.id
 
     if (!orgId) {
       return reply.status(400).send({ success: false, error: 'No org selected' })
     }
+
     if (!type) {
       return reply.status(400).send({ success: false, error: 'type required' })
     }
 
-    try {
-      const job = await prisma.job.create({
-        data: {
-          type,
-          payload: JSON.stringify(payload || {}),
-          status: 'PENDING',
-          orgId,
-        },
-      })
-      return reply.status(201).send({ success: true, data: job })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
+    const job: Job = {
+      id: `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      data,
+      status: 'pending',
+      orgId,
+      createdAt: new Date(),
     }
+
+    jobQueue.push(job)
+    
+    // Notify via WebSocket
+    sendToOrg(orgId, 'job.created', { id: job.id, type })
+
+    // Process job asynchronously
+    processJob(job).catch(console.error)
+
+    return reply.status(201).send({ success: true, data: job })
   })
 
-  // POST /api/jobs/:id/run - manually trigger a pending job
-  fastify.post('/:id/run', async (req, reply) => {
+  // GET /api/jobs/:id - get job status
+  fastify.get('/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
+    const job = jobQueue.find(j => j.id === id)
 
-    try {
-      const job = await prisma.job.update({
-        where: { id },
-        data: { status: 'RUNNING', startedAt: new Date() },
-      })
-      // Simulate processing: wait 2 seconds then mark complete
-      setTimeout(async () => {
-        await prisma.job.update({
-          where: { id },
-          data: { status: 'COMPLETED', completedAt: new Date(), result: JSON.stringify({ done: true }) },
-        })
-      }, 2000)
-
-      return reply.send({ success: true, data: job })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
+    if (!job) {
+      return reply.status(404).send({ success: false, error: 'Job not found' })
     }
+
+    return reply.send({ success: true, data: job })
   })
+}
+
+async function processJob(job: Job) {
+  job.status = 'running'
+  job.startedAt = new Date()
+
+  try {
+    let result: any
+
+    switch (job.type) {
+      case 'scan':
+        // Simulate scan
+        await new Promise(r => setTimeout(r, 3000))
+        const score = Math.floor(Math.random() * 30) + 70
+        result = { score, vulnerabilities: Math.floor(Math.random() * 5) }
+        
+        // Update scan in DB
+        await prisma.scan.updateMany({
+          where: { id: job.data.scanId },
+          data: { status: 'COMPLETED', score, completedAt: new Date() }
+        })
+        break
+
+      case 'threat_detection':
+        await new Promise(r => setTimeout(r, 2000))
+        result = { threatsFound: Math.floor(Math.random() * 3) }
+        break
+
+      default:
+        throw new Error(`Unknown job type: ${job.type}`)
+    }
+
+    job.status = 'completed'
+    job.result = result
+    job.completedAt = new Date()
+
+    // Notify
+    sendToOrg(job.orgId, 'job.completed', { id: job.id, type: job.type, result })
+
+  } catch (error: any) {
+    job.status = 'failed'
+    job.error = error.message
+    job.completedAt = new Date()
+
+    sendToOrg(job.orgId, 'job.failed', { id: job.id, type: job.type, error: error.message })
+  }
 }
