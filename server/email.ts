@@ -15,6 +15,9 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     return false;
   }
 
+  const fromAddress = process.env.EMAIL_FROM || "Zyra <noreply@zyra.host>";
+  console.log(`[email] Sending "${options.subject}" to ${options.to} from ${fromAddress}`);
+
   try {
     const res = await fetch(RESEND_API_URL, {
       method: "POST",
@@ -23,7 +26,7 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "Zyra <noreply@zyra.host>",
+        from: fromAddress,
         to: [options.to],
         subject: options.subject,
         html: options.html,
@@ -32,13 +35,15 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("Email send failed:", res.status, err);
+      console.error("[email] Send failed:", res.status, err);
       return false;
     }
 
+    const result = await res.json();
+    console.log("[email] Sent successfully, id:", result.id);
     return true;
   } catch (err) {
-    console.error("Email send error:", err);
+    console.error("[email] Send error:", err);
     return false;
   }
 }
