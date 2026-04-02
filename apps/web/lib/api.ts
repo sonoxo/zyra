@@ -97,11 +97,21 @@ export const assets = {
 
 // Scans
 export const scans = {
-  list: () => fetchApi<any[]>('/api/scan'),
-  create: (data: any) =>
-    fetchApi('/api/scan', {
+  list: (orgId?: string) => fetchApi<any[]>(`/api/scan${orgId ? `?orgId=${orgId}` : ''}`),
+  create: (type: string, assetId?: string) =>
+    fetchApi('/api/scan', { method: 'POST', body: JSON.stringify({ type, assetId }) }),
+  run: (id: string) => fetchApi(`/api/scan/${id}/run`, { method: 'POST' }),
+  get: (id: string) => fetchApi<any>(`/api/scan/${id}`),
+}
+
+// Pricing
+export const pricing = {
+  plans: () => fetchApi<any[]>('/api/pricing/plans'),
+  myPlan: () => fetchApi<any>('/api/pricing/my-plan'),
+  checkout: (planId: string) =>
+    fetchApi<{ sessionId: string; url: string }>('/api/pricing/checkout', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ planId }),
     }),
 }
 

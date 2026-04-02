@@ -16,6 +16,7 @@ import profileRoutes from './routes/profiles.js'
 import streamRoutes from './routes/streams.js'
 import paymentRoutes from './routes/payments.js'
 import stripeRoutes from './routes/stripe.js'
+import pricingRoutes from './routes/pricing.js'
 import websocketRoutes from './websocket/index.js'
 
 const server = Fastify({
@@ -48,6 +49,7 @@ await server.register(profileRoutes, { prefix: '/api/profiles' })
 await server.register(streamRoutes, { prefix: '/api/streams' })
 await server.register(paymentRoutes, { prefix: '/api/payments' })
 await server.register(stripeRoutes, { prefix: '/api/stripe' })
+await server.register(pricingRoutes, { prefix: '/api/pricing' })
 
 // WebSocket
 await server.register(websocketRoutes)

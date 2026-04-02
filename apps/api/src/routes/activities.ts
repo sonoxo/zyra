@@ -1,6 +1,30 @@
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma.js'
+import { PrismaClient } from '@prisma/client'
 import { authMiddleware } from '../middleware/auth.js'
+
+interface ActivityData {
+  action: string
+  entityType: string
+  entityId?: string
+  description?: string
+  metadata?: any
+  orgId: string
+  userId: string
+}
+
+export async function logActivity(prisma: PrismaClient, data: ActivityData) {
+  return prisma.activity.create({
+    data: {
+      action: data.action,
+      entityType: data.entityType,
+      entityId: data.entityId || null,
+      description: data.description || null,
+      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      orgId: data.orgId,
+      userId: data.userId,
+    },
+  })
+}
 
 export default async function activityRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
