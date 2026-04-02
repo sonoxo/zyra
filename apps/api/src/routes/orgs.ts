@@ -71,7 +71,9 @@ export default async function orgRoutes(fastify: FastifyInstance) {
           members: { some: { userId: req.user!.id } }
         },
         include: { 
-          members: { include: { user: { select: { id: true, email: true, name: true } } } }
+          members: { include: { user: { select: { id: true, email: true, name: true, avatar: true } } } },
+          assets: true,
+          _count: { select: { threats: true, incidents: true, scans: true } },
         },
       })
 
