@@ -16,3 +16,6 @@ apps/web/out
 
 # Database
 prisma/dev.db
+-e 
+.env
+.env.example

@@ -7,6 +7,10 @@ import assetRoutes from './routes/assets.js'
 import scanRoutes from './routes/scan.js'
 import threatRoutes from './routes/threats.js'
 import incidentRoutes from './routes/incidents.js'
+import profileRoutes from './routes/profiles.js'
+import streamRoutes from './routes/streams.js'
+import paymentRoutes from './routes/payments.js'
+import stripeRoutes from './routes/stripe.js'
 import websocketRoutes from './websocket/index.js'
 
 const server = Fastify({
@@ -29,6 +33,10 @@ await server.register(assetRoutes, { prefix: '/api/assets' })
 await server.register(scanRoutes, { prefix: '/api/scan' })
 await server.register(threatRoutes, { prefix: '/api/threats' })
 await server.register(incidentRoutes, { prefix: '/api/incidents' })
+await server.register(profileRoutes, { prefix: '/api/profiles' })
+await server.register(streamRoutes, { prefix: '/api/streams' })
+await server.register(paymentRoutes, { prefix: '/api/payments' })
+await server.register(stripeRoutes, { prefix: '/api/stripe' })
 
 // WebSocket
 await server.register(websocketRoutes)
