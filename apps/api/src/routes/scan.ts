@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { logActivity } from './activities.js'
+import { triggerWebhook } from '../lib/webhook.js'
 
 const SCAN_SCORES = {
   FULL: { min: 60, max: 100 },
@@ -58,6 +59,9 @@ export default async function scanRoutes(fastify: FastifyInstance) {
         orgId,
         userId: req.user!.id,
       })
+
+      // Trigger webhooks
+      await triggerWebhook(orgId, 'scan.created', { id: scan.id, type: scan.type })
 
       return reply.status(201).send({ success: true, data: scan })
     } catch (error: any) {

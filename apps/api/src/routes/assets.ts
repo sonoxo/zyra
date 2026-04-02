@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { triggerWebhook } from '../lib/webhook.js'
 
 export default async function assetRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
@@ -50,6 +51,10 @@ export default async function assetRoutes(fastify: FastifyInstance) {
           status: 'ACTIVE',
         },
       })
+
+      // Trigger webhooks
+      await triggerWebhook(orgId, 'asset.created', { id: asset.id, name: asset.name, type: asset.type })
+
       return reply.status(201).send({ success: true, data: asset })
     } catch (error: any) {
       return reply.status(500).send({ success: false, error: error.message })

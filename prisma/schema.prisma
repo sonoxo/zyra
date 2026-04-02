@@ -136,6 +136,7 @@ model Organization {
   threats     Threat[]
   incidents   Incident[]
   activities  Activity[]
+  webhooks    Webhook[]
 }
 
 model OrganizationUser {
@@ -257,4 +258,18 @@ model PasswordReset {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Webhook {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  events      String
+  secret      String?
+  active      Boolean  @default(true)
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }

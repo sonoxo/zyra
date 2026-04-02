@@ -7,6 +7,7 @@ import { errorMiddleware } from './middleware/error.js'
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
 import orgRoutes from './routes/orgs.js'
+import webhookRoutes from './routes/webhooks.js'
 import activityRoutes from './routes/activities.js'
 import assetRoutes from './routes/assets.js'
 import scanRoutes from './routes/scan.js'
@@ -55,6 +56,7 @@ await server.register(pricingRoutes, { prefix: '/api/pricing' })
 await server.register(apiKeyRoutes, { prefix: '/api/keys' })
 await server.register(passwordResetRoutes, { prefix: '/api/password' })
 await server.register(notificationRoutes, { prefix: '/api/notifications' })
+await server.register(webhookRoutes, { prefix: '/api/webhooks' })
 
 // WebSocket
 await server.register(websocketRoutes)
