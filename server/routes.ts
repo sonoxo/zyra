@@ -6,9 +6,9 @@ import { storage } from "./storage";
 import { runScanSimulation } from "./scan-worker";
 import { generateReport } from "./report-generator";
 import { runPentestSimulation, runCloudScanSimulation, refreshThreatIntel } from "./simulations";
-import { seedIntelligenceData, fetchCveDatabase, runThreatHunt, runSecurityCopilot } from "./intelligence";
-import { ensureSoarPlaybooksSeeded, executePlaybook } from "./soar";
-import { getMetrics, getPrometheusMetrics, requestMetricsMiddleware, runThreatCorrelation, seedSecurityEvents } from "./metrics";
+import { fetchCveDatabase, runThreatHunt, runSecurityCopilot } from "./intelligence";
+import { executePlaybook } from "./soar";
+import { getMetrics, getPrometheusMetrics, requestMetricsMiddleware, runThreatCorrelation } from "./metrics";
 import { getGraphData, addGraphNode, addGraphEdge } from "./graph";
 import {
   insertPentestSessionSchema,
@@ -20,6 +20,7 @@ import {
   insertTaskSchema,
 } from "@shared/schema";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
+import { executeTask, processPendingTasks, getTaskExecutionHistory } from "./task-runner";
 import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "./email";
 import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken } from "./auth";
 import { z } from "zod";
@@ -1927,20 +1928,13 @@ export async function registerRoutes(
     });
   });
 
-  // ── Intelligence Layer: Seed on first access ─────────────────────────────
-  async function ensureIntelSeeded(orgId: string) {
-    await seedIntelligenceData(orgId);
-  }
-
   // ── Asset Inventory ───────────────────────────────────────────────────────
   app.get("/api/assets", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.user!.organizationId);
     const assets = await storage.getAssets(req.user!.organizationId);
     res.json(assets);
   });
 
   app.get("/api/assets/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.user!.organizationId);
     const assets = await storage.getAssets(req.user!.organizationId);
     res.json({
       total: assets.length,
@@ -2007,13 +2001,11 @@ export async function registerRoutes(
 
   // ── Attack Path Modeling ──────────────────────────────────────────────────
   app.get("/api/attack-paths", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.user!.organizationId);
     const paths = await storage.getAttackPaths(req.user!.organizationId);
     res.json(paths);
   });
 
   app.get("/api/attack-paths/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.user!.organizationId);
     const paths = await storage.getAttackPaths(req.user!.organizationId);
     res.json({
       total: paths.length,
@@ -2107,7 +2099,6 @@ export async function registerRoutes(
 
   // ── Intelligence Stats (Dashboard) ───────────────────────────────────────
   app.get("/api/intelligence/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.user!.organizationId);
     const [cves, assets, paths, queries, convs] = await Promise.all([
       fetchCveDatabase(req.user!.organizationId),
       storage.getAssets(req.user!.organizationId),
@@ -2254,7 +2245,6 @@ async function registerSoarRoutes(app: Express) {
   app.get("/api/soar/playbooks", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureSoarPlaybooksSeeded(orgId);
       const playbooks = await storage.getSoarPlaybooks(orgId);
       res.json(playbooks);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -2281,7 +2271,6 @@ async function registerSoarRoutes(app: Express) {
   app.get("/api/soar/stats", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureSoarPlaybooksSeeded(orgId);
       const playbooks = await storage.getSoarPlaybooks(orgId);
       const executions = await storage.getSoarExecutions(orgId);
       res.json({
@@ -2299,7 +2288,6 @@ async function registerSecurityEventsRoutes(app: Express) {
   app.get("/api/security-events", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await seedSecurityEvents(orgId);
       const limit = parseInt(req.query.limit as string) || 100;
       const events = await storage.getSecurityEvents(orgId, limit);
       res.json(events);
@@ -2317,7 +2305,6 @@ async function registerSecurityEventsRoutes(app: Express) {
   app.get("/api/security-events/stats", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await seedSecurityEvents(orgId);
       const events = await storage.getSecurityEvents(orgId, 500);
       const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
       const bySource: Record<string, number> = {};
@@ -2452,6 +2439,29 @@ async function registerMetricsRoutes(app: Express) {
     }
   });
 
+  app.post("/api/tasks/execute-pending", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const count = await processPendingTasks(req.user!.organizationId);
+      res.json({ executed: count });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/tasks/execution-history", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const history = await getTaskExecutionHistory(req.user!.organizationId);
+      res.json(history);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/tasks/:id/execute", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    try {
+      const result = await executeTask(req.params.id, req.user!.organizationId);
+      if (!result) return res.status(404).json({ message: "Task not found or not pending" });
+      await logAudit(req.user!.organizationId, req.user!.userId, "task.executed", "task", req.params.id, { status: result.status }, req.ip);
+      res.json(result);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
   app.patch("/api/tasks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
       const existing = await storage.getTask(req.params.id, req.user!.organizationId);
@@ -2469,6 +2479,61 @@ async function registerMetricsRoutes(app: Express) {
     try {
       await storage.deleteTask(req.params.id, req.user!.organizationId);
       await logAudit(req.user!.organizationId, req.user!.userId, "task.deleted", "task", req.params.id, {}, req.ip);
+      res.json({ success: true });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/admin/overview", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const [users, tasks, auditLogs, scans, incidents, subscription] = await Promise.all([
+        storage.getOrganizationUsers(orgId),
+        storage.getTasks(orgId),
+        storage.getAuditLogs(orgId, 50),
+        storage.getScans(orgId),
+        storage.getIncidents(orgId),
+        storage.getSubscription(orgId),
+      ]);
+      const roleCounts = users.reduce((acc: any, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {});
+      res.json({
+        userCount: users.length,
+        roleCounts,
+        taskStats: { total: tasks.length, pending: tasks.filter(t => t.status === "pending").length, running: tasks.filter(t => t.status === "running").length, completed: tasks.filter(t => t.status === "completed").length, failed: tasks.filter(t => t.status === "failed").length },
+        scanCount: scans.length,
+        incidentCount: incidents.length,
+        recentActivity: auditLogs.slice(0, 20),
+        subscription: subscription ? { plan: subscription.plan, status: subscription.status, maxUsers: subscription.maxUsers, maxScansPerMonth: subscription.maxScansPerMonth } : null,
+        users: users.map(u => ({ id: u.id, username: u.username, email: u.email, fullName: u.fullName, role: u.role, createdAt: u.createdAt, emailVerified: u.emailVerified })),
+      });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.patch("/api/admin/users/:id/role", requireAuth, requireRole("owner"), async (req: Request, res: Response) => {
+    try {
+      const { role } = req.body;
+      if (!["owner", "admin", "analyst", "viewer"].includes(role)) return res.status(400).json({ message: "Invalid role" });
+      if (req.params.id === req.user!.userId) return res.status(400).json({ message: "Cannot change your own role" });
+      const updated = await storage.updateUserRole(req.params.id, req.user!.organizationId, role);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      await logAudit(req.user!.organizationId, req.user!.userId, "admin.role_changed", "user", req.params.id, { newRole: role }, req.ip);
+      res.json(updated);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/admin/env-status", requireAuth, requireRole("owner", "admin"), async (_req: Request, res: Response) => {
+    res.json({
+      JWT_SECRET: !!process.env.JWT_SECRET,
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+      RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    });
+  });
+
+  app.delete("/api/admin/users/:id", requireAuth, requireRole("owner"), async (req: Request, res: Response) => {
+    try {
+      if (req.params.id === req.user!.userId) return res.status(400).json({ message: "Cannot remove yourself" });
+      await storage.removeTeamMember(req.params.id, req.user!.organizationId);
+      await logAudit(req.user!.organizationId, req.user!.userId, "admin.user_removed", "user", req.params.id, {}, req.ip);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });

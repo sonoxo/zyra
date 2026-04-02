@@ -301,7 +301,6 @@ export async function registerCaasmRoutes(app: Express) {
   app.get("/api/caasm/identities", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureIdentitiesSeeded(orgId);
       const identities = await storage.getCaasmIdentities(orgId);
       res.json(identities.map(i => ({ ...i, riskScore: calcIdentityRiskScore(i) })));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -325,7 +324,6 @@ export async function registerCaasmRoutes(app: Express) {
   app.get("/api/caasm/stats", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureIdentitiesSeeded(orgId);
       res.json(await getCaasmStats(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });

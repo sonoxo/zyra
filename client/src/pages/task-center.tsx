@@ -217,6 +217,14 @@ function TasksTab() {
     onError: (e: any) => { toast({ title: "Update failed", description: e.message, variant: "destructive" }); },
   });
 
+  const executeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("POST", `/api/tasks/${id}/execute`);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/tasks"] }); toast({ title: "Task executed by agent" }); },
+    onError: (e: any) => { toast({ title: "Execution failed", description: e.message, variant: "destructive" }); },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       return apiRequest("DELETE", `/api/tasks/${id}`);
@@ -308,8 +316,8 @@ function TasksTab() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {canEdit && task.status === "pending" && (
-                            <DropdownMenuItem onClick={() => updateMutation.mutate({ id: task.id, data: { status: "running" } })} data-testid={`action-start-${task.id}`}>
-                              <Play className="h-4 w-4 mr-2" /> Start
+                            <DropdownMenuItem onClick={() => executeMutation.mutate(task.id)} data-testid={`action-execute-${task.id}`}>
+                              <Play className="h-4 w-4 mr-2" /> Execute
                             </DropdownMenuItem>
                           )}
                           {canEdit && task.status === "running" && (

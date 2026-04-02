@@ -13,28 +13,29 @@ Zyra is an AI-native cybersecurity ecosystem combining vulnerability scanning, A
 ## Project Structure
 ```
 client/src/
-  pages/          - All page components (39 pages + auth)
-  components/     - Layout (6-group sidebar nav), ThemeProvider, shadcn/ui
+  pages/          - All page components (40+ pages + auth)
+  components/     - Layout (7-group sidebar nav), ThemeProvider, shadcn/ui
   lib/            - auth, queryClient
   hooks/          - use-toast
 
 server/
-  index.ts            - Express server entry point
-  routes.ts           - All API routes (auth + 24 feature modules); exports requireAuth
-  simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
+  index.ts            - Express server entry point (env validation at startup)
+  routes.ts           - All API routes (auth + 24 feature modules + admin + task runner)
   auth.ts             - JWT auth middleware (requireAuth, requireRole, token generation/verification)
   storage.ts          - DatabaseStorage (IStorage interface, 50 tables)
-  exposure-manager.ts - Exposure Management: attack path graph visualizer, exposure monitor with alert triggers, automated remediation engine
-  team-ops.ts         - Security Team Operations: RBAC permissions matrix, activity feed, incident comments, on-call scheduling, escalation policies, approval workflows
-  enterprise.ts       - Enterprise Readiness: SIEM integration (Splunk/Elastic/Sentinel/QRadar export), data retention controls with purge, multi-tenant workspaces
+  task-runner.ts      - Agent task execution engine (scan, playbook, remediation, audit, compliance, general)
+  exposure-manager.ts - Exposure Management: attack path graph visualizer, exposure monitor, remediation engine
+  team-ops.ts         - Security Team Operations: RBAC, activity feed, on-call scheduling, escalation, approvals
+  enterprise.ts       - Enterprise Readiness: SIEM integration, data retention, multi-tenant workspaces
+  simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
   db.ts               - Database connection
   scan-worker.ts      - Security scan simulations (Semgrep, Trivy, Bandit, ZAP)
   report-generator.ts - Automated compliance report generation
-  soar.ts             - SOAR automation engine (6 built-in playbooks, execution simulator)
-  metrics.ts          - Prometheus metrics, request middleware, threat correlation, event seeding
-  graph.ts            - Security graph seeding (14 nodes, 15 edges) and query functions
-  caasm.ts            - CAASM engine: risk scoring, correlation, identity seeding, API routes
-  exposure.ts         - Attack Path Risk Prioritization engine: exposure scoring, exploitability detection, critical path detection, composite risk scoring, remediation generation
+  soar.ts             - SOAR automation engine (playbook execution)
+  metrics.ts          - Prometheus metrics, request middleware, threat correlation
+  graph.ts            - Security graph nodes/edges and query functions
+  caasm.ts            - CAASM engine: risk scoring, correlation, API routes
+  exposure.ts         - Attack Path Risk Prioritization engine
   stripe.ts           - Stripe Checkout integration: session creation, status retrieval, graceful degradation
 
 shared/
@@ -58,16 +59,16 @@ shared/
 
 **Enterprise Readiness (3):** siem_configs, retention_policies, workspaces
 
-**Task Center (1):** tasks (queue with status: pending/running/completed/failed/cancelled)
+**Task Center (1):** tasks (queue with status: pending/running/completed/failed/cancelled, agent execution with results)
 
-## Sidebar Navigation (6 groups)
+## Sidebar Navigation (7 groups)
 - **Overview**: Dashboard, Analytics, Security Posture, Getting Started (/onboarding)
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
 - **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty, SOAR Automation
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
-- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management (Attack Graph / Exposure Monitor / Risk Prioritization / All Paths / Exposure Analysis), Threat Hunting, Security Copilot, Security Data Lake, Security Graph
+- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management, Threat Hunting, Security Copilot, Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
-- **Platform**: Task Center (queue + activity log), Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise Readiness (SIEM / Retention / Workspaces), Enterprise / SSO, Billing, API Keys, Settings
+- **Platform**: Task Center, Admin Panel, Team, Audit Logs, Platform Metrics, Enterprise Readiness, Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |
@@ -83,7 +84,7 @@ shared/
 | /secrets | Secrets Scanning (AWS keys, GitHub tokens, DB creds across repos) |
 | /incidents | Incident Response Management (triage, investigate, contain, resolve, close) |
 | /vulnerabilities | Vulnerability Lifecycle Tracking (CVE, CVSS, status, severity) |
-| /risks | Risk Register (likelihood × impact matrix, heat map, treatment workflow) |
+| /risks | Risk Register (likelihood x impact matrix, heat map, treatment workflow) |
 | /sbom | Supply Chain / SBOM (dependency scanning, vulnerability mapping) |
 | /compliance | SOC2/HIPAA/ISO27001/PCI-DSS/FedRAMP/GDPR compliance mapping |
 | /devsecops | DevSecOps pipelines, continuous monitoring, alert rules |
@@ -95,6 +96,8 @@ shared/
 | /bug-bounty | Bug bounty program — submit, triage, accept, reward |
 | /container-security | Container image & Kubernetes cluster vulnerability scanning |
 | /onboarding | 8-step getting started checklist with progress tracking |
+| /admin | Admin Panel — user/role management, platform activity, system controls, env status |
+| /task-center | Task Center — queue, agent execution, activity log |
 | /repositories | Repository management (GitHub/GitLab) |
 | /documents | Document upload and management |
 | /integrations | GitHub/GitLab/Slack/Jira integrations |
@@ -122,7 +125,7 @@ shared/
 - `GET/POST/DELETE /api/api-keys` — API key management
 - `GET/PUT /api/billing/subscription` + usage + plans — Billing
 - `GET /api/stripe/status` — Stripe configuration check
-- `POST /api/stripe/create-checkout-session` — Create Stripe Checkout session (redirects to Stripe)
+- `POST /api/stripe/create-checkout-session` — Create Stripe Checkout session
 - `GET /api/stripe/session/:sessionId` — Retrieve Stripe Checkout session status
 - `GET/PUT /api/sso/config` — SSO configuration
 - `GET /api/analytics/vulnerabilities` — Advanced analytics
@@ -142,7 +145,21 @@ shared/
 - `GET/POST /api/containers/scans` + findings + scan + stats — Container Security
 - `GET/POST /api/onboarding` + complete step — Onboarding Checklist
 - `GET/POST/PATCH/DELETE /api/tasks` + stats/summary — Task Center
+- `POST /api/tasks/:id/execute` — Execute single task via agent
+- `POST /api/tasks/execute-pending` — Execute all pending tasks
+- `GET /api/tasks/execution-history` — Task execution history
+- `GET /api/admin/overview` — Admin panel overview (owner/admin only)
+- `GET /api/admin/env-status` — Environment variable status
+- `PATCH /api/admin/users/:id/role` — Change user role (owner only)
+- `DELETE /api/admin/users/:id` — Remove user (owner only)
 - `POST /api/auth/refresh` — Token refresh
+
+## Task Runner / Agent Layer
+- **Module**: `server/task-runner.ts`
+- **Task Types**: scan, playbook, remediation, audit, compliance, general
+- **Flow**: Create task (pending) → Execute (running) → Completed/Failed
+- **Features**: Auto-creates audit logs, sends notifications on completion/failure, logs execution duration
+- **Admin**: Can batch-execute all pending tasks from Admin Panel
 
 ## Stripe Integration
 - **Module**: `server/stripe.ts` — Stripe Checkout session creation, status retrieval
@@ -159,11 +176,21 @@ shared/
 - Frontend `queryClient.ts` auto-attaches Bearer header and handles 401 with token refresh
 - Rate limiting: 200 req/15min general, 20 req/15min auth endpoints
 
+## Environment Validation
+- Startup env validation in `server/index.ts`
+- **Required**: `DATABASE_URL`, `JWT_SECRET` (fatal error if missing)
+- **Optional**: `STRIPE_SECRET_KEY`, `RESEND_API_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY` (warning, features limited)
+
+## Mock Data Status
+- All seed functions removed from route handlers (no fake data injection on access)
+- Pages show empty states when no data exists
+- All data comes from real user actions (creating tasks, running scans, etc.)
+
 ## Key Notes
 - `apiRequest` returns `Promise<Response>` — must call `.json()` to parse body
-- CVSS score auto-maps to severity in vulnerability form (≥9=critical, ≥7=high, ≥4=medium)
-- Risk score = likelihood × impact (both 1–5 via Select dropdowns)
-- All 7 new SecOps tables use UUID primary keys (`varchar` with `gen_random_uuid()`)
+- CVSS score auto-maps to severity in vulnerability form
+- Risk score = likelihood x impact (both 1-5 via Select dropdowns)
+- All SecOps tables use UUID primary keys (`varchar` with `gen_random_uuid()`)
 - Email verification required for new accounts (via Resend API)
 - Account self-deletion available in Settings > Account tab
 - `RESEND_API_KEY` secret required for sending verification emails

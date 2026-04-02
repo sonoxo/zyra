@@ -4,6 +4,21 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
+function validateEnv() {
+  const required = ["DATABASE_URL", "JWT_SECRET"];
+  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY"];
+  const missing = required.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    console.error(`FATAL: Missing required environment variables: ${missing.join(", ")}`);
+    process.exit(1);
+  }
+  const unset = optional.filter(k => !process.env[k]);
+  if (unset.length > 0) {
+    console.warn(`WARN: Optional env vars not set (features will be limited): ${unset.join(", ")}`);
+  }
+}
+validateEnv();
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -68,12 +83,14 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (capturedJsonResponse && !SENSITIVE_PATHS.some(sp => path.startsWith(sp))) {
+        const body = JSON.stringify(capturedJsonResponse);
+        logLine += ` :: ${body.length > 200 ? body.slice(0, 200) + "..." : body}`;
       }
 
       log(logLine);

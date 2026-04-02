@@ -156,7 +156,6 @@ export async function registerEnterpriseRoutes(app: Express) {
   app.get("/api/siem/config", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await seedEnterpriseData(orgId);
       const configs = await storage.getSiemConfigs(orgId);
       const maskedConfigs = configs.map(c => ({ ...c, apiKey: maskApiKey(c.apiKey) }));
       const providers = Object.entries(SIEM_PROVIDERS).map(([key, val]) => ({ id: key, ...val }));
@@ -228,7 +227,6 @@ export async function registerEnterpriseRoutes(app: Express) {
   app.get("/api/retention-policy", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await seedEnterpriseData(orgId);
       const policies = await storage.getRetentionPolicies(orgId);
       const dataTypes = DATA_TYPES;
       res.json({ policies, dataTypes });
@@ -292,7 +290,6 @@ export async function registerEnterpriseRoutes(app: Express) {
   app.get("/api/workspaces", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await seedEnterpriseData(orgId);
       const ws = await storage.getWorkspaces(orgId);
       res.json(ws);
     } catch (e: any) { res.status(500).json({ message: e.message }); }

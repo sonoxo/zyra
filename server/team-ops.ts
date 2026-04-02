@@ -222,7 +222,6 @@ export async function registerTeamOpsRoutes(app: Express) {
   app.get("/api/team-ops/activity", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureTeamOpsSeeded(orgId);
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
       const activities = await storage.getTeamActivities(orgId, limit);
       res.json(activities);
@@ -292,7 +291,6 @@ export async function registerTeamOpsRoutes(app: Express) {
   app.get("/api/team-ops/oncall", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureTeamOpsSeeded(orgId);
       const schedules = await storage.getOncallSchedules(orgId);
       const now = new Date();
       const current = schedules.find(s => new Date(s.startTime) <= now && new Date(s.endTime) >= now && s.label === "Primary On-Call");
@@ -333,7 +331,6 @@ export async function registerTeamOpsRoutes(app: Express) {
   app.get("/api/team-ops/escalation", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureTeamOpsSeeded(orgId);
       res.json(await storage.getEscalationPolicies(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
@@ -392,7 +389,6 @@ export async function registerTeamOpsRoutes(app: Express) {
   app.get("/api/team-ops/approvals", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      await ensureTeamOpsSeeded(orgId);
       res.json(await storage.getApprovalRequests(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
