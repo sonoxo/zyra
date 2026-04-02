@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Shield, Lock, Eye, Activity, AlertTriangle, CheckCircle, XCircle, Plus, Users, Settings, LogOut, Bell, Zap, CreditCard, Check } from "lucide-react"
+import { Shield, Lock, Eye, Activity, AlertTriangle, CheckCircle, XCircle, Plus, Users, Settings, LogOut, Bell, Zap, CreditCard, Check, Server, Database, Key, ShieldAlert } from "lucide-react"
 import { useAuth } from "../../context/AuthContext"
 import { orgs, activities, assets, threats, incidents } from "../../lib/api"
 
@@ -17,7 +17,7 @@ interface ActivityLog {
 export default function Dashboard() {
   const router = useRouter()
   const { user, logout, isAuthenticated, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'incidents' | 'activity' | 'team' | 'billing' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'incidents' | 'activity' | 'team' | 'billing' | 'admin' | 'settings'>('overview')
   const [orgList, setOrgList] = useState<any[]>([])
   const [selectedOrg, setSelectedOrg] = useState<any>(null)
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([])
@@ -127,6 +127,7 @@ export default function Dashboard() {
                 { id: 'activity', label: 'Activity', icon: Activity },
                 { id: 'team', label: 'Team', icon: Users },
                 { id: 'billing', label: 'Billing', icon: CreditCard },
+                { id: 'admin', label: 'Admin', icon: ShieldAlert },
                 { id: 'settings', label: 'Settings', icon: Settings },
               ].map(tab => (
                 <button
@@ -396,6 +397,82 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === 'admin' && user?.role === 'ADMIN' || user?.role === 'OWNER' ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Users className="w-5 h-5 text-cyan-400" />
+                  <span className="text-gray-400 text-sm">Total Users</span>
+                </div>
+                <div className="text-2xl font-bold">{selectedOrg?.members?.length || 0}</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Server className="w-5 h-5 text-cyan-400" />
+                  <span className="text-gray-400 text-sm">Assets</span>
+                </div>
+                <div className="text-2xl font-bold">{assetList.length}</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <ShieldAlert className="w-5 h-5 text-cyan-400" />
+                  <span className="text-gray-400 text-sm">Open Threats</span>
+                </div>
+                <div className="text-2xl font-bold">{threatList.filter(t => t.status === 'OPEN').length}</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Key className="w-5 h-5 text-cyan-400" />
+                  <span className="text-gray-400 text-sm">API Keys</span>
+                </div>
+                <div className="text-2xl font-bold">-</div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-xl">
+              <div className="p-6 border-b border-gray-800">
+                <h3 className="text-lg font-semibold">System Health</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                  <span className="text-gray-400">API Server</span>
+                  <span className="flex items-center space-x-2 text-green-400">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Online</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                  <span className="text-gray-400">Database</span>
+                  <span className="flex items-center space-x-2 text-green-400">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Connected</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                  <span className="text-gray-400">WebSocket</span>
+                  <span className="flex items-center space-x-2 text-yellow-400">
+                    <Activity className="w-4 h-4" />
+                    <span>Standby</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-xl">
+              <div className="p-6 border-b border-gray-800">
+                <h3 className="text-lg font-semibold">Audit Log</h3>
+              </div>
+              <div className="p-6">
+                <div className="text-center py-8 text-gray-500">
+                  <Activity className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+                  <p>Full audit log available in enterprise</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {activeTab === 'settings' && (
           <div className="bg-gray-900 border border-gray-800 rounded-xl">
