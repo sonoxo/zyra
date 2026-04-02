@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import type { Express, Request, Response } from "express";
-import { requireAuth } from "./routes";
+import { requireAuth } from "./auth";
 
 // ── Risk Scoring Engine ──────────────────────────────────────────────────────
 
@@ -278,14 +278,14 @@ export async function getCaasmStats(orgId: string) {
 export async function registerCaasmRoutes(app: Express) {
   app.get("/api/caasm/assets", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       res.json(await buildCorrelatedAssets(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.get("/api/caasm/assets/high-risk", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const correlated = await buildCorrelatedAssets(orgId);
       res.json(correlated.filter(a => a.riskScore >= 70));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -293,14 +293,14 @@ export async function registerCaasmRoutes(app: Express) {
 
   app.get("/api/caasm/assets/exposed", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       res.json(await getExternalAttackSurface(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.get("/api/caasm/identities", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureIdentitiesSeeded(orgId);
       const identities = await storage.getCaasmIdentities(orgId);
       res.json(identities.map(i => ({ ...i, riskScore: calcIdentityRiskScore(i) })));
@@ -309,14 +309,14 @@ export async function registerCaasmRoutes(app: Express) {
 
   app.post("/api/caasm/identities", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       res.json(await storage.createCaasmIdentity({ ...req.body, organizationId: orgId }));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.delete("/api/caasm/identities/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await storage.deleteCaasmIdentity(req.params.id, orgId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -324,7 +324,7 @@ export async function registerCaasmRoutes(app: Express) {
 
   app.get("/api/caasm/stats", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureIdentitiesSeeded(orgId);
       res.json(await getCaasmStats(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }

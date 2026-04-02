@@ -1,7 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { storage } from "./storage";
@@ -19,36 +17,26 @@ import {
   insertPipelineConfigSchema,
   insertThreatIntelItemSchema,
   insertMonitoringConfigSchema,
+  insertTaskSchema,
 } from "@shared/schema";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "./email";
+import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken } from "./auth";
+import { z } from "zod";
+export { requireAuth } from "./auth";
 
-declare module "express-session" {
-  interface SessionData {
-    userId: string;
-    organizationId: string;
-    role: string;
-  }
-}
+const registerBodySchema = z.object({
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  fullName: z.string().min(1).max(100),
+  organizationName: z.string().min(2).max(100),
+});
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  next();
-}
-
-function requireRole(...roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    if (!req.session.role || !roles.includes(req.session.role)) {
-      return res.status(403).json({ message: "Insufficient permissions" });
-    }
-    next();
-  };
-}
+const loginBodySchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
 
 async function logAudit(orgId: string, userId: string, action: string, resourceType?: string, resourceId?: string, details?: any, ipAddress?: string) {
   try {
@@ -62,35 +50,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  const PgStore = connectPgSimple(session);
-
-  app.use(
-    session({
-      store: new PgStore({
-        conString: process.env.DATABASE_URL,
-        createTableIfMissing: true,
-      }),
-      secret: process.env.SESSION_SECRET || "zyra-secret-key-change-in-prod",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-      },
-    })
-  );
-
   app.use(requestMetricsMiddleware());
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
-      const { username, email, password, fullName, organizationName } = req.body;
-
-      if (!username || !email || !password || !fullName || !organizationName) {
-        return res.status(400).json({ message: "All fields are required" });
+      const parsed = registerBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.issues.map(i => i.message).join(", ");
+        return res.status(400).json({ message: errors });
       }
+      const { username, email, password, fullName, organizationName } = parsed.data;
 
       const existing = await storage.getUserByUsername(username);
       if (existing) {
@@ -159,7 +128,11 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
+      const parsed = loginBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      const { username, password } = parsed.data;
       const user = await storage.getUserByUsername(username);
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
@@ -180,21 +153,25 @@ export async function registerRoutes(
 
       const org = await storage.getOrganization(user.organizationId);
 
-      req.session.userId = user.id;
-      req.session.organizationId = user.organizationId;
-      req.session.role = user.role;
+      const tokenPayload = { userId: user.id, organizationId: user.organizationId, role: user.role };
+      const accessToken = generateAccessToken(tokenPayload);
+      const refreshToken = generateRefreshToken(tokenPayload);
 
       await logAudit(user.organizationId, user.id, "user.login", "user", user.id, { username }, req.ip);
 
       return res.json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        organizationId: user.organizationId,
-        organization: org ? { id: org.id, name: org.name, slug: org.slug, plan: org.plan } : undefined,
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          avatarUrl: user.avatarUrl,
+          organizationId: user.organizationId,
+          organization: org ? { id: org.id, name: org.name, slug: org.slug, plan: org.plan } : undefined,
+        },
       });
     } catch (err: any) {
       return res.status(500).json({ message: "Login failed" });
@@ -269,16 +246,37 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/logout", (req: Request, res: Response) => {
-    req.session.destroy(() => {
-      res.json({ message: "Logged out" });
-    });
+  app.post("/api/auth/logout", (_req: Request, res: Response) => {
+    res.json({ message: "Logged out" });
+  });
+
+  app.post("/api/auth/refresh", async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({ message: "Refresh token is required" });
+      }
+      const payload = verifyToken(refreshToken, "refresh");
+      if (!payload) {
+        return res.status(401).json({ message: "Invalid or expired refresh token" });
+      }
+      const user = await storage.getUser(payload.userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      const tokenPayload = { userId: user.id, organizationId: user.organizationId, role: user.role };
+      const newAccessToken = generateAccessToken(tokenPayload);
+      const newRefreshToken = generateRefreshToken(tokenPayload);
+      return res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+    } catch (err: any) {
+      return res.status(500).json({ message: "Token refresh failed" });
+    }
   });
 
   app.delete("/api/auth/account", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId!;
-      const orgId = req.session.organizationId!;
+      const userId = req.user!.userId;
+      const orgId = req.user!.organizationId;
       const { password } = req.body;
 
       if (!password) {
@@ -298,21 +296,15 @@ export async function registerRoutes(
       await logAudit(orgId, userId, "user.account_deleted", "user", userId, { username: user.username }, req.ip);
       await storage.deleteUser(userId);
 
-      req.session.destroy(() => {
-        res.json({ message: "Account deleted successfully" });
-      });
+      res.json({ message: "Account deleted successfully" });
     } catch (err: any) {
       console.error("Account deletion error:", err);
       return res.status(500).json({ message: "Failed to delete account" });
     }
   });
 
-  app.get("/api/auth/me", async (req: Request, res: Response) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const user = await storage.getUser(req.session.userId);
+  app.get("/api/auth/me", requireAuth, async (req: Request, res: Response) => {
+    const user = await storage.getUser(req.user!.userId);
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
@@ -333,7 +325,7 @@ export async function registerRoutes(
 
   app.get("/api/dashboard/stats", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const allScans = await storage.getScans(orgId);
       const allFindings = await storage.getFindingsByOrg(orgId);
       const mappings = await storage.getComplianceMappings(orgId);
@@ -349,7 +341,7 @@ export async function registerRoutes(
       const completedScans = allScans.filter((s) => s.status === "completed");
       const securityScore = completedScans.length > 0
         ? Math.round(completedScans.reduce((acc, s) => acc + (s.securityScore || 0), 0) / completedScans.length)
-        : 85;
+        : 0;
 
       const frameworks = ["SOC2", "HIPAA", "ISO27001", "PCI-DSS", "FedRAMP", "GDPR"];
       const complianceCoverage = frameworks.map((fw) => {
@@ -447,6 +439,20 @@ export async function registerRoutes(
         high: allRisks.filter(r => r.riskScore >= 12 && r.riskScore < 20).length,
       };
 
+      const [teamMembers, recentAuditLogs, subscription] = await Promise.all([
+        storage.getOrganizationUsers(orgId),
+        storage.getAuditLogs(orgId),
+        storage.getSubscription(orgId),
+      ]);
+
+      const recentActivity = recentAuditLogs.slice(0, 10).map(l => ({
+        id: l.id,
+        action: l.action,
+        userId: l.userId,
+        resourceType: l.resourceType,
+        createdAt: l.createdAt,
+      }));
+
       return res.json({
         totalScans: allScans.length,
         activeScans,
@@ -471,6 +477,10 @@ export async function registerRoutes(
         vulnerabilitiesStats,
         risksStats,
         latestPostureScore: latestPosture?.overallScore ?? null,
+        teamMemberCount: teamMembers.length,
+        subscriptionStatus: subscription?.status ?? "none",
+        subscriptionPlan: subscription?.plan ?? "none",
+        recentActivity,
       });
     } catch (err: any) {
       console.error("Dashboard error:", err);
@@ -479,20 +489,20 @@ export async function registerRoutes(
   });
 
   app.get("/api/scans", requireAuth, async (req: Request, res: Response) => {
-    const orgScans = await storage.getScans(req.session.organizationId!);
+    const orgScans = await storage.getScans(req.user!.organizationId);
     return res.json(orgScans);
   });
 
   app.get("/api/scans/:id", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const scan = await storage.getScan(id, req.session.organizationId!);
+    const scan = await storage.getScan(id, req.user!.organizationId);
     if (!scan) return res.status(404).json({ message: "Scan not found" });
     return res.json(scan);
   });
 
   app.get("/api/scans/:id/findings", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const scan = await storage.getScan(id, req.session.organizationId!);
+    const scan = await storage.getScan(id, req.user!.organizationId);
     if (!scan) return res.status(403).json({ message: "Access denied" });
     const findings = await storage.getScanFindings(id);
     return res.json(findings);
@@ -500,8 +510,8 @@ export async function registerRoutes(
 
   app.post("/api/scans", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const { name, scanType, targetType, targetId, targetName } = req.body;
 
       if (!scanType) {
@@ -537,26 +547,26 @@ export async function registerRoutes(
   });
 
   app.get("/api/compliance", requireAuth, async (req: Request, res: Response) => {
-    const mappings = await storage.getComplianceMappings(req.session.organizationId!);
+    const mappings = await storage.getComplianceMappings(req.user!.organizationId);
     return res.json(mappings);
   });
 
   app.get("/api/reports", requireAuth, async (req: Request, res: Response) => {
-    const orgReports = await storage.getReports(req.session.organizationId!);
+    const orgReports = await storage.getReports(req.user!.organizationId);
     return res.json(orgReports);
   });
 
   app.get("/api/reports/:id", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const report = await storage.getReport(id, req.session.organizationId!);
+    const report = await storage.getReport(id, req.user!.organizationId);
     if (!report) return res.status(404).json({ message: "Report not found" });
     return res.json(report);
   });
 
   app.post("/api/reports", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const { title, frameworks } = req.body;
 
       const report = await storage.createReport({
@@ -584,7 +594,7 @@ export async function registerRoutes(
 
   app.get("/api/reports/:id/export/pdf", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const report = await storage.getReport(id, req.session.organizationId!);
+    const report = await storage.getReport(id, req.user!.organizationId);
     if (!report) return res.status(404).json({ message: "Report not found" });
 
     const pdfContent = generatePDFContent(report);
@@ -594,13 +604,13 @@ export async function registerRoutes(
   });
 
   app.get("/api/repositories", requireAuth, async (req: Request, res: Response) => {
-    const repos = await storage.getRepositories(req.session.organizationId!);
+    const repos = await storage.getRepositories(req.user!.organizationId);
     return res.json(repos);
   });
 
   app.post("/api/repositories", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { provider, name, fullName, url, branch } = req.body;
 
       if (!name || !url) {
@@ -616,7 +626,7 @@ export async function registerRoutes(
         branch: branch || "main",
       });
 
-      await logAudit(orgId, req.session.userId!, "repository.create", "repository", repo.id, { name, provider }, req.ip);
+      await logAudit(orgId, req.user!.userId, "repository.create", "repository", repo.id, { name, provider }, req.ip);
       return res.json(repo);
     } catch (err: any) {
       console.error("Create repo error:", err);
@@ -626,19 +636,19 @@ export async function registerRoutes(
 
   app.delete("/api/repositories/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await storage.deleteRepository(id, req.session.organizationId!);
+    await storage.deleteRepository(id, req.user!.organizationId);
     return res.json({ message: "Deleted" });
   });
 
   app.get("/api/documents", requireAuth, async (req: Request, res: Response) => {
-    const docs = await storage.getDocuments(req.session.organizationId!);
+    const docs = await storage.getDocuments(req.user!.organizationId);
     return res.json(docs);
   });
 
   app.post("/api/documents", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const { name, type, size } = req.body;
 
       const doc = await storage.createDocument({
@@ -659,26 +669,26 @@ export async function registerRoutes(
 
   app.delete("/api/documents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await logAudit(req.session.organizationId!, req.session.userId!, "document.delete", "document", id, null, req.ip);
-    await storage.deleteDocument(id, req.session.organizationId!);
+    await logAudit(req.user!.organizationId, req.user!.userId, "document.delete", "document", id, null, req.ip);
+    await storage.deleteDocument(id, req.user!.organizationId);
     return res.json({ message: "Deleted" });
   });
 
   app.get("/api/settings", requireAuth, async (req: Request, res: Response) => {
     const category = req.query.category as string | undefined;
-    const allSettings = await storage.getSettings(req.session.organizationId!, category);
+    const allSettings = await storage.getSettings(req.user!.organizationId, category);
     return res.json(allSettings);
   });
 
   app.put("/api/settings", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { category, key, value } = req.body;
       if (!category || !key) {
         return res.status(400).json({ message: "Category and key are required" });
       }
       const setting = await storage.upsertSetting({ organizationId: orgId, category, key, value });
-      await logAudit(orgId, req.session.userId!, "settings.update", "setting", setting.id, { category, key }, req.ip);
+      await logAudit(orgId, req.user!.userId, "settings.update", "setting", setting.id, { category, key }, req.ip);
       return res.json(setting);
     } catch (err: any) {
       return res.status(500).json({ message: "Failed to save setting" });
@@ -686,17 +696,17 @@ export async function registerRoutes(
   });
 
   app.get("/api/audit-logs", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const logs = await storage.getAuditLogs(req.session.organizationId!);
+    const logs = await storage.getAuditLogs(req.user!.organizationId);
     return res.json(logs);
   });
 
   app.get("/api/reports/:id/export/csv", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const report = await storage.getReport(id, req.session.organizationId!);
+    const report = await storage.getReport(id, req.user!.organizationId);
     if (!report) return res.status(404).json({ message: "Report not found" });
 
-    const findings = await storage.getFindingsByOrg(req.session.organizationId!);
-    const mappings = await storage.getComplianceMappings(req.session.organizationId!);
+    const findings = await storage.getFindingsByOrg(req.user!.organizationId);
+    const mappings = await storage.getComplianceMappings(req.user!.organizationId);
 
     function csvSafe(val: string): string {
       let s = (val || "").replace(/"/g, '""');
@@ -735,13 +745,13 @@ export async function registerRoutes(
 
   // === API KEY MANAGEMENT ===
   app.get("/api/api-keys", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const keys = await storage.getApiKeys(req.session.organizationId!);
+    const keys = await storage.getApiKeys(req.user!.organizationId);
     return res.json(keys.map((k) => ({ ...k, keyHash: undefined })));
   });
 
   app.post("/api/api-keys", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { name, permissions, expiresInDays } = req.body;
       if (!name) return res.status(400).json({ message: "Name is required" });
 
@@ -763,10 +773,10 @@ export async function registerRoutes(
         permissions: permissions || ["read:scans", "read:reports"],
         expiresAt: expiresAt ? expiresAt : undefined,
         isActive: true,
-        createdById: req.session.userId!,
+        createdById: req.user!.userId,
       });
 
-      await logAudit(orgId, req.session.userId!, "apikey.create", "api_key", apiKey.id, { name }, req.ip);
+      await logAudit(orgId, req.user!.userId, "apikey.create", "api_key", apiKey.id, { name }, req.ip);
       return res.json({ ...apiKey, keyHash: undefined, rawKey });
     } catch (err: any) {
       return res.status(500).json({ message: "Failed to create API key" });
@@ -775,15 +785,15 @@ export async function registerRoutes(
 
   app.delete("/api/api-keys/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await logAudit(req.session.organizationId!, req.session.userId!, "apikey.revoke", "api_key", id, null, req.ip);
-    await storage.deleteApiKey(id, req.session.organizationId!);
+    await logAudit(req.user!.organizationId, req.user!.userId, "apikey.revoke", "api_key", id, null, req.ip);
+    await storage.deleteApiKey(id, req.user!.organizationId);
     return res.json({ message: "API key revoked" });
   });
 
   app.post("/api/api-keys/:id/regenerate", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
-      const existing = await storage.getApiKey(id, req.session.organizationId!);
+      const existing = await storage.getApiKey(id, req.user!.organizationId);
       if (!existing) return res.status(404).json({ message: "API key not found" });
 
       const rawKey = `sf_${crypto.randomBytes(32).toString("hex")}`;
@@ -791,7 +801,7 @@ export async function registerRoutes(
       const keyPrefix = rawKey.substring(0, 10);
 
       await storage.updateApiKey(id, { keyHash, keyPrefix });
-      await logAudit(req.session.organizationId!, req.session.userId!, "apikey.regenerate", "api_key", id, null, req.ip);
+      await logAudit(req.user!.organizationId, req.user!.userId, "apikey.regenerate", "api_key", id, null, req.ip);
       return res.json({ rawKey, keyPrefix });
     } catch (err: any) {
       return res.status(500).json({ message: "Failed to regenerate key" });
@@ -809,7 +819,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/billing/subscription", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     let sub = await storage.getSubscription(orgId);
     if (!sub) {
       const trialEndsAt = new Date();
@@ -849,7 +859,7 @@ export async function registerRoutes(
 
   app.put("/api/billing/subscription", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { plan } = req.body;
       if (!plan || !PLAN_DETAILS[plan]) return res.status(400).json({ message: "Invalid plan. Choose: professional or enterprise." });
 
@@ -871,7 +881,7 @@ export async function registerRoutes(
         currentPeriodEnd: periodEnd,
       });
 
-      await logAudit(orgId, req.session.userId!, "billing.subscription_update", "subscription", undefined, { plan }, req.ip);
+      await logAudit(orgId, req.user!.userId, "billing.subscription_update", "subscription", undefined, { plan }, req.ip);
       return res.json(sub);
     } catch (err: any) {
       return res.status(500).json({ message: "Failed to update subscription" });
@@ -881,7 +891,7 @@ export async function registerRoutes(
   // === ANALYTICS & INSIGHTS ===
   app.get("/api/analytics/overview", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const findings = await storage.getFindingsByOrg(orgId);
       const open = findings.filter((f) => !f.isResolved);
 
@@ -903,7 +913,7 @@ export async function registerRoutes(
 
   // === MULTI-REGION DEPLOYMENT ===
   app.get("/api/deployment/regions", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const config = await storage.getSetting(orgId, "deployment", "regions");
     const savedConfig = (config?.value as any) || {};
 
@@ -920,7 +930,7 @@ export async function registerRoutes(
 
   app.put("/api/deployment/config", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { regions, primaryRegion, failoverEnabled, rateLimit } = req.body;
 
       if (regions) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "regions", value: regions });
@@ -928,7 +938,7 @@ export async function registerRoutes(
       if (failoverEnabled !== undefined) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "failoverEnabled", value: failoverEnabled });
       if (rateLimit) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "rate_limit", value: rateLimit });
 
-      await logAudit(orgId, req.session.userId!, "deployment.config_update", "deployment", undefined, { primaryRegion, failoverEnabled }, req.ip);
+      await logAudit(orgId, req.user!.userId, "deployment.config_update", "deployment", undefined, { primaryRegion, failoverEnabled }, req.ip);
       return res.json({ message: "Deployment configuration updated" });
     } catch (err: any) {
       return res.status(500).json({ message: "Failed to update deployment config" });
@@ -937,7 +947,7 @@ export async function registerRoutes(
 
   // === ENHANCED AUDIT LOGS ===
   app.get("/api/audit-logs/export", requireAuth, requireRole("owner"), async (req: Request, res: Response) => {
-    const logs = await storage.getAuditLogs(req.session.organizationId!, 1000);
+    const logs = await storage.getAuditLogs(req.user!.organizationId, 1000);
     const lines = ["Timestamp,Action,Resource Type,Resource ID,User ID,IP Address,Details"];
     logs.forEach((log) => {
       lines.push(`${log.createdAt},${log.action},${log.resourceType || ""},${log.resourceId || ""},${log.userId || ""},${log.ipAddress || ""},${JSON.stringify(log.details || {}).replace(/"/g, '""')}`);
@@ -949,14 +959,14 @@ export async function registerRoutes(
 
   // === AI PENTEST ROUTES ===
   app.get("/api/pentest/sessions", requireAuth, async (req: Request, res: Response) => {
-    const sessions = await storage.getPentestSessions(req.session.organizationId!);
+    const sessions = await storage.getPentestSessions(req.user!.organizationId);
     res.json(sessions);
   });
 
   app.post("/api/pentest/sessions", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const data = insertPentestSessionSchema.parse(req.body);
 
       if (!data.authorizedBy) {
@@ -982,7 +992,7 @@ export async function registerRoutes(
 
   app.get("/api/pentest/sessions/:id", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const session = await storage.getPentestSession(id, req.session.organizationId!);
+    const session = await storage.getPentestSession(id, req.user!.organizationId);
     if (!session) return res.status(404).json({ message: "Session not found" });
     const findings = await storage.getPentestFindings(session.id);
     res.json({ ...session, findings });
@@ -990,7 +1000,7 @@ export async function registerRoutes(
 
   app.get("/api/pentest/sessions/:id/findings", requireAuth, async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const session = await storage.getPentestSession(id, req.session.organizationId!);
+    const session = await storage.getPentestSession(id, req.user!.organizationId);
     if (!session) return res.status(404).json({ message: "Session not found" });
     const findings = await storage.getPentestFindings(session.id);
     res.json(findings);
@@ -998,7 +1008,7 @@ export async function registerRoutes(
 
   app.post("/api/pentest/sessions/:id/run", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const session = await storage.getPentestSession(id, req.session.organizationId!);
+    const session = await storage.getPentestSession(id, req.user!.organizationId);
     if (!session) return res.status(404).json({ message: "Session not found" });
     
     await storage.updatePentestSession(session.id, {
@@ -1007,13 +1017,13 @@ export async function registerRoutes(
       completedAt: null
     });
 
-    runPentestSimulation(session.id, req.session.organizationId!, session.testTypes || []);
+    runPentestSimulation(session.id, req.user!.organizationId, session.testTypes || []);
     res.json({ message: "Pentest session restarted" });
   });
 
   // === CLOUD SECURITY ROUTES ===
   app.get("/api/cloud-security/targets", requireAuth, async (req: Request, res: Response) => {
-    const targets = await storage.getCloudScanTargets(req.session.organizationId!);
+    const targets = await storage.getCloudScanTargets(req.user!.organizationId);
     res.json(targets);
   });
 
@@ -1022,9 +1032,9 @@ export async function registerRoutes(
       const data = insertCloudScanTargetSchema.parse(req.body);
       const target = await storage.createCloudScanTarget({
         ...data,
-        organizationId: req.session.organizationId!
+        organizationId: req.user!.organizationId
       });
-      await logAudit(req.session.organizationId!, req.session.userId!, "cloud_target.create", "cloud_scan_target", target.id, { name: target.name }, req.ip);
+      await logAudit(req.user!.organizationId, req.user!.userId, "cloud_target.create", "cloud_scan_target", target.id, { name: target.name }, req.ip);
       res.json(target);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -1033,28 +1043,28 @@ export async function registerRoutes(
 
   app.delete("/api/cloud-security/targets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await storage.deleteCloudScanTarget(id, req.session.organizationId!);
+    await storage.deleteCloudScanTarget(id, req.user!.organizationId);
     res.json({ message: "Target deleted" });
   });
 
   app.post("/api/cloud-security/targets/:id/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const targets = await storage.getCloudScanTargets(req.session.organizationId!);
+    const targets = await storage.getCloudScanTargets(req.user!.organizationId);
     const found = targets.find(t => t.id === id);
     if (!found) return res.status(404).json({ message: "Target not found" });
 
-    runCloudScanSimulation(found.id, req.session.organizationId!, found.provider);
+    runCloudScanSimulation(found.id, req.user!.organizationId, found.provider);
     res.json({ message: "Cloud scan started" });
   });
 
   app.get("/api/cloud-security/results", requireAuth, async (req: Request, res: Response) => {
     const targetId = req.query.targetId as string | undefined;
-    const results = await storage.getCloudScanResults(req.session.organizationId!, targetId);
+    const results = await storage.getCloudScanResults(req.user!.organizationId, targetId);
     res.json(results);
   });
 
   app.get("/api/cloud-security/summary", requireAuth, async (req: Request, res: Response) => {
-    const results = await storage.getCloudScanResults(req.session.organizationId!);
+    const results = await storage.getCloudScanResults(req.user!.organizationId);
     const summary = {
       critical: results.filter(r => r.severity === "critical").length,
       high: results.filter(r => r.severity === "high").length,
@@ -1068,7 +1078,7 @@ export async function registerRoutes(
   // === THREAT INTELLIGENCE ROUTES ===
   app.get("/api/threat-intel", requireAuth, async (req: Request, res: Response) => {
     const status = req.query.status as string | undefined;
-    let items = await storage.getThreatIntelItems(req.session.organizationId!);
+    let items = await storage.getThreatIntelItems(req.user!.organizationId);
     if (status) {
       items = items.filter(i => i.status === status);
     }
@@ -1076,7 +1086,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/threat-intel/refresh", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await refreshThreatIntel(req.session.organizationId!);
+    await refreshThreatIntel(req.user!.organizationId);
     res.json({ message: "Threat intelligence refreshed" });
   });
 
@@ -1088,7 +1098,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/threat-intel/stats", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getThreatIntelItems(req.session.organizationId!);
+    const items = await storage.getThreatIntelItems(req.user!.organizationId);
     const severityStats: Record<string, number> = {};
     const sourceStats: Record<string, number> = {};
     
@@ -1102,7 +1112,7 @@ export async function registerRoutes(
 
   // === MONITORING ROUTES ===
   app.get("/api/monitoring/configs", requireAuth, async (req: Request, res: Response) => {
-    const configs = await storage.getMonitoringConfigs(req.session.organizationId!);
+    const configs = await storage.getMonitoringConfigs(req.user!.organizationId);
     res.json(configs);
   });
 
@@ -1116,7 +1126,7 @@ export async function registerRoutes(
         const validated = insertMonitoringConfigSchema.parse(config);
         results.push(await storage.upsertMonitoringConfig({
           ...validated,
-          organizationId: req.session.organizationId!
+          organizationId: req.user!.organizationId
         }));
       }
       res.json(results);
@@ -1131,14 +1141,14 @@ export async function registerRoutes(
   });
 
   app.get("/api/monitoring/history", requireAuth, async (req: Request, res: Response) => {
-    const logs = await storage.getAuditLogs(req.session.organizationId!);
+    const logs = await storage.getAuditLogs(req.user!.organizationId);
     const monitoringLogs = logs.filter(l => l.action.startsWith("monitoring."));
     res.json(monitoringLogs);
   });
 
   // === ALERT RULES ROUTES ===
   app.get("/api/alerts/rules", requireAuth, async (req: Request, res: Response) => {
-    const rules = await storage.getAlertRules(req.session.organizationId!);
+    const rules = await storage.getAlertRules(req.user!.organizationId);
     res.json(rules);
   });
 
@@ -1147,7 +1157,7 @@ export async function registerRoutes(
       const data = insertAlertRuleSchema.parse(req.body);
       const rule = await storage.createAlertRule({
         ...data,
-        organizationId: req.session.organizationId!
+        organizationId: req.user!.organizationId
       });
       res.json(rule);
     } catch (err: any) {
@@ -1164,19 +1174,19 @@ export async function registerRoutes(
 
   app.delete("/api/alerts/rules/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await storage.deleteAlertRule(id, req.session.organizationId!);
+    await storage.deleteAlertRule(id, req.user!.organizationId);
     res.json({ message: "Rule deleted" });
   });
 
   app.get("/api/alerts/history", requireAuth, async (req: Request, res: Response) => {
-    const logs = await storage.getAuditLogs(req.session.organizationId!);
+    const logs = await storage.getAuditLogs(req.user!.organizationId);
     const alertLogs = logs.filter(l => l.action.startsWith("alert."));
     res.json(alertLogs);
   });
 
   // === PIPELINE ROUTES ===
   app.get("/api/pipelines", requireAuth, async (req: Request, res: Response) => {
-    const pipelines = await storage.getPipelineConfigs(req.session.organizationId!);
+    const pipelines = await storage.getPipelineConfigs(req.user!.organizationId);
     res.json(pipelines);
   });
 
@@ -1186,10 +1196,10 @@ export async function registerRoutes(
       const webhookSecret = crypto.randomBytes(16).toString("hex");
       const pipeline = await storage.createPipelineConfig({
         ...data,
-        organizationId: req.session.organizationId!,
+        organizationId: req.user!.organizationId,
         webhookSecret
       });
-      await logAudit(req.session.organizationId!, req.session.userId!, "pipeline.create", "pipeline_config", pipeline.id, { name: pipeline.name }, req.ip);
+      await logAudit(req.user!.organizationId, req.user!.userId, "pipeline.create", "pipeline_config", pipeline.id, { name: pipeline.name }, req.ip);
       res.json(pipeline);
     } catch (err: any) {
       res.status(400).json({ message: err.message });
@@ -1205,7 +1215,7 @@ export async function registerRoutes(
 
   app.delete("/api/pipelines/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    await storage.deletePipelineConfig(id, req.session.organizationId!);
+    await storage.deletePipelineConfig(id, req.user!.organizationId);
     res.json({ message: "Pipeline deleted" });
   });
 
@@ -1219,29 +1229,29 @@ export async function registerRoutes(
 
   // ===== INCIDENT RESPONSE =====
   app.get("/api/incidents", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getIncidents(req.session.organizationId!);
+    const items = await storage.getIncidents(req.user!.organizationId);
     res.json(items);
   });
-  app.post("/api/incidents", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/incidents", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const item = await storage.createIncident({ ...req.body, organizationId: orgId });
-    await storage.createAuditLog({ organizationId: orgId, userId: req.session.userId!, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
+    await storage.createAuditLog({ organizationId: orgId, userId: req.user!.userId, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
     const isCritical = item.severity === "critical";
     await storage.createNotification({ organizationId: orgId, title: isCritical ? "Critical Incident Created" : "New Incident Created", message: `Incident "${item.title}" has been created with ${item.severity} severity.`, type: "incident", severity: item.severity, resourceType: "incident", resourceId: item.id });
     res.json(item);
   });
-  app.put("/api/incidents/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/incidents/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const item = await storage.updateIncident(req.params.id, req.body);
     if (!item) return res.status(404).json({ message: "Not found" });
-    await storage.createAuditLog({ organizationId: req.session.organizationId!, userId: req.session.userId!, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
+    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
     res.json(item);
   });
   app.delete("/api/incidents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteIncident(req.params.id, req.session.organizationId!);
+    await storage.deleteIncident(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
-  app.post("/api/incidents/:id/timeline", requireAuth, async (req: Request, res: Response) => {
-    const incident = await storage.getIncident(req.params.id, req.session.organizationId!);
+  app.post("/api/incidents/:id/timeline", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const incident = await storage.getIncident(req.params.id, req.user!.organizationId);
     if (!incident) return res.status(404).json({ message: "Not found" });
     const entry = { timestamp: new Date().toISOString(), action: req.body.action, note: req.body.note, user: req.body.user || "System" };
     const timeline = [...(incident.timeline as any[] || []), entry];
@@ -1249,7 +1259,7 @@ export async function registerRoutes(
     res.json(updated);
   });
   app.get("/api/incidents/stats", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getIncidents(req.session.organizationId!);
+    const items = await storage.getIncidents(req.user!.organizationId);
     const byStatus = { triage: 0, assign: 0, contain: 0, remediate: 0, close: 0 };
     const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     items.forEach(i => {
@@ -1263,18 +1273,18 @@ export async function registerRoutes(
 
   // ===== VULNERABILITY LIFECYCLE =====
   app.get("/api/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getVulnerabilities(req.session.organizationId!);
+    const items = await storage.getVulnerabilities(req.user!.organizationId);
     res.json(items);
   });
-  app.post("/api/vulnerabilities", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/vulnerabilities", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const item = await storage.createVulnerability({ ...req.body, organizationId: orgId });
     if (item.severity === "critical" || item.severity === "high") {
       await storage.createNotification({ organizationId: orgId, title: `${item.severity === "critical" ? "Critical" : "High"} Vulnerability Discovered`, message: `${item.title}${item.cve ? ` (${item.cve})` : ""} — CVSS ${item.cvss ?? "N/A"}`, type: "vulnerability", severity: item.severity, resourceType: "vulnerability", resourceId: item.id });
     }
     res.json(item);
   });
-  app.put("/api/vulnerabilities/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const data = { ...req.body };
     if (data.status === "verified" && !data.verifiedAt) data.verifiedAt = new Date();
     const item = await storage.updateVulnerability(req.params.id, data);
@@ -1282,11 +1292,11 @@ export async function registerRoutes(
     res.json(item);
   });
   app.delete("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteVulnerability(req.params.id, req.session.organizationId!);
+    await storage.deleteVulnerability(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
   app.get("/api/vulnerabilities/stats", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getVulnerabilities(req.session.organizationId!);
+    const items = await storage.getVulnerabilities(req.user!.organizationId);
     const byStatus = { open: 0, in_progress: 0, remediated: 0, verified: 0 };
     const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     items.forEach(v => {
@@ -1299,11 +1309,11 @@ export async function registerRoutes(
 
   // ===== SBOM / SUPPLY CHAIN =====
   app.get("/api/sbom", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getSbomItems(req.session.organizationId!);
+    const items = await storage.getSbomItems(req.user!.organizationId);
     res.json(items);
   });
   app.post("/api/sbom/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const ecosystems = ["npm", "pip", "maven", "gem", "go", "nuget"];
     const packages = [
       { name: "lodash", ver: "4.17.20", eco: "npm", cves: ["CVE-2020-8203"], patched: "4.17.21", risk: 75 },
@@ -1332,17 +1342,17 @@ export async function registerRoutes(
     res.json(item);
   });
   app.delete("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteSbomItem(req.params.id, req.session.organizationId!);
+    await storage.deleteSbomItem(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
   // ===== SECRETS SCANNING =====
   app.get("/api/secrets", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getSecretsFindings(req.session.organizationId!);
+    const items = await storage.getSecretsFindings(req.user!.organizationId);
     res.json(items);
   });
   app.post("/api/secrets/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const secretTypes = [
       { type: "aws_access_key", masked: "AKIA****EXAMPLE", path: "src/config/aws.js", line: 12, severity: "critical" as const },
       { type: "github_token", masked: "ghp_****example", path: ".env.backup", line: 3, severity: "critical" as const },
@@ -1369,22 +1379,22 @@ export async function registerRoutes(
     res.json(item);
   });
   app.delete("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteSecretsFinding(req.params.id, req.session.organizationId!);
+    await storage.deleteSecretsFinding(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
   // ===== RISK REGISTER =====
   app.get("/api/risks", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getRisks(req.session.organizationId!);
+    const items = await storage.getRisks(req.user!.organizationId);
     res.json(items);
   });
-  app.post("/api/risks", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/risks", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const body = req.body;
     const riskScore = (body.likelihood || 3) * (body.impact || 3);
-    const item = await storage.createRisk({ ...body, organizationId: req.session.organizationId!, riskScore });
+    const item = await storage.createRisk({ ...body, organizationId: req.user!.organizationId, riskScore });
     res.json(item);
   });
-  app.put("/api/risks/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/risks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const body = req.body;
     if (body.likelihood && body.impact) body.riskScore = body.likelihood * body.impact;
     const item = await storage.updateRisk(req.params.id, body);
@@ -1392,11 +1402,11 @@ export async function registerRoutes(
     res.json(item);
   });
   app.delete("/api/risks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteRisk(req.params.id, req.session.organizationId!);
+    await storage.deleteRisk(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
   app.get("/api/risks/matrix", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getRisks(req.session.organizationId!);
+    const items = await storage.getRisks(req.user!.organizationId);
     const matrix = items.map(r => ({ id: r.id, title: r.title, likelihood: r.likelihood, impact: r.impact, riskScore: r.riskScore, treatment: r.treatment, status: r.status }));
     const summary = { critical: matrix.filter(r => r.riskScore >= 20).length, high: matrix.filter(r => r.riskScore >= 12 && r.riskScore < 20).length, medium: matrix.filter(r => r.riskScore >= 6 && r.riskScore < 12).length, low: matrix.filter(r => r.riskScore < 6).length };
     res.json({ matrix, summary });
@@ -1404,15 +1414,15 @@ export async function registerRoutes(
 
   // ===== ATTACK SURFACE =====
   app.get("/api/attack-surface", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getAttackSurfaceAssets(req.session.organizationId!);
+    const items = await storage.getAttackSurfaceAssets(req.user!.organizationId);
     res.json(items);
   });
-  app.post("/api/attack-surface", requireAuth, async (req: Request, res: Response) => {
-    const item = await storage.createAttackSurfaceAsset({ ...req.body, organizationId: req.session.organizationId! });
+  app.post("/api/attack-surface", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const item = await storage.createAttackSurfaceAsset({ ...req.body, organizationId: req.user!.organizationId });
     res.json(item);
   });
   app.post("/api/attack-surface/discover", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const assets = [
       { assetType: "subdomain", host: "api.example.com", port: 443, service: "HTTPS", riskLevel: "medium", technologies: ["nginx", "TLS 1.3"], openPorts: [443, 80], vulnerabilityCount: 2, tlsCertIssuer: "Let's Encrypt" },
       { assetType: "subdomain", host: "admin.example.com", port: 443, service: "HTTPS", riskLevel: "high", technologies: ["Apache", "PHP 7.4"], openPorts: [443, 80, 8080], vulnerabilityCount: 5 },
@@ -1438,18 +1448,18 @@ export async function registerRoutes(
     res.json(item);
   });
   app.delete("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    await storage.deleteAttackSurfaceAsset(req.params.id, req.session.organizationId!);
+    await storage.deleteAttackSurfaceAsset(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
   // ===== SECURITY POSTURE SCORE TRENDING =====
   app.get("/api/posture", requireAuth, async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 30;
-    const items = await storage.getPostureScores(req.session.organizationId!, limit);
+    const items = await storage.getPostureScores(req.user!.organizationId, limit);
     res.json(items.reverse());
   });
   app.get("/api/posture/current", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     let current = await storage.getLatestPostureScore(orgId);
     if (!current) {
       current = await storage.createPostureScore({ organizationId: orgId, date: new Date().toISOString().split("T")[0], overallScore: 72, scanScore: 78, pentestScore: 65, cloudScore: 70, complianceScore: 82, incidentScore: 68, vulnerabilityScore: 71, trend: "stable" });
@@ -1457,7 +1467,7 @@ export async function registerRoutes(
     res.json(current);
   });
   app.post("/api/posture/snapshot", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const latest = await storage.getLatestPostureScore(orgId);
     const baseScore = latest?.overallScore || 72;
     const delta = Math.floor(Math.random() * 11) - 5;
@@ -1478,7 +1488,7 @@ export async function registerRoutes(
 
   // ===== NOTIFICATIONS =====
   app.get("/api/notifications", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const limit = parseInt(req.query.limit as string) || 30;
     const items = await storage.getNotifications(orgId, limit);
     const unreadCount = await storage.getUnreadCount(orgId);
@@ -1486,7 +1496,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/notifications/read", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const { id } = req.body;
     if (id) {
       await storage.markNotificationRead(id, orgId);
@@ -1498,7 +1508,7 @@ export async function registerRoutes(
 
   // ===== TEAM MANAGEMENT =====
   app.get("/api/team", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const [members, invites] = await Promise.all([
       storage.getTeamMembers(orgId),
       storage.getInviteTokens(orgId),
@@ -1510,8 +1520,8 @@ export async function registerRoutes(
 
   app.post("/api/team/invite", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const { email, role = "analyst" } = req.body;
       if (!email) return res.status(400).json({ message: "Email is required" });
 
@@ -1529,8 +1539,8 @@ export async function registerRoutes(
   });
 
   app.patch("/api/team/:userId/role", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
-    const currentUserId = req.session.userId!;
+    const orgId = req.user!.organizationId;
+    const currentUserId = req.user!.userId;
     const { userId } = req.params;
     const { role } = req.body;
     if (!role) return res.status(400).json({ message: "Role is required" });
@@ -1544,8 +1554,8 @@ export async function registerRoutes(
   });
 
   app.delete("/api/team/:userId", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
-    const currentUserId = req.session.userId!;
+    const orgId = req.user!.organizationId;
+    const currentUserId = req.user!.userId;
     const { userId } = req.params;
     if (userId === currentUserId) return res.status(400).json({ message: "Cannot remove yourself" });
     await storage.removeTeamMember(userId, orgId);
@@ -1563,7 +1573,7 @@ export async function registerRoutes(
 
   // ===== ONBOARDING =====
   app.get("/api/onboarding", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     await storage.initOnboarding(orgId);
     const rawSteps = await storage.getOnboardingSteps(orgId);
 
@@ -1619,53 +1629,53 @@ export async function registerRoutes(
   });
 
   app.post("/api/onboarding/:step/complete", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     await storage.upsertOnboardingStep(orgId, req.params.step, true);
     res.json({ ok: true });
   });
 
   // ── Security Awareness ────────────────────────────────────────────────────
   app.get("/api/security-awareness/training", requireAuth, async (req: Request, res: Response) => {
-    const records = await storage.getTrainingRecords(req.session.organizationId!);
+    const records = await storage.getTrainingRecords(req.user!.organizationId);
     res.json(records);
   });
 
-  app.post("/api/security-awareness/training", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/security-awareness/training", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const r = await storage.createTrainingRecord({ ...req.body, organizationId: orgId });
     res.json(r);
   });
 
-  app.put("/api/security-awareness/training/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/security-awareness/training/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const r = await storage.updateTrainingRecord(req.params.id, req.body);
     if (!r) return res.status(404).json({ message: "Not found" });
     res.json(r);
   });
 
-  app.delete("/api/security-awareness/training/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteTrainingRecord(req.params.id, req.session.organizationId!);
+  app.delete("/api/security-awareness/training/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteTrainingRecord(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/security-awareness/campaigns", requireAuth, async (req: Request, res: Response) => {
-    const campaigns = await storage.getPhishingCampaigns(req.session.organizationId!);
+    const campaigns = await storage.getPhishingCampaigns(req.user!.organizationId);
     res.json(campaigns);
   });
 
-  app.post("/api/security-awareness/campaigns", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/security-awareness/campaigns", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const c = await storage.createPhishingCampaign({ ...req.body, organizationId: orgId });
     res.json(c);
   });
 
-  app.put("/api/security-awareness/campaigns/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/security-awareness/campaigns/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const c = await storage.updatePhishingCampaign(req.params.id, req.body);
     if (!c) return res.status(404).json({ message: "Not found" });
     res.json(c);
   });
 
-  app.post("/api/security-awareness/campaigns/:id/launch", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/security-awareness/campaigns/:id/launch", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const existing = await storage.getPhishingCampaigns(orgId);
     const campaign = existing.find(c => c.id === req.params.id);
     if (!campaign) return res.status(404).json({ message: "Not found" });
@@ -1681,13 +1691,13 @@ export async function registerRoutes(
     res.json(updated);
   });
 
-  app.delete("/api/security-awareness/campaigns/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deletePhishingCampaign(req.params.id, req.session.organizationId!);
+  app.delete("/api/security-awareness/campaigns/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deletePhishingCampaign(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/security-awareness/stats", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+    const orgId = req.user!.organizationId;
     const [records, campaigns] = await Promise.all([
       storage.getTrainingRecords(orgId),
       storage.getPhishingCampaigns(orgId),
@@ -1701,23 +1711,23 @@ export async function registerRoutes(
 
   // ── Vendor Risk ───────────────────────────────────────────────────────────
   app.get("/api/vendors", requireAuth, async (req: Request, res: Response) => {
-    const vendors = await storage.getVendors(req.session.organizationId!);
+    const vendors = await storage.getVendors(req.user!.organizationId);
     res.json(vendors);
   });
 
-  app.post("/api/vendors", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/vendors", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const v = await storage.createVendor({ ...req.body, organizationId: orgId });
     res.json(v);
   });
 
-  app.put("/api/vendors/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/vendors/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const v = await storage.updateVendor(req.params.id, req.body);
     if (!v) return res.status(404).json({ message: "Not found" });
     res.json(v);
   });
 
-  app.post("/api/vendors/:id/assess", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/vendors/:id/assess", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const riskScore = Math.floor(Math.random() * 100);
     const riskRating = riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low";
     const v = await storage.updateVendor(req.params.id, {
@@ -1727,13 +1737,13 @@ export async function registerRoutes(
     res.json(v);
   });
 
-  app.delete("/api/vendors/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteVendor(req.params.id, req.session.organizationId!);
+  app.delete("/api/vendors/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteVendor(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/vendors/stats", requireAuth, async (req: Request, res: Response) => {
-    const vendors = await storage.getVendors(req.session.organizationId!);
+    const vendors = await storage.getVendors(req.user!.organizationId);
     const high = vendors.filter(v => v.riskRating === "high").length;
     const medium = vendors.filter(v => v.riskRating === "medium").length;
     const low = vendors.filter(v => v.riskRating === "low").length;
@@ -1743,12 +1753,12 @@ export async function registerRoutes(
 
   // ── Dark Web Monitoring ───────────────────────────────────────────────────
   app.get("/api/dark-web/alerts", requireAuth, async (req: Request, res: Response) => {
-    const alerts = await storage.getDarkWebAlerts(req.session.organizationId!);
+    const alerts = await storage.getDarkWebAlerts(req.user!.organizationId);
     res.json(alerts);
   });
 
-  app.post("/api/dark-web/scan", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/dark-web/scan", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const domain = req.body.domain || "company.com";
     const alertTypes = ["credential", "api_key", "email", "pii", "source_code"];
     const sources = ["PasteBin", "RaidForums", "BreachDB", "TelegramChannel", "DarkNetForum"];
@@ -1769,19 +1779,19 @@ export async function registerRoutes(
     res.json({ scanned: domain, alertsFound: newAlerts.length, alerts: newAlerts });
   });
 
-  app.put("/api/dark-web/alerts/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const a = await storage.updateDarkWebAlert(req.params.id, req.body);
     if (!a) return res.status(404).json({ message: "Not found" });
     res.json(a);
   });
 
-  app.delete("/api/dark-web/alerts/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteDarkWebAlert(req.params.id, req.session.organizationId!);
+  app.delete("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteDarkWebAlert(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/dark-web/stats", requireAuth, async (req: Request, res: Response) => {
-    const alerts = await storage.getDarkWebAlerts(req.session.organizationId!);
+    const alerts = await storage.getDarkWebAlerts(req.user!.organizationId);
     res.json({
       total: alerts.length,
       new: alerts.filter(a => a.status === "new").length,
@@ -1792,17 +1802,17 @@ export async function registerRoutes(
 
   // ── Security Roadmap ──────────────────────────────────────────────────────
   app.get("/api/roadmap/tasks", requireAuth, async (req: Request, res: Response) => {
-    const tasks = await storage.getRemediationTasks(req.session.organizationId!);
+    const tasks = await storage.getRemediationTasks(req.user!.organizationId);
     res.json(tasks);
   });
 
-  app.post("/api/roadmap/tasks", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/roadmap/tasks", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const t = await storage.createRemediationTask({ ...req.body, organizationId: orgId });
     res.json(t);
   });
 
-  app.put("/api/roadmap/tasks/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/roadmap/tasks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const data = { ...req.body };
     if (data.status === "completed" && !data.completedAt) data.completedAt = new Date();
     const t = await storage.updateRemediationTask(req.params.id, data);
@@ -1810,13 +1820,13 @@ export async function registerRoutes(
     res.json(t);
   });
 
-  app.delete("/api/roadmap/tasks/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteRemediationTask(req.params.id, req.session.organizationId!);
+  app.delete("/api/roadmap/tasks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteRemediationTask(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/roadmap/stats", requireAuth, async (req: Request, res: Response) => {
-    const tasks = await storage.getRemediationTasks(req.session.organizationId!);
+    const tasks = await storage.getRemediationTasks(req.user!.organizationId);
     const open = tasks.filter(t => t.status === "open").length;
     const inProgress = tasks.filter(t => t.status === "in_progress").length;
     const completed = tasks.filter(t => t.status === "completed").length;
@@ -1826,18 +1836,17 @@ export async function registerRoutes(
 
   // ── Bug Bounty ────────────────────────────────────────────────────────────
   app.get("/api/bounty/reports", requireAuth, async (req: Request, res: Response) => {
-    const reports = await storage.getBountyReports(req.session.organizationId!);
+    const reports = await storage.getBountyReports(req.user!.organizationId);
     res.json(reports);
   });
 
-  app.post("/api/bounty/report", async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId;
-    if (!orgId) return res.status(401).json({ message: "Unauthorized" });
+  app.post("/api/bounty/report", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const r = await storage.createBountyReport({ ...req.body, organizationId: orgId, status: "new" });
     res.json(r);
   });
 
-  app.put("/api/bounty/reports/:id", requireAuth, async (req: Request, res: Response) => {
+  app.put("/api/bounty/reports/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const data = { ...req.body };
     if (data.status === "resolved" && !data.resolvedAt) data.resolvedAt = new Date();
     const r = await storage.updateBountyReport(req.params.id, data);
@@ -1845,13 +1854,13 @@ export async function registerRoutes(
     res.json(r);
   });
 
-  app.delete("/api/bounty/reports/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteBountyReport(req.params.id, req.session.organizationId!);
+  app.delete("/api/bounty/reports/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteBountyReport(req.params.id, req.user!.organizationId);
     res.json({ ok: true });
   });
 
   app.get("/api/bounty/stats", requireAuth, async (req: Request, res: Response) => {
-    const reports = await storage.getBountyReports(req.session.organizationId!);
+    const reports = await storage.getBountyReports(req.user!.organizationId);
     const totalReward = reports.reduce((s, r) => s + (r.reward || 0), 0);
     res.json({
       total: reports.length,
@@ -1865,12 +1874,12 @@ export async function registerRoutes(
 
   // ── Container Security ────────────────────────────────────────────────────
   app.get("/api/containers/scans", requireAuth, async (req: Request, res: Response) => {
-    const scans = await storage.getContainerScans(req.session.organizationId!);
+    const scans = await storage.getContainerScans(req.user!.organizationId);
     res.json(scans);
   });
 
-  app.post("/api/containers/scan", requireAuth, async (req: Request, res: Response) => {
-    const orgId = req.session.organizationId!;
+  app.post("/api/containers/scan", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const orgId = req.user!.organizationId;
     const { imageName, imageTag = "latest", scanType = "image" } = req.body;
     if (!imageName) return res.status(400).json({ message: "imageName is required" });
     const scan = await storage.createContainerScan({ organizationId: orgId, imageName, imageTag, scanType, status: "running" });
@@ -1907,7 +1916,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/containers/stats", requireAuth, async (req: Request, res: Response) => {
-    const scans = await storage.getContainerScans(req.session.organizationId!);
+    const scans = await storage.getContainerScans(req.user!.organizationId);
     const completed = scans.filter(s => s.status === "completed");
     res.json({
       totalScans: scans.length,
@@ -1925,14 +1934,14 @@ export async function registerRoutes(
 
   // ── Asset Inventory ───────────────────────────────────────────────────────
   app.get("/api/assets", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.session.organizationId!);
-    const assets = await storage.getAssets(req.session.organizationId!);
+    await ensureIntelSeeded(req.user!.organizationId);
+    const assets = await storage.getAssets(req.user!.organizationId);
     res.json(assets);
   });
 
   app.get("/api/assets/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.session.organizationId!);
-    const assets = await storage.getAssets(req.session.organizationId!);
+    await ensureIntelSeeded(req.user!.organizationId);
+    const assets = await storage.getAssets(req.user!.organizationId);
     res.json({
       total: assets.length,
       byType: {
@@ -1958,35 +1967,35 @@ export async function registerRoutes(
   });
 
   app.get("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
-    const asset = await storage.getAsset(req.params.id, req.session.organizationId!);
+    const asset = await storage.getAsset(req.params.id, req.user!.organizationId);
     if (!asset) return res.status(404).json({ message: "Asset not found" });
     res.json(asset);
   });
 
-  app.post("/api/assets", requireAuth, async (req: Request, res: Response) => {
-    const asset = await storage.createAsset({ ...req.body, organizationId: req.session.organizationId! });
+  app.post("/api/assets", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const asset = await storage.createAsset({ ...req.body, organizationId: req.user!.organizationId });
     res.json(asset);
   });
 
-  app.patch("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
+  app.patch("/api/assets/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const updated = await storage.updateAsset(req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: "Asset not found" });
     res.json(updated);
   });
 
-  app.delete("/api/assets/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteAsset(req.params.id, req.session.organizationId!);
+  app.delete("/api/assets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteAsset(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
   // ── CVE Intelligence ──────────────────────────────────────────────────────
   app.get("/api/cve/database", requireAuth, async (req: Request, res: Response) => {
-    const cves = await fetchCveDatabase(req.session.organizationId!);
+    const cves = await fetchCveDatabase(req.user!.organizationId);
     res.json(cves);
   });
 
   app.get("/api/cve/stats", requireAuth, async (req: Request, res: Response) => {
-    const cves = await fetchCveDatabase(req.session.organizationId!);
+    const cves = await fetchCveDatabase(req.user!.organizationId);
     res.json({
       total: cves.length,
       critical: cves.filter(c => c.severity === "critical").length,
@@ -1998,14 +2007,14 @@ export async function registerRoutes(
 
   // ── Attack Path Modeling ──────────────────────────────────────────────────
   app.get("/api/attack-paths", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.session.organizationId!);
-    const paths = await storage.getAttackPaths(req.session.organizationId!);
+    await ensureIntelSeeded(req.user!.organizationId);
+    const paths = await storage.getAttackPaths(req.user!.organizationId);
     res.json(paths);
   });
 
   app.get("/api/attack-paths/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.session.organizationId!);
-    const paths = await storage.getAttackPaths(req.session.organizationId!);
+    await ensureIntelSeeded(req.user!.organizationId);
+    const paths = await storage.getAttackPaths(req.user!.organizationId);
     res.json({
       total: paths.length,
       active: paths.filter(p => !p.mitigated).length,
@@ -2024,21 +2033,21 @@ export async function registerRoutes(
   }
 
   app.get("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
-    const path = await storage.getAttackPath(req.params.id, req.session.organizationId!);
+    const path = await storage.getAttackPath(req.params.id, req.user!.organizationId);
     if (!path) return res.status(404).json({ message: "Attack path not found" });
     res.json(path);
   });
 
-  app.patch("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
-    const existing = await storage.getAttackPath(req.params.id, req.session.organizationId!);
+  app.patch("/api/attack-paths/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const existing = await storage.getAttackPath(req.params.id, req.user!.organizationId);
     if (!existing) return res.status(404).json({ message: "Not found" });
     const updated = await storage.updateAttackPath(req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: "Not found" });
     res.json(updated);
   });
 
-  app.delete("/api/attack-paths/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteAttackPath(req.params.id, req.session.organizationId!);
+  app.delete("/api/attack-paths/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteAttackPath(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
@@ -2046,25 +2055,25 @@ export async function registerRoutes(
   app.get("/api/hunt", requireAuth, async (req: Request, res: Response) => {
     const query = (req.query.q as string) || "";
     if (!query.trim()) return res.json({ results: [], count: 0, query });
-    const results = await runThreatHunt(query, req.session.organizationId!);
+    const results = await runThreatHunt(query, req.user!.organizationId);
     const saved = await storage.createThreatHuntQuery({
-      organizationId: req.session.organizationId!,
+      organizationId: req.user!.organizationId,
       query,
       queryType: "general",
       resultsCount: results.length,
       results,
-      savedByUserId: req.session.userId,
+      savedByUserId: req.user!.userId,
     });
     res.json({ results, count: results.length, query, queryId: saved.id });
   });
 
   app.get("/api/hunt/history", requireAuth, async (req: Request, res: Response) => {
-    const history = await storage.getThreatHuntQueries(req.session.organizationId!);
+    const history = await storage.getThreatHuntQueries(req.user!.organizationId);
     res.json(history);
   });
 
-  app.delete("/api/hunt/:id", requireAuth, async (req: Request, res: Response) => {
-    await storage.deleteThreatHuntQuery(req.params.id, req.session.organizationId!);
+  app.delete("/api/hunt/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    await storage.deleteThreatHuntQuery(req.params.id, req.user!.organizationId);
     res.json({ success: true });
   });
 
@@ -2073,38 +2082,38 @@ export async function registerRoutes(
     const { message, conversationId } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
 
-    const existing = await storage.getCopilotConversation(req.session.organizationId!, req.session.userId!);
+    const existing = await storage.getCopilotConversation(req.user!.organizationId, req.user!.userId);
     const messages: any[] = existing ? (existing.messages as any[]) : [];
 
     messages.push({ role: "user", content: message, timestamp: new Date().toISOString() });
 
-    const response = await runSecurityCopilot(message, req.session.organizationId!);
+    const response = await runSecurityCopilot(message, req.user!.organizationId);
     messages.push({ role: "assistant", content: response, timestamp: new Date().toISOString() });
 
-    await storage.upsertCopilotConversation(req.session.organizationId!, req.session.userId!, messages);
+    await storage.upsertCopilotConversation(req.user!.organizationId, req.user!.userId, messages);
 
     res.json({ response, messages });
   });
 
   app.get("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {
-    const conv = await storage.getCopilotConversation(req.session.organizationId!, req.session.userId!);
+    const conv = await storage.getCopilotConversation(req.user!.organizationId, req.user!.userId);
     res.json({ messages: conv ? (conv.messages as any[]) : [] });
   });
 
   app.delete("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {
-    await storage.upsertCopilotConversation(req.session.organizationId!, req.session.userId!, []);
+    await storage.upsertCopilotConversation(req.user!.organizationId, req.user!.userId, []);
     res.json({ success: true });
   });
 
   // ── Intelligence Stats (Dashboard) ───────────────────────────────────────
   app.get("/api/intelligence/stats", requireAuth, async (req: Request, res: Response) => {
-    await ensureIntelSeeded(req.session.organizationId!);
+    await ensureIntelSeeded(req.user!.organizationId);
     const [cves, assets, paths, queries, convs] = await Promise.all([
-      fetchCveDatabase(req.session.organizationId!),
-      storage.getAssets(req.session.organizationId!),
-      storage.getAttackPaths(req.session.organizationId!),
-      storage.getThreatHuntQueries(req.session.organizationId!),
-      storage.getCopilotConversation(req.session.organizationId!, req.session.userId!),
+      fetchCveDatabase(req.user!.organizationId),
+      storage.getAssets(req.user!.organizationId),
+      storage.getAttackPaths(req.user!.organizationId),
+      storage.getThreatHuntQueries(req.user!.organizationId),
+      storage.getCopilotConversation(req.user!.organizationId, req.user!.userId),
     ]);
     res.json({
       assets: assets.length,
@@ -2244,7 +2253,7 @@ async function seedComplianceData(orgId: string) {
 async function registerSoarRoutes(app: Express) {
   app.get("/api/soar/playbooks", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureSoarPlaybooksSeeded(orgId);
       const playbooks = await storage.getSoarPlaybooks(orgId);
       res.json(playbooks);
@@ -2253,16 +2262,16 @@ async function registerSoarRoutes(app: Express) {
 
   app.get("/api/soar/executions", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const executions = await storage.getSoarExecutions(orgId);
       res.json(executions);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  app.post("/api/soar/execute/:playbookId", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/soar/execute/:playbookId", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
-      const userId = req.session.userId!;
+      const orgId = req.user!.organizationId;
+      const userId = req.user!.userId;
       const { playbookId } = req.params;
       const result = await executePlaybook(playbookId, orgId, userId, req.body);
       res.json(result);
@@ -2271,7 +2280,7 @@ async function registerSoarRoutes(app: Express) {
 
   app.get("/api/soar/stats", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureSoarPlaybooksSeeded(orgId);
       const playbooks = await storage.getSoarPlaybooks(orgId);
       const executions = await storage.getSoarExecutions(orgId);
@@ -2289,7 +2298,7 @@ async function registerSoarRoutes(app: Express) {
 async function registerSecurityEventsRoutes(app: Express) {
   app.get("/api/security-events", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await seedSecurityEvents(orgId);
       const limit = parseInt(req.query.limit as string) || 100;
       const events = await storage.getSecurityEvents(orgId, limit);
@@ -2297,9 +2306,9 @@ async function registerSecurityEventsRoutes(app: Express) {
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  app.post("/api/security-events", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/security-events", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const ev = await storage.createSecurityEvent({ ...req.body, organizationId: orgId });
       res.json(ev);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -2307,7 +2316,7 @@ async function registerSecurityEventsRoutes(app: Express) {
 
   app.get("/api/security-events/stats", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await seedSecurityEvents(orgId);
       const events = await storage.getSecurityEvents(orgId, 500);
       const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
@@ -2322,9 +2331,9 @@ async function registerSecurityEventsRoutes(app: Express) {
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  app.post("/api/correlate", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/correlate", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const result = await runThreatCorrelation(orgId);
       res.json(result);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -2335,24 +2344,24 @@ async function registerSecurityEventsRoutes(app: Express) {
 async function registerGraphRoutes(app: Express) {
   app.get("/api/graph", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const data = await getGraphData(orgId);
       res.json(data);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  app.post("/api/graph/nodes", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/graph/nodes", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { nodeType, externalId, label, properties, riskScore } = req.body;
       const node = await addGraphNode(orgId, nodeType, externalId, label, properties, riskScore);
       res.json(node);
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 
-  app.post("/api/graph/edges", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/graph/edges", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { sourceNodeId, targetNodeId, edgeType, weight } = req.body;
       const edge = await addGraphEdge(orgId, sourceNodeId, targetNodeId, edgeType, weight);
       res.json(edge);
@@ -2373,7 +2382,7 @@ async function registerMetricsRoutes(app: Express) {
 
   app.get("/api/dashboard/security-score", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const [scans, incidents, risks, events] = await Promise.all([
         storage.getScans(orgId),
         storage.getIncidents(orgId),
@@ -2398,6 +2407,69 @@ async function registerMetricsRoutes(app: Express) {
         critical_findings: criticalScans + openIncidents + criticalRisks,
         last_updated: new Date().toISOString(),
       });
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/tasks", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const tasks = await storage.getTasks(req.user!.organizationId);
+      res.json(tasks);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/tasks/stats/summary", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const tasks = await storage.getTasks(req.user!.organizationId);
+      const stats = {
+        total: tasks.length,
+        pending: tasks.filter(t => t.status === "pending").length,
+        running: tasks.filter(t => t.status === "running").length,
+        completed: tasks.filter(t => t.status === "completed").length,
+        failed: tasks.filter(t => t.status === "failed").length,
+        cancelled: tasks.filter(t => t.status === "cancelled").length,
+      };
+      res.json(stats);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.get("/api/tasks/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const task = await storage.getTask(req.params.id, req.user!.organizationId);
+      if (!task) return res.status(404).json({ message: "Task not found" });
+      res.json(task);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.post("/api/tasks", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    try {
+      const parsed = insertTaskSchema.parse({ ...req.body, organizationId: req.user!.organizationId, createdById: req.user!.userId });
+      const task = await storage.createTask(parsed);
+      await logAudit(req.user!.organizationId, req.user!.userId, "task.created", "task", task.id, { title: task.title }, req.ip);
+      res.status(201).json(task);
+    } catch (e: any) {
+      if (e.name === "ZodError") return res.status(400).json({ message: "Validation error", errors: e.errors });
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.patch("/api/tasks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    try {
+      const existing = await storage.getTask(req.params.id, req.user!.organizationId);
+      if (!existing) return res.status(404).json({ message: "Task not found" });
+      const updates: any = { ...req.body };
+      if (updates.status === "running" && existing.status === "pending") updates.startedAt = new Date();
+      if ((updates.status === "completed" || updates.status === "failed") && existing.status !== "completed" && existing.status !== "failed") updates.completedAt = new Date();
+      const task = await storage.updateTask(req.params.id, updates);
+      await logAudit(req.user!.organizationId, req.user!.userId, "task.updated", "task", req.params.id, { status: updates.status }, req.ip);
+      res.json(task);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  app.delete("/api/tasks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    try {
+      await storage.deleteTask(req.params.id, req.user!.organizationId);
+      await logAudit(req.user!.organizationId, req.user!.userId, "task.deleted", "task", req.params.id, {}, req.ip);
+      res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }
   });
 }

@@ -49,6 +49,7 @@ import SecurityEventsPage from "@/pages/security-events";
 import SecurityGraphPage from "@/pages/security-graph";
 import PlatformMetricsPage from "@/pages/platform-metrics";
 import TeamPage from "@/pages/team";
+import TaskCenterPage from "@/pages/task-center";
 import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
 import VerifyEmailPage from "@/pages/verify-email";
 import Layout from "@/components/Layout";
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/security-events">{() => <ProtectedRoute component={SecurityEventsPage} />}</Route>
       <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
+      <Route path="/task-center">{() => <ProtectedRoute component={TaskCenterPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
       <Route path="/enterprise-readiness">{() => <ProtectedRoute component={EnterpriseReadinessPage} />}</Route>
       <Route path="/team-activity">{() => <Redirect to="/team" />}</Route>

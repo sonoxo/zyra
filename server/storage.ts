@@ -57,6 +57,7 @@ import {
   type SiemConfig, type InsertSiemConfig,
   type RetentionPolicy, type InsertRetentionPolicy,
   type Workspace, type InsertWorkspace,
+  type Task, type InsertTask,
   organizations, users, repositories, documents,
   scans, scanFindings, complianceMappings, reports,
   settings, auditLogs, apiKeys, subscriptions,
@@ -72,7 +73,7 @@ import {
   caasmIdentities,
   incidentComments, teamActivities, oncallSchedules, escalationPolicies, approvalRequests,
   exposureAlerts, remediationActions,
-  siemConfigs, retentionPolicies, workspaces,
+  siemConfigs, retentionPolicies, workspaces, tasks,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -88,6 +89,7 @@ export interface IStorage {
 
   createOrganization(org: InsertOrganization): Promise<Organization>;
   getOrganization(id: string): Promise<Organization | undefined>;
+  getOrganizationUsers(orgId: string): Promise<User[]>;
 
   getRepositories(orgId: string): Promise<Repository[]>;
   createRepository(repo: InsertRepository): Promise<Repository>;
@@ -363,6 +365,12 @@ export interface IStorage {
   createWorkspace(w: InsertWorkspace): Promise<Workspace>;
   updateWorkspace(id: string, data: Partial<Workspace>): Promise<Workspace | undefined>;
   deleteWorkspace(id: string, orgId: string): Promise<void>;
+
+  getTasks(orgId: string): Promise<Task[]>;
+  getTask(id: string, orgId: string): Promise<Task | undefined>;
+  createTask(t: InsertTask): Promise<Task>;
+  updateTask(id: string, data: Partial<Task>): Promise<Task | undefined>;
+  deleteTask(id: string, orgId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -408,6 +416,10 @@ export class DatabaseStorage implements IStorage {
   async getOrganization(id: string): Promise<Organization | undefined> {
     const [org] = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
     return org;
+  }
+
+  async getOrganizationUsers(orgId: string): Promise<User[]> {
+    return db.select().from(users).where(eq(users.organizationId, orgId)).orderBy(desc(users.createdAt));
   }
 
   async getRepositories(orgId: string): Promise<Repository[]> {
@@ -1310,6 +1322,25 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteWorkspace(id: string, orgId: string): Promise<void> {
     await db.delete(workspaces).where(and(eq(workspaces.id, id), eq(workspaces.organizationId, orgId)));
+  }
+
+  async getTasks(orgId: string): Promise<Task[]> {
+    return db.select().from(tasks).where(eq(tasks.organizationId, orgId)).orderBy(desc(tasks.createdAt));
+  }
+  async getTask(id: string, orgId: string): Promise<Task | undefined> {
+    const [r] = await db.select().from(tasks).where(and(eq(tasks.id, id), eq(tasks.organizationId, orgId))).limit(1);
+    return r;
+  }
+  async createTask(t: InsertTask): Promise<Task> {
+    const [r] = await db.insert(tasks).values(t).returning();
+    return r;
+  }
+  async updateTask(id: string, data: Partial<Task>): Promise<Task | undefined> {
+    const [r] = await db.update(tasks).set(data).where(eq(tasks.id, id)).returning();
+    return r;
+  }
+  async deleteTask(id: string, orgId: string): Promise<void> {
+    await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.organizationId, orgId)));
   }
 }
 

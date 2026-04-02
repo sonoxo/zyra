@@ -65,7 +65,7 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
       const priceInfo = PRICE_MAP[plan];
 
       const baseUrl = getCanonicalBaseUrl(req);
-      const orgId = req.session.organizationId || "";
+      const orgId = req.user!.organizationId || "";
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -85,7 +85,7 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
           },
         ],
         metadata: {
-          userId: req.session.userId || "",
+          userId: req.user!.userId || "",
           orgId,
           plan,
         },
@@ -114,7 +114,7 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
 
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      const requestOrgId = req.session.organizationId || "";
+      const requestOrgId = req.user!.organizationId || "";
       if (session.metadata?.orgId && session.metadata.orgId !== requestOrgId) {
         return res.status(403).json({ message: "Access denied." });
       }

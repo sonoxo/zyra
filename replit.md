@@ -7,13 +7,13 @@ Zyra is an AI-native cybersecurity ecosystem combining vulnerability scanning, A
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts
 - **Backend**: Express.js + TypeScript
 - **Database**: PostgreSQL via Drizzle ORM
-- **Auth**: express-session + connect-pg-simple + bcryptjs
+- **Auth**: JWT (access + refresh tokens via jsonwebtoken) + bcryptjs + RBAC (owner/admin/analyst/viewer)
 - **Routing**: wouter (frontend), Express (backend)
 
 ## Project Structure
 ```
 client/src/
-  pages/          - All page components (38 pages + auth)
+  pages/          - All page components (39 pages + auth)
   components/     - Layout (6-group sidebar nav), ThemeProvider, shadcn/ui
   lib/            - auth, queryClient
   hooks/          - use-toast
@@ -22,7 +22,8 @@ server/
   index.ts            - Express server entry point
   routes.ts           - All API routes (auth + 24 feature modules); exports requireAuth
   simulations.ts      - Async simulation workers (pentest, cloud scan, threat intel)
-  storage.ts          - DatabaseStorage (IStorage interface, 49 tables)
+  auth.ts             - JWT auth middleware (requireAuth, requireRole, token generation/verification)
+  storage.ts          - DatabaseStorage (IStorage interface, 50 tables)
   exposure-manager.ts - Exposure Management: attack path graph visualizer, exposure monitor with alert triggers, automated remediation engine
   team-ops.ts         - Security Team Operations: RBAC permissions matrix, activity feed, incident comments, on-call scheduling, escalation policies, approval workflows
   enterprise.ts       - Enterprise Readiness: SIEM integration (Splunk/Elastic/Sentinel/QRadar export), data retention controls with purge, multi-tenant workspaces
@@ -37,10 +38,10 @@ server/
   stripe.ts           - Stripe Checkout integration: session creation, status retrieval, graceful degradation
 
 shared/
-  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (49 tables)
+  schema.ts       - Drizzle ORM schema + Zod + TypeScript types (50 tables)
 ```
 
-## Database Tables (49 total)
+## Database Tables (50 total)
 **Core (18):** organizations, users, repositories, documents, scans, scan_findings, compliance_mappings, reports, settings, audit_logs, api_keys, subscriptions, pentest_sessions, pentest_findings, cloud_scan_targets, cloud_scan_results, threat_intel_items, monitoring_configs, alert_rules, pipeline_configs
 
 **SecOps (7):** incidents, vulnerabilities, sbom_items, secrets_findings, risks, attack_surface_assets, posture_scores
@@ -57,6 +58,8 @@ shared/
 
 **Enterprise Readiness (3):** siem_configs, retention_policies, workspaces
 
+**Task Center (1):** tasks (queue with status: pending/running/completed/failed/cancelled)
+
 ## Sidebar Navigation (6 groups)
 - **Overview**: Dashboard, Analytics, Security Posture, Getting Started (/onboarding)
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
@@ -64,7 +67,7 @@ shared/
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
 - **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management (Attack Graph / Exposure Monitor / Risk Prioritization / All Paths / Exposure Analysis), Threat Hunting, Security Copilot, Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
-- **Platform**: Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise Readiness (SIEM / Retention / Workspaces), Enterprise / SSO, Billing, API Keys, Settings
+- **Platform**: Task Center (queue + activity log), Team (Members / Activity / On-Call & Escalation / Approvals tabs), Audit Logs, Platform Metrics, Enterprise Readiness (SIEM / Retention / Workspaces), Enterprise / SSO, Billing, API Keys, Settings
 
 ## Pages & Routes
 | Path | Page |
@@ -138,6 +141,8 @@ shared/
 - `GET/POST/PUT/DELETE /api/bounty/reports` + stats — Bug Bounty
 - `GET/POST /api/containers/scans` + findings + scan + stats — Container Security
 - `GET/POST /api/onboarding` + complete step — Onboarding Checklist
+- `GET/POST/PATCH/DELETE /api/tasks` + stats/summary — Task Center
+- `POST /api/auth/refresh` — Token refresh
 
 ## Stripe Integration
 - **Module**: `server/stripe.ts` — Stripe Checkout session creation, status retrieval
@@ -146,6 +151,13 @@ shared/
 - **Secrets**: `STRIPE_SECRET_KEY` (backend), `VITE_STRIPE_PUBLISHABLE_KEY` (frontend)
 - **Flow**: Click Upgrade → POST `/api/stripe/create-checkout-session` → redirect to Stripe → return to `/billing?status=success|cancelled`
 - **Graceful degradation**: If Stripe keys not configured, plan changes apply directly without payment
+
+## Auth System
+- JWT access tokens (15m expiry) + refresh tokens (7d expiry) stored in localStorage (`zyra_access_token`, `zyra_refresh_token`)
+- `requireAuth` middleware validates Bearer token and populates `req.user` (JwtPayload: userId, organizationId, role)
+- `requireRole(...roles)` middleware for RBAC enforcement (owner > admin > analyst > viewer)
+- Frontend `queryClient.ts` auto-attaches Bearer header and handles 401 with token refresh
+- Rate limiting: 200 req/15min general, 20 req/15min auth endpoints
 
 ## Key Notes
 - `apiRequest` returns `Promise<Response>` — must call `.json()` to parse body

@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import type { Express, Request, Response } from "express";
-import { requireAuth } from "./routes";
+import { requireAuth } from "./auth";
 
 const ROLE_PERMISSIONS: Record<string, Record<string, string[]>> = {
   owner: {
@@ -189,11 +189,10 @@ async function ensureTeamOpsSeeded(orgId: string) {
 }
 
 function getSessionUser(req: Request) {
-  const s = req.session as any;
   return {
-    id: s.userId ?? "unknown",
-    name: s.userName ?? "Admin User",
-    role: s.userRole ?? "analyst",
+    id: req.user?.userId ?? "unknown",
+    name: "User",
+    role: req.user?.role ?? "analyst",
   };
 }
 
@@ -222,7 +221,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.get("/api/team-ops/activity", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureTeamOpsSeeded(orgId);
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
       const activities = await storage.getTeamActivities(orgId, limit);
@@ -232,7 +231,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.post("/api/team-ops/activity", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       const activity = await storage.createTeamActivity({
         organizationId: orgId,
@@ -249,7 +248,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.get("/api/team-ops/comments/:incidentId", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const comments = await storage.getIncidentComments(orgId, req.params.incidentId);
       res.json(comments);
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -257,7 +256,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.post("/api/team-ops/comments/:incidentId", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       if (!req.body.message || typeof req.body.message !== "string") {
         return res.status(400).json({ error: "Message is required" });
@@ -285,14 +284,14 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.delete("/api/team-ops/comments/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      await storage.deleteIncidentComment(req.params.id, req.session.organizationId!);
+      await storage.deleteIncidentComment(req.params.id, req.user!.organizationId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.get("/api/team-ops/oncall", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureTeamOpsSeeded(orgId);
       const schedules = await storage.getOncallSchedules(orgId);
       const now = new Date();
@@ -303,7 +302,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.post("/api/team-ops/oncall", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       if (!hasPermission(user.role, "oncall", "create")) {
         return res.status(403).json({ error: "Insufficient permissions" });
@@ -326,14 +325,14 @@ export async function registerTeamOpsRoutes(app: Express) {
       if (!hasPermission(user.role, "oncall", "delete")) {
         return res.status(403).json({ error: "Insufficient permissions" });
       }
-      await storage.deleteOncallSchedule(req.params.id, req.session.organizationId!);
+      await storage.deleteOncallSchedule(req.params.id, req.user!.organizationId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.get("/api/team-ops/escalation", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureTeamOpsSeeded(orgId);
       res.json(await storage.getEscalationPolicies(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -341,7 +340,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.post("/api/team-ops/escalation", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       if (!hasPermission(user.role, "policies", "create")) {
         return res.status(403).json({ error: "Insufficient permissions" });
@@ -360,7 +359,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.patch("/api/team-ops/escalation/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       if (!hasPermission(user.role, "policies", "update")) {
         return res.status(403).json({ error: "Insufficient permissions" });
@@ -385,14 +384,14 @@ export async function registerTeamOpsRoutes(app: Express) {
       if (!hasPermission(user.role, "policies", "delete")) {
         return res.status(403).json({ error: "Insufficient permissions" });
       }
-      await storage.deleteEscalationPolicy(req.params.id, req.session.organizationId!);
+      await storage.deleteEscalationPolicy(req.params.id, req.user!.organizationId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
   app.get("/api/team-ops/approvals", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await ensureTeamOpsSeeded(orgId);
       res.json(await storage.getApprovalRequests(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -400,7 +399,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.post("/api/team-ops/approvals", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       if (!hasPermission(user.role, "approvals", "create")) {
         return res.status(403).json({ error: "Insufficient permissions" });
@@ -431,7 +430,7 @@ export async function registerTeamOpsRoutes(app: Express) {
 
   app.patch("/api/team-ops/approvals/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const user = getSessionUser(req);
       const status = req.body.status;
       if (status !== "approved" && status !== "rejected") {

@@ -1,11 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { requireAuth } from "./routes";
+import { requireAuth } from "./auth";
 import { insertSiemConfigSchema, insertRetentionPolicySchema, insertWorkspaceSchema } from "@shared/schema";
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
-  if (!req.session.role || !["owner", "admin"].includes(req.session.role)) {
+  if (!req.user!.userId) return res.status(401).json({ message: "Unauthorized" });
+  if (!req.user!.role || !["owner", "admin"].includes(req.user!.role)) {
     return res.status(403).json({ message: "Admin or owner role required" });
   }
   next();
@@ -155,7 +155,7 @@ export async function registerEnterpriseRoutes(app: Express) {
   // ── SIEM ────────────────────────────────────────────────────
   app.get("/api/siem/config", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await seedEnterpriseData(orgId);
       const configs = await storage.getSiemConfigs(orgId);
       const maskedConfigs = configs.map(c => ({ ...c, apiKey: maskApiKey(c.apiKey) }));
@@ -166,7 +166,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.post("/api/siem/config", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const allowed = ["provider", "endpoint", "apiKey", "index", "enabled"];
       const body: any = {};
       for (const k of allowed) { if (req.body[k] !== undefined) body[k] = req.body[k]; }
@@ -179,7 +179,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.patch("/api/siem/config/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const existing = await storage.getSiemConfig(req.params.id, orgId);
       if (!existing) return res.status(404).json({ message: "Not found" });
       const allowed = ["endpoint", "apiKey", "index", "enabled"];
@@ -192,7 +192,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.delete("/api/siem/config/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await storage.deleteSiemConfig(req.params.id, orgId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -200,7 +200,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.post("/api/siem/test-export", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { configId } = req.body;
       const config = await storage.getSiemConfig(configId, orgId);
       if (!config) return res.status(404).json({ message: "Config not found" });
@@ -227,7 +227,7 @@ export async function registerEnterpriseRoutes(app: Express) {
   // ── Retention Policies ──────────────────────────────────────
   app.get("/api/retention-policy", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await seedEnterpriseData(orgId);
       const policies = await storage.getRetentionPolicies(orgId);
       const dataTypes = DATA_TYPES;
@@ -237,7 +237,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.post("/api/retention-policy", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const allowed = ["dataType", "retentionDays", "enabled"];
       const body: any = {};
       for (const k of allowed) { if (req.body[k] !== undefined) body[k] = req.body[k]; }
@@ -250,7 +250,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.patch("/api/retention-policy/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const policies = await storage.getRetentionPolicies(orgId);
       const existing = policies.find(p => p.id === req.params.id);
       if (!existing) return res.status(404).json({ message: "Not found" });
@@ -264,7 +264,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.delete("/api/retention-policy/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await storage.deleteRetentionPolicy(req.params.id, orgId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }
@@ -272,7 +272,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.post("/api/retention-policy/purge", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const policies = await storage.getRetentionPolicies(orgId);
       const enabledPolicies = policies.filter(p => p.enabled);
       const results: any[] = [];
@@ -291,7 +291,7 @@ export async function registerEnterpriseRoutes(app: Express) {
   // ── Workspaces ──────────────────────────────────────────────
   app.get("/api/workspaces", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await seedEnterpriseData(orgId);
       const ws = await storage.getWorkspaces(orgId);
       res.json(ws);
@@ -300,7 +300,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.get("/api/workspaces/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const ws = await storage.getWorkspace(req.params.id, orgId);
       if (!ws) return res.status(404).json({ message: "Not found" });
       res.json(ws);
@@ -309,12 +309,12 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.post("/api/workspaces/create", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const allowed = ["name", "description", "color"];
       const body: any = {};
       for (const k of allowed) { if (req.body[k] !== undefined) body[k] = req.body[k]; }
       body.organizationId = orgId;
-      body.createdById = req.session.userId;
+      body.createdById = req.user!.userId;
       const parsed = insertWorkspaceSchema.parse(body);
       const ws = await storage.createWorkspace(parsed);
       res.json(ws);
@@ -323,7 +323,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.patch("/api/workspaces/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const existing = await storage.getWorkspace(req.params.id, orgId);
       if (!existing) return res.status(404).json({ message: "Not found" });
       const allowed = ["name", "description", "color"];
@@ -336,7 +336,7 @@ export async function registerEnterpriseRoutes(app: Express) {
 
   app.delete("/api/workspaces/:id", requireAuth, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       await storage.deleteWorkspace(req.params.id, orgId);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }

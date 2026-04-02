@@ -1047,6 +1047,28 @@ export const workspaces = pgTable("workspaces", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const taskStatusEnum = pgEnum("task_status", ["pending", "running", "completed", "failed", "cancelled"]);
+
+export const tasks = pgTable("tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull().default("general"),
+  status: taskStatusEnum("task_status").notNull().default("pending"),
+  priority: text("priority").notNull().default("medium"),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  createdById: varchar("created_by_id").references(() => users.id),
+  result: jsonb("result"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true, startedAt: true, completedAt: true, result: true });
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+
 export const insertSiemConfigSchema = createInsertSchema(siemConfigs).omit({ id: true, createdAt: true, lastExportAt: true, eventsExported: true });
 export const insertRetentionPolicySchema = createInsertSchema(retentionPolicies).omit({ id: true, createdAt: true, lastPurgedAt: true, purgedCount: true });
 export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({ id: true, createdAt: true, assetCount: true, memberCount: true });

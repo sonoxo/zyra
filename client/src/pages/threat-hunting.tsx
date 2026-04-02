@@ -80,7 +80,7 @@ export default function ThreatHuntingPage() {
     setIsSearching(true);
     setLastQuery(searchQuery);
     try {
-      const resp = await fetch(`/api/hunt?q=${encodeURIComponent(searchQuery)}`, { credentials: "include" });
+      const resp = await apiRequest("GET", `/api/hunt?q=${encodeURIComponent(searchQuery)}`);
       const data = await resp.json();
       setResults(data.results || []);
       qc.invalidateQueries({ queryKey: ["/api/hunt/history"] });

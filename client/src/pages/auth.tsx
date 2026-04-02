@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { login } from "@/lib/auth";
+import { login, setTokens } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 
@@ -58,7 +58,6 @@ export default function AuthPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
       const body = await res.json();
       if (!res.ok) {
@@ -70,8 +69,9 @@ export default function AuthPage() {
       }
       return body;
     },
-    onSuccess: (user) => {
-      qc.setQueryData(["/api/auth/me"], user);
+    onSuccess: (data) => {
+      setTokens(data.accessToken, data.refreshToken);
+      qc.setQueryData(["/api/auth/me"], data.user);
       navigate("/dashboard");
     },
     onError: (err: any) => {

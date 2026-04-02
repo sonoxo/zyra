@@ -129,7 +129,7 @@ export default function Billing() {
 
     if (status === "success" && sessionId) {
       setCheckoutStatus("success");
-      fetch(`/api/stripe/session/${sessionId}`, { credentials: "include" })
+      apiRequest("GET", `/api/stripe/session/${sessionId}`)
         .then(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/billing/subscription"] });
           queryClient.invalidateQueries({ queryKey: ["/api/billing/usage"] });

@@ -7,7 +7,7 @@ import {
   CreditCard, Key, BarChart3, Crosshair,
   Cloud, Rss, GitMerge, Flame, Bug, Package,
   KeyRound, TriangleAlert, Radar, TrendingUp,
-  Users, ClipboardList, Rocket, Check, X,
+  Users, ClipboardList, Rocket, Check, X, ListTodo,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
   Share2, Database, BarChart2, Layers, Clock, AlertTriangle
@@ -103,6 +103,7 @@ const navGroups = [
   {
     label: "Platform",
     items: [
+      { href: "/task-center", label: "Task Center", icon: ListTodo },
       { href: "/team", label: "Team", icon: Users },
       { href: "/audit-logs", label: "Audit Logs", icon: ClipboardList },
       { href: "/platform-metrics", label: "Platform Metrics", icon: BarChart2 },

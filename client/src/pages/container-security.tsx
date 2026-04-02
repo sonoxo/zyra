@@ -24,7 +24,7 @@ function FindingsPanel({ scan }: { scan: ContainerScan }) {
   const { data: findings = [], isLoading } = useQuery<ContainerFinding[]>({
     queryKey: ["/api/containers/scans", scan.id, "findings"],
     queryFn: async () => {
-      const res = await fetch(`/api/containers/scans/${scan.id}/findings`, { credentials: "include" });
+      const res = await apiRequest("GET", `/api/containers/scans/${scan.id}/findings`);
       return res.json();
     },
     enabled: open,

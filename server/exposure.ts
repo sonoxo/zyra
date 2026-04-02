@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import type { Express, Request, Response } from "express";
-import { requireAuth } from "./routes";
+import { requireAuth } from "./auth";
 
 interface ExposureResult {
   exposed: boolean;
@@ -303,7 +303,7 @@ export async function getExposureAnalysis(orgId: string) {
 export async function registerExposureRoutes(app: Express) {
   app.get("/api/attack-paths/prioritized", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const paths = await getPrioritizedPaths(orgId);
       const top10 = paths.slice(0, 10);
       const criticalCount = top10.filter(p => p.reachesCritical).length;
@@ -325,7 +325,7 @@ export async function registerExposureRoutes(app: Express) {
 
   app.get("/api/attack-paths/exposure", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       res.json(await getExposureAnalysis(orgId));
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });

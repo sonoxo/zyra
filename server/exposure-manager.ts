@@ -1,10 +1,10 @@
 import { storage } from "./storage";
 import type { Express, Request, Response, NextFunction } from "express";
-import { requireAuth } from "./routes";
+import { requireAuth } from "./auth";
 import { getPrioritizedPaths, getExposureAnalysis } from "./exposure";
 
 function requireAnalyst(req: Request, res: Response, next: NextFunction) {
-  const role = req.session.role;
+  const role = req.user!.role;
   if (!role || !["owner", "admin", "analyst"].includes(role)) {
     return res.status(403).json({ message: "Insufficient permissions. Requires analyst role or higher." });
   }
@@ -377,7 +377,7 @@ async function executeRemediation(orgId: string, actionId: string): Promise<any>
 export async function registerExposureManagerRoutes(app: Express) {
   app.get("/api/attack-paths/graph", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const [paths, assets, identities] = await Promise.all([
         getPrioritizedPaths(orgId),
         storage.getAssets(orgId),
@@ -390,7 +390,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.get("/api/exposure/monitor", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const alerts = await storage.getExposureAlerts(orgId);
       const openCount = alerts.filter(a => a.status === "open").length;
       const resolvedCount = alerts.filter(a => a.status === "resolved").length;
@@ -400,7 +400,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.post("/api/exposure/monitor/scan", requireAuth, requireAnalyst, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const result = await runExposureMonitor(orgId);
       res.json({ message: `Exposure scan complete. ${result.stats.newAlerts} new alerts generated.`, ...result });
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -408,7 +408,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.get("/api/exposure/alerts", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const alerts = await storage.getExposureAlerts(orgId);
       res.json(alerts);
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -416,7 +416,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.patch("/api/exposure/alerts/:id", requireAuth, requireAnalyst, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const { status } = req.body;
       if (!["open", "acknowledged", "resolved", "dismissed"].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
@@ -431,7 +431,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.post("/api/exposure/remediate/:alertId", requireAuth, requireAnalyst, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const actions = await autoRemediate(orgId, req.params.alertId);
       res.json({ message: `${actions.length} remediation actions created`, actions });
     } catch (e: any) {
@@ -443,7 +443,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.get("/api/exposure/remediations", requireAuth, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const actions = await storage.getRemediationActions(orgId);
       res.json(actions);
     } catch (e: any) { res.status(500).json({ error: e.message }); }
@@ -451,7 +451,7 @@ export async function registerExposureManagerRoutes(app: Express) {
 
   app.post("/api/exposure/remediations/:id/execute", requireAuth, requireAnalyst, async (req: Request, res: Response) => {
     try {
-      const orgId = req.session.organizationId!;
+      const orgId = req.user!.organizationId;
       const result = await executeRemediation(orgId, req.params.id);
       if (!result) return res.status(404).json({ error: "Remediation action not found" });
       res.json({ message: "Remediation executed successfully", action: result });

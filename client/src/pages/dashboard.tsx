@@ -38,6 +38,10 @@ interface DashboardStats {
   cloudStats?: { targets: number; criticalMisconfigs: number };
   threatIntelStats?: { activeThreats: number; criticalCVEs: number; severityBreakdown?: Record<string, number> };
   monitoringActive?: boolean;
+  teamMemberCount?: number;
+  subscriptionStatus?: string;
+  subscriptionPlan?: string;
+  recentActivity?: Array<{ id: string; action: string; userId: string; resourceType: string | null; createdAt: string }>;
 }
 
 const SEVERITY_COLORS = {
@@ -149,16 +153,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 function AttackSurfaceMap({ stats }: { stats?: DashboardStats }) {
-  const data = [
-    { subject: 'Web Application', A: 65, fullMark: 100 },
-    { subject: 'API Layer', A: 45, fullMark: 100 },
-    { subject: 'Authentication', A: 30, fullMark: 100 },
-    { subject: 'Database', A: 20, fullMark: 100 },
-    { subject: 'Network', A: 55, fullMark: 100 },
-    { subject: 'Cloud Infra', A: 75, fullMark: 100 },
-  ];
+  const scansByTool = stats?.scansByTool ?? [];
+  const hasScans = scansByTool.some(s => s.count > 0);
+  const maxCount = Math.max(...scansByTool.map(s => s.count), 1);
 
-  // In a real app, these scores would come from the stats
+  const data = hasScans
+    ? scansByTool.map(s => ({ subject: s.tool, A: Math.round((s.count / maxCount) * 100), fullMark: 100 }))
+    : [
+        { subject: 'SAST', A: 0, fullMark: 100 },
+        { subject: 'Container', A: 0, fullMark: 100 },
+        { subject: 'Dependencies', A: 0, fullMark: 100 },
+        { subject: 'DAST', A: 0, fullMark: 100 },
+      ];
+
   const getFillColor = (value: number) => {
     if (value > 60) return "#ef4444";
     if (value > 40) return "#eab308";
@@ -207,13 +214,16 @@ function AttackSurfaceMap({ stats }: { stats?: DashboardStats }) {
 }
 
 function InfrastructurePosture({ stats }: { stats?: DashboardStats }) {
-  const postureItems = [
-    { label: "IAM & Access", score: 85 },
-    { label: "Network Security", score: 62 },
-    { label: "Data Encryption", score: 90 },
-    { label: "Logging & Monitoring", score: 45 },
-    { label: "Vulnerability Management", score: 70 },
-  ];
+  const coverage = stats?.complianceCoverage ?? [];
+  const postureItems = coverage.length > 0
+    ? coverage.slice(0, 5).map(c => ({ label: c.framework, score: c.coverage }))
+    : [
+        { label: "SOC2", score: 0 },
+        { label: "HIPAA", score: 0 },
+        { label: "ISO27001", score: 0 },
+        { label: "PCI-DSS", score: 0 },
+        { label: "GDPR", score: 0 },
+      ];
 
   return (
     <Card className="border-card-border">
@@ -379,9 +389,9 @@ export default function Dashboard() {
             </Card>
           </div>
           <StatCard icon={Activity} label="Total Scans" value={stats?.totalScans ?? 0} subtext={`${stats?.activeScans ?? 0} running`} loading={isLoading} />
-          <StatCard icon={AlertTriangle} label="Critical Issues" value={stats?.criticalFindings ?? 0} color="critical" trend={12} loading={isLoading} />
-          <StatCard icon={Shield} label="High Severity" value={stats?.highFindings ?? 0} color="warning" trend={-5} loading={isLoading} />
-          <StatCard icon={CheckCircle} label="Resolved" value={stats?.resolvedFindings ?? 0} color="success" trend={-8} loading={isLoading} />
+          <StatCard icon={AlertTriangle} label="Critical Issues" value={stats?.criticalFindings ?? 0} color="critical" loading={isLoading} />
+          <StatCard icon={Shield} label="High Severity" value={stats?.highFindings ?? 0} color="warning" loading={isLoading} />
+          <StatCard icon={CheckCircle} label="Resolved" value={stats?.resolvedFindings ?? 0} color="success" loading={isLoading} />
           <StatCard icon={Target} label="Total Findings" value={stats?.totalFindings ?? 0} loading={isLoading} />
           <StatCard icon={FileText} label="Medium Issues" value={stats?.mediumFindings ?? 0} loading={isLoading} />
         </div>
@@ -691,6 +701,77 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <DependencyVulnerabilitySummary stats={stats} />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-card-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-foreground flex items-center justify-between">
+                Recent Activity
+                <Link href="/audit-logs">
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground" data-testid="link-view-audit-logs">
+                    View all <ArrowUpRight className="w-3 h-3" />
+                  </Button>
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)
+              ) : (stats?.recentActivity?.length ?? 0) > 0 ? (
+                stats!.recentActivity!.map((a) => (
+                  <div key={a.id} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0" data-testid={`activity-row-${a.id}`}>
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Activity className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-foreground truncate">{a.action.replace(/\./g, " ").replace(/\b\w/g, c => c.toUpperCase())}</div>
+                      {a.resourceType && <div className="text-xs text-muted-foreground">{a.resourceType}</div>}
+                    </div>
+                    <div className="text-xs text-muted-foreground shrink-0">
+                      {new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <Activity className="w-6 h-6 text-muted-foreground mx-auto mb-2 opacity-20" />
+                  <p className="text-xs text-muted-foreground">No recent activity</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-card-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-foreground">Organization Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Team Members</span>
+                <span className="text-sm font-semibold text-foreground" data-testid="text-team-count">{stats?.teamMemberCount ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Subscription</span>
+                <Badge variant="outline" className={cn(
+                  "text-xs",
+                  stats?.subscriptionStatus === "active" ? "border-green-500/30 text-green-600" :
+                  stats?.subscriptionStatus === "trialing" ? "border-blue-500/30 text-blue-600" :
+                  "border-red-500/30 text-red-600"
+                )} data-testid="text-subscription-status">
+                  {stats?.subscriptionStatus === "trialing" ? "Trial" : stats?.subscriptionStatus ?? "None"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Plan</span>
+                <span className="text-sm font-semibold text-foreground capitalize" data-testid="text-plan">{stats?.subscriptionPlan ?? "None"}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-muted-foreground">Total Scans</span>
+                <span className="text-sm font-semibold text-foreground">{stats?.totalScans ?? 0}</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <IntelligenceSection />
