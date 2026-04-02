@@ -19,7 +19,7 @@
     "stripe": "^14.17.0"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
+    "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.0",
     "tsx": "^4.7.0",
