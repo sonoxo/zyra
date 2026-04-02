@@ -13,8 +13,8 @@ externalPort = 80
 PORT = "5000"
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["node", "./dist/index.cjs"]
+deploymentTarget = "vm"
+run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
 
 [workflows]
@@ -42,3 +42,7 @@ waitForPort = 5000
 
 [userenv.shared]
 JWT_SECRET = "a86d0326305dbfe90d874933a5aeec4a5cdde9793e81e61510140b51040c1426"
+
+[userenv.production]
+FRONTEND_URL = "https://zyra.host"
+BACKEND_URL = "https://zyra-host.replit.app"
