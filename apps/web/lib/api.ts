@@ -174,6 +174,15 @@ export const notifications = {
   delete: (id: string) => fetchApi(`/api/notifications/${id}`, { method: 'DELETE' }),
 }
 
+// Jobs / Task Queue
+export const jobs = {
+  list: () => fetchApi<any[]>('/api/jobs'),
+  get: (id: string) => fetchApi<any>(`/api/jobs/${id}`),
+  create: (type: string, payload?: any) =>
+    fetchApi('/api/jobs', { method: 'POST', body: JSON.stringify({ type, payload }) }),
+  run: (id: string) => fetchApi(`/api/jobs/${id}/run`, { method: 'POST' }),
+}
+
 // Save token helper
 export function setToken(token: string) {
   if (typeof window !== 'undefined') {
