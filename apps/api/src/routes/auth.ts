@@ -7,6 +7,26 @@ import { config } from '@zyra/config'
 const JWT_SECRET = process.env.JWT_SECRET || config.auth.secret
 const TOKEN_EXPIRY = '7d'
 
+// Build user payload with org info
+async function buildUserPayload(user: any) {
+  const orgMemberships = await prisma.organizationUser.findMany({
+    where: { userId: user.id },
+    include: { organization: true },
+  })
+
+  const defaultOrg = orgMemberships[0]?.organization
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    isVerified: user.isVerified,
+    orgId: defaultOrg?.id,
+    orgRole: orgMemberships[0]?.role,
+  }
+}
+
 interface RegisterBody {
   email: string
   password: string
@@ -59,16 +79,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
         },
       })
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: TOKEN_EXPIRY }
-      )
+      const userPayload = await buildUserPayload(user)
+      const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
 
       return reply.status(201).send({
         success: true,
         data: { 
-          user: { id: user.id, email: user.email, name: user.name, role: user.role }, 
+          user: userPayload, 
           token 
         }
       })
@@ -98,16 +115,13 @@ export default async function authRoutes(fastify: FastifyInstance) {
         return reply.status(401).send({ success: false, error: 'Invalid credentials' })
       }
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: TOKEN_EXPIRY }
-      )
+      const userPayload = await buildUserPayload(user)
+      const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
 
       return reply.send({
         success: true,
         data: { 
-          user: { id: user.id, email: user.email, name: user.name, role: user.role }, 
+          user: userPayload, 
           token 
         }
       })
@@ -138,17 +152,22 @@ export default async function authRoutes(fastify: FastifyInstance) {
         return reply.status(401).send({ success: false, error: 'User not found' })
       }
 
+      const userPayload = await buildUserPayload(user)
+      const orgMemberships = await prisma.organizationUser.findMany({
+        where: { userId: user.id },
+        include: { organization: true },
+      })
+
       return reply.send({ 
         success: true, 
         data: { 
-          user: { 
-            id: user.id, 
-            email: user.email, 
-            name: user.name, 
-            role: user.role,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-          },
+          user: userPayload,
+          organizations: orgMemberships.map(m => ({
+            id: m.organization.id,
+            name: m.organization.name,
+            slug: m.organization.slug,
+            role: m.role,
+          })),
           profile: user.profile
         } 
       })

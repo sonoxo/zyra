@@ -24,6 +24,8 @@ model User {
   streams     Stream[]
   payments    Payment[]
   notifications Notification[]
+  organizations OrganizationUser[]
+  assignedIncidents Incident[] @relation("AssignedTo")
 }
 
 model Profile {
@@ -114,4 +116,116 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== ORGANIZATIONS ==============
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        String   @default("FREE")
+  stripeCustomerId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OrganizationUser[]
+  assets      Asset[]
+  scans       Scan[]
+  threats     Threat[]
+  incidents   Incident[]
+  activities  Activity[]
+}
+
+model OrganizationUser {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+// ============== ASSETS ==============
+model Asset {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // WEBSITE, API, SERVER, DATABASE, CONTAINER
+  url         String?
+  ip          String?
+  status      String   @default("ACTIVE") // ACTIVE, SCANNING, ISOLATED, OFFLINE
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  scans        Scan[]
+  threats      Threat[]
+}
+
+// ============== SCANS ==============
+model Scan {
+  id          String   @id @default(cuid())
+  type        String   // FULL, QUICK, SPECIFIC
+  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  score       Int?
+  orgId       String
+  assetId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  asset        Asset?       @relation(fields: [assetId], references: [id], onDelete: SetNull)
+}
+
+// ============== THREATS ==============
+model Threat {
+  id          String   @id @default(cuid())
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  title       String
+  description String?
+  cve         String?
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, FALSE_POSITIVE
+  assetId     String
+  orgId       String
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  asset        Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== INCIDENTS ==============
+model Incident {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  orgId       String
+  assignedToId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignedTo     User?        @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+}
+
+// ============== ACTIVITY LOG ==============
+model Activity {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String   // USER, ASSET, SCAN, THREAT, INCIDENT
+  entityId    String?
+  description String?
+  metadata    String?  // JSON string
+  orgId       String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
