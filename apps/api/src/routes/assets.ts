@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { triggerWebhook } from '../lib/webhook.js'
+import { sendToOrg } from '../websocket/index.js'
 
 export default async function assetRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
@@ -54,6 +55,9 @@ export default async function assetRoutes(fastify: FastifyInstance) {
 
       // Trigger webhooks
       await triggerWebhook(orgId, 'asset.created', { id: asset.id, name: asset.name, type: asset.type })
+
+      // Real-time notification
+      sendToOrg(orgId, 'asset.created', { id: asset.id, name: asset.name })
 
       return reply.status(201).send({ success: true, data: asset })
     } catch (error: any) {

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { triggerWebhook } from '../lib/webhook.js'
+import { sendToOrg } from '../websocket/index.js'
 
 export default async function threatRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
@@ -51,6 +52,7 @@ export default async function threatRoutes(fastify: FastifyInstance) {
 
       // Trigger webhooks
       await triggerWebhook(orgId, 'threat.created', { id: threat.id, title: threat.title, severity: threat.severity })
+      sendToOrg(orgId, 'threat.created', { id: threat.id, title: threat.title, severity: threat.severity })
       return reply.status(201).send({ success: true, data: threat })
     } catch (error: any) {
       return reply.status(500).send({ success: false, error: error.message })
