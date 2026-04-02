@@ -1,14 +1,11 @@
-name: CI (Optional)
+name: CI
 
 on:
   push:
     branches: [main]
 
-# Zyra deploys on Replit - this workflow is optional source control validation
-# For Replit deployment: push to GitHub → Replit auto-pulls or use Replit GitHub integration
-
 jobs:
-  validate:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,11 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Validate dependencies
-        run: npm install --legacy-peer-deps --dry-run
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Type check
-        run: npx tsc --noEmit
-        continue-on-error: true
+      - name: Build
+        run: npm run build:web
