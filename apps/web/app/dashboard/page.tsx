@@ -517,9 +517,9 @@ export default function Dashboard() {
                       {selectedOrg?.plan === 'ENTERPRISE' ? 'Unlimited everything' : selectedOrg?.plan === 'PRO' ? '100 scans, 50 assets' : '10 scans, 5 assets'}
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-cyan-500 rounded-lg text-sm font-medium">
+                  <a href="/pricing" className="px-4 py-2 bg-cyan-500 rounded-lg text-sm font-medium inline-block">
                     Upgrade Plan
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
