@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Shield, Lock, Eye, Activity, AlertTriangle, CheckCircle, XCircle, Plus, Users, Settings, LogOut, Bell, Zap } from "lucide-react"
+import { Shield, Lock, Eye, Activity, AlertTriangle, CheckCircle, XCircle, Plus, Users, Settings, LogOut, Bell, Zap, CreditCard, Check } from "lucide-react"
 import { useAuth } from "../../context/AuthContext"
 import { orgs, activities, assets, threats, incidents } from "../../lib/api"
 
@@ -17,7 +17,7 @@ interface ActivityLog {
 export default function Dashboard() {
   const router = useRouter()
   const { user, logout, isAuthenticated, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'incidents' | 'activity' | 'team' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'incidents' | 'activity' | 'team' | 'billing' | 'settings'>('overview')
   const [orgList, setOrgList] = useState<any[]>([])
   const [selectedOrg, setSelectedOrg] = useState<any>(null)
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([])
@@ -126,6 +126,7 @@ export default function Dashboard() {
                 { id: 'incidents', label: 'Incidents', icon: AlertTriangle },
                 { id: 'activity', label: 'Activity', icon: Activity },
                 { id: 'team', label: 'Team', icon: Users },
+                { id: 'billing', label: 'Billing', icon: CreditCard },
                 { id: 'settings', label: 'Settings', icon: Settings },
               ].map(tab => (
                 <button
@@ -421,6 +422,59 @@ export default function Dashboard() {
               <button className="px-4 py-2 bg-cyan-500 rounded-lg text-sm font-medium">
                 Save Changes
               </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'billing' && (
+          <div className="space-y-6">
+            <div className="bg-gray-900 border border-gray-800 rounded-xl">
+              <div className="p-6 border-b border-gray-800">
+                <h3 className="text-lg font-semibold">Current Plan</h3>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                  <div>
+                    <div className="text-xl font-bold text-white">{selectedOrg?.plan || 'FREE'}</div>
+                    <div className="text-sm text-gray-400">
+                      {selectedOrg?.plan === 'ENTERPRISE' ? 'Unlimited everything' : selectedOrg?.plan === 'PRO' ? '100 scans, 50 assets' : '10 scans, 5 assets'}
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-cyan-500 rounded-lg text-sm font-medium">
+                    Upgrade Plan
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { id: 'FREE', name: 'Free', price: '$0', features: ['10 scans', '5 assets', '1 team member', 'Community support'] },
+                { id: 'PRO', name: 'Pro', price: '$49/mo', features: ['100 scans', '50 assets', '10 team members', 'Priority support', 'Advanced analytics'] },
+                { id: 'ENTERPRISE', name: 'Enterprise', price: '$199/mo', features: ['Unlimited scans', 'Unlimited assets', 'Unlimited team', '24/7 support', 'Custom integrations'] },
+              ].map(plan => (
+                <div key={plan.id} className={`bg-gray-900 border rounded-xl p-6 ${selectedOrg?.plan === plan.id ? 'border-cyan-500' : 'border-gray-800'}`}>
+                  <div className="text-lg font-semibold mb-2">{plan.name}</div>
+                  <div className="text-2xl font-bold text-white mb-4">{plan.price}</div>
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center space-x-2 text-sm text-gray-400">
+                        <Check className="w-4 h-4 text-cyan-400" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selectedOrg?.plan === plan.id ? (
+                    <button disabled className="w-full py-2 bg-gray-700 rounded-lg text-sm font-medium text-gray-400">
+                      Current Plan
+                    </button>
+                  ) : (
+                    <button className="w-full py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg text-sm font-medium">
+                      {plan.id === 'FREE' ? 'Downgrade' : 'Upgrade'}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
