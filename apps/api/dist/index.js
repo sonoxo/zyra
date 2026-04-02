@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import { config } from '@zyra/config';
+import { prisma } from './lib/prisma.js';
 import './env.js'; // Validate env vars on startup
 import { errorMiddleware } from './middleware/error.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
@@ -81,8 +82,51 @@ await server.register(webhookRoutes, { prefix: '/api/webhooks' });
 await server.register(jobRoutes, { prefix: '/api/jobs' });
 // WebSocket
 await server.register(websocketRoutes);
+// Auto-bootstrap: create admin user if none exists
+async function autoBootstrap() {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) {
+        console.log('[Bootstrap] No ADMIN_EMAIL/PASSWORD set, skipping auto-bootstrap');
+        return;
+    }
+    try {
+        const userCount = await prisma.user.count();
+        if (userCount > 0) {
+            console.log('[Bootstrap] Users already exist, skipping');
+            return;
+        }
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
+        const user = await prisma.user.create({
+            data: {
+                email: adminEmail,
+                password: hashedPassword,
+                name: 'Admin',
+                role: 'ADMIN',
+                isVerified: true,
+            },
+        });
+        // Create default org
+        const org = await prisma.organization.create({
+            data: { name: 'Zyra HQ', slug: 'zyra-hq', plan: 'ENTERPRISE' },
+        });
+        await prisma.organizationUser.create({
+            data: { userId: user.id, organizationId: org.id, role: 'OWNER' },
+        });
+        await prisma.profile.create({
+            data: { userId: user.id, displayName: 'Admin' },
+        });
+        console.log(`[Bootstrap] Created admin user: ${adminEmail}`);
+    }
+    catch (error) {
+        console.error('[Bootstrap] Failed:', error.message);
+    }
+}
 const start = async () => {
     try {
+        // Run auto-bootstrap before accepting requests
+        await autoBootstrap();
         await server.listen({ port: config.websocket.port, host: '0.0.0.0' });
         console.log(`🚀 Zyra API running on port ${config.websocket.port}`);
         // Start continuous health monitoring (every 5 minutes)
