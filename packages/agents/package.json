@@ -11,7 +11,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@zyra/types": "workspace:*"
+    "@zyra/types": "file:../types"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
