@@ -224,6 +224,7 @@ export default function AuthPage() {
                     id="login-username"
                     data-testid="input-username"
                     placeholder="Enter your username"
+                    autoComplete="username"
                     {...loginForm.register("username")}
                     className="h-10"
                   />
@@ -239,6 +240,7 @@ export default function AuthPage() {
                       data-testid="input-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      autoComplete="current-password"
                       {...loginForm.register("password")}
                       className="h-10 pr-10"
                     />
