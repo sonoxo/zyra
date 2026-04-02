@@ -23,7 +23,7 @@ async function sendEmail(options: SendEmailOptions): Promise<boolean> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "Zyra <noreply@zyra.dev>",
+        from: process.env.EMAIL_FROM || "Zyra <noreply@zyra.host>",
         to: [options.to],
         subject: options.subject,
         html: options.html,
