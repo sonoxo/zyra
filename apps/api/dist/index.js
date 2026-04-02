@@ -32,6 +32,7 @@ import apiKeyRoutes from './routes/keys.js';
 import passwordResetRoutes from './routes/password.js';
 import notificationRoutes from './routes/notifications.js';
 import healthRoutes from './routes/health.js';
+import publicRoutes from './routes/public.js';
 import { getSystemHealth } from '@zyra/monitoring';
 import { websocketRoutes } from './websocket/index.js';
 const server = Fastify({
@@ -51,6 +52,7 @@ server.addHook('preHandler', rateLimit());
 server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 // Detailed health route
 await server.register(healthRoutes, { prefix: '/api/health' });
+await server.register(publicRoutes, { prefix: '/api/public' });
 // API Routes
 await server.register(authRoutes, { prefix: '/api/auth' });
 await server.register(userRoutes, { prefix: '/api/users' });
