@@ -162,7 +162,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
         success: true, 
         data: { 
           user: userPayload,
-          organizations: orgMemberships.map(m => ({
+          organizations: orgMemberships.map((m: any) => ({
             id: m.organization.id,
             name: m.organization.name,
             slug: m.organization.slug,

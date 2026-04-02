@@ -10,7 +10,7 @@ export default async function orgRoutes(fastify) {
                 where: { userId: req.user.id },
                 include: { organization: true },
             });
-            return reply.send({ success: true, data: orgs.map(o => o.organization) });
+            return reply.send({ success: true, data: orgs.map((o) => o.organization) });
         }
         catch (error) {
             return reply.status(500).send({ success: false, error: error.message });

@@ -80,7 +80,7 @@ export default async function analyticsRoutes(fastify) {
             });
             // Group by day
             const byDay = {};
-            scans.forEach(scan => {
+            scans.forEach((scan) => {
                 const day = scan.createdAt.toISOString().split('T')[0];
                 if (!byDay[day]) {
                     byDay[day] = { total: 0, completed: 0 };

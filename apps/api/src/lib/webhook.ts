@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './prisma.js'
 import crypto from 'crypto'
-
-const prisma = new PrismaClient()
 
 export interface WebhookPayload {
   event: string
@@ -27,7 +25,7 @@ export async function triggerWebhook(orgId: string, event: string, data: any) {
 
   for (const webhook of webhooks) {
     // check if event in list
-    const events = webhook.events.split(',').map(e => e.trim())
+    const events = webhook.events.split(',').map((e: string) => e.trim())
     if (!events.includes(event)) continue
 
     try {

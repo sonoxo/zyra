@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============== USER & AUTH ==============
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  avatar      String?
+  password    String
+  role        String    @default("VIEWER")
+  isVerified  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  profile     Profile?
+  sessions    Session[]
+  streams     Stream[]
+  payments    Payment[]
+  notifications Notification[]
+  organizations OrganizationUser[]
+  assignedIncidents Incident[] @relation("AssignedTo")
+  apiKeys          ApiKey[]
+  passwordResets PasswordReset[]
+  activities      Activity[]
+  jobs           Job[]
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String?
+  bio         String?
+  website     String?
+  twitter     String?
+  instagram   String?
+  location    String?
+  isPublic    Boolean  @default(true)
+  followerCount Int    @default(0)
+  followingCount Int   @default(0)
+  streamCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ip        String?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== STREAMING ==============
+model Stream {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  description  String?
+  category     String?
+  thumbnailUrl String?
+  streamKey    String   @unique
+  isLive       Boolean  @default(false)
+  isPrivate    Boolean  @default(false)
+  viewerCount  Int      @default(0)
+  startedAt    DateTime?
+  endedAt      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatMessages ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  streamId  String
+  userId    String
+  content   String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  stream    Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+}
+
+// ============== MONETIZATION ==============
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String
+  stripePaymentId String   @unique
+  amount          Int
+  currency        String   @default("usd")
+  status          String   // PENDING, COMPLETED, FAILED, REFUNDED
+  description     String?
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== NOTIFICATIONS ==============
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== ORGANIZATIONS ==============
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        String   @default("FREE")
+  stripeCustomerId String?
+  settings    Json?    // Store Slack webhook URLs, etc
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OrganizationUser[]
+  assets      Asset[]
+  scans       Scan[]
+  threats     Threat[]
+  incidents   Incident[]
+  activities  Activity[]
+  webhooks    Webhook[]
+  jobs       Job[]
+}
+
+model OrganizationUser {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+// ============== ASSETS ==============
+model Asset {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // WEBSITE, API, SERVER, DATABASE, CONTAINER
+  url         String?
+  ip          String?
+  status      String   @default("ACTIVE") // ACTIVE, SCANNING, ISOLATED, OFFLINE
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  scans        Scan[]
+  threats      Threat[]
+}
+
+// ============== SCANS ==============
+model Scan {
+  id          String   @id @default(cuid())
+  type        String   // FULL, QUICK, SPECIFIC
+  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  score       Int?
+  orgId       String
+  assetId     String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  asset        Asset?       @relation(fields: [assetId], references: [id], onDelete: SetNull)
+}
+
+// ============== THREATS ==============
+model Threat {
+  id          String   @id @default(cuid())
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  title       String
+  description String?
+  cve         String?
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, FALSE_POSITIVE
+  assetId     String
+  orgId       String
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  asset        Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== INCIDENTS ==============
+model Incident {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  orgId       String
+  assignedToId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignedTo     User?        @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+}
+
+// ============== ACTIVITY LOG ==============
+model Activity {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String   // USER, ASSET, SCAN, THREAT, INCIDENT
+  entityId    String?
+  description String?
+  metadata    String?  // JSON string
+  orgId       String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== API KEYS ==============
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  key         String    @unique // hashed
+  prefix      String    // first 12 chars for display
+  userId      String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== PASSWORD RESET ==============
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== WEBHOOKS ==============
+model Webhook {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  events      String
+  secret      String?
+  active      Boolean  @default(true)
+  orgId       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== JOBS / TASK QUEUE ==============
+model Job {
+  id          String   @id @default(cuid())
+  type        String   // SCAN, NOTIFY, WEBHOOK, HEALTH_CHECK
+  status      String   @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED
+  payload     String   // JSON string
+  result      String?  // JSON string result
+  error       String?  // error message if failed
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  scheduledAt DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  orgId       String
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+// ============== AUDIT LOG ==============
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entityType  String   // USER, ORGANIZATION, SCAN, etc
+  entityId    String?
+  userId      String?
+  orgId       String?
+  details     String?  // JSON with changed fields
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}

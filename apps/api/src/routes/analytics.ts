@@ -97,7 +97,7 @@ export default async function analyticsRoutes(fastify: FastifyInstance) {
       // Group by day
       const byDay: Record<string, { total: number; completed: number }> = {}
       
-      scans.forEach(scan => {
+      scans.forEach((scan: any) => {
         const day = scan.createdAt.toISOString().split('T')[0]
         if (!byDay[day]) {
           byDay[day] = { total: 0, completed: 0 }
