@@ -34,6 +34,7 @@ server/
   graph.ts            - Security graph seeding (14 nodes, 15 edges) and query functions
   caasm.ts            - CAASM engine: risk scoring, correlation, identity seeding, API routes
   exposure.ts         - Attack Path Risk Prioritization engine: exposure scoring, exploitability detection, critical path detection, composite risk scoring, remediation generation
+  stripe.ts           - Stripe Checkout integration: session creation, status retrieval, graceful degradation
 
 shared/
   schema.ts       - Drizzle ORM schema + Zod + TypeScript types (49 tables)
@@ -117,6 +118,9 @@ shared/
 - `GET /api/audit-logs` + CSV export — Audit logging
 - `GET/POST/DELETE /api/api-keys` — API key management
 - `GET/PUT /api/billing/subscription` + usage + plans — Billing
+- `GET /api/stripe/status` — Stripe configuration check
+- `POST /api/stripe/create-checkout-session` — Create Stripe Checkout session (redirects to Stripe)
+- `GET /api/stripe/session/:sessionId` — Retrieve Stripe Checkout session status
 - `GET/PUT /api/sso/config` — SSO configuration
 - `GET /api/analytics/vulnerabilities` — Advanced analytics
 - `GET /api/deployment/regions` + config — Multi-region deployment
@@ -134,6 +138,14 @@ shared/
 - `GET/POST/PUT/DELETE /api/bounty/reports` + stats — Bug Bounty
 - `GET/POST /api/containers/scans` + findings + scan + stats — Container Security
 - `GET/POST /api/onboarding` + complete step — Onboarding Checklist
+
+## Stripe Integration
+- **Module**: `server/stripe.ts` — Stripe Checkout session creation, status retrieval
+- **Mode**: Stripe Checkout (test mode) with subscription billing
+- **Plans**: Starter ($0/free), Professional ($99/mo), Enterprise ($499/mo)
+- **Secrets**: `STRIPE_SECRET_KEY` (backend), `VITE_STRIPE_PUBLISHABLE_KEY` (frontend)
+- **Flow**: Click Upgrade → POST `/api/stripe/create-checkout-session` → redirect to Stripe → return to `/billing?status=success|cancelled`
+- **Graceful degradation**: If Stripe keys not configured, plan changes apply directly without payment
 
 ## Key Notes
 - `apiRequest` returns `Promise<Response>` — must call `.json()` to parse body

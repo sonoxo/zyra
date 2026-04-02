@@ -4,13 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   CreditCard, Check, Star, Zap, Crown,
   Users, ScanSearch, GitBranch, Loader2,
-  FileText, Calendar
+  FileText, Calendar, ExternalLink, CheckCircle2, XCircle, Info
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { Subscription } from "@shared/schema";
 
 interface UsageData {
@@ -32,8 +33,8 @@ interface PlanInfo {
 const plans: PlanInfo[] = [
   {
     name: "starter",
-    price: 49,
-    maxUsers: 3,
+    price: 0,
+    maxUsers: 5,
     maxScansPerMonth: 50,
     maxRepositories: 10,
     features: [
@@ -41,16 +42,16 @@ const plans: PlanInfo[] = [
       "SBOM supply chain",
       "Secrets detection",
       "Security dashboard",
-      "3 users",
-      "Limited scans",
+      "5 users",
+      "50 scans/month",
     ],
   },
   {
     name: "professional",
-    price: 199,
-    maxUsers: -1,
-    maxScansPerMonth: -1,
-    maxRepositories: -1,
+    price: 99,
+    maxUsers: 25,
+    maxScansPerMonth: 500,
+    maxRepositories: 50,
     popular: true,
     features: [
       "Everything in Starter",
@@ -58,22 +59,21 @@ const plans: PlanInfo[] = [
       "Attack surface monitoring",
       "Container security",
       "Vendor risk tracking",
-      "Unlimited users",
+      "25 users",
     ],
   },
   {
     name: "enterprise",
-    price: 999,
+    price: 499,
     maxUsers: -1,
     maxScansPerMonth: -1,
     maxRepositories: -1,
     features: [
       "Everything in Professional",
-      "SSO login",
+      "SSO & SAML",
       "Audit logs",
       "SOC2 compliance",
-      "Distributed scan workers",
-      "API access",
+      "Unlimited everything",
       "Priority support",
     ],
   },
@@ -81,16 +81,11 @@ const plans: PlanInfo[] = [
 
 function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
-    case "active":
-      return "default";
-    case "trialing":
-      return "secondary";
-    case "past_due":
-      return "destructive";
-    case "canceled":
-      return "outline";
-    default:
-      return "secondary";
+    case "active": return "default";
+    case "trialing": return "secondary";
+    case "past_due": return "destructive";
+    case "canceled": return "outline";
+    default: return "secondary";
   }
 }
 
@@ -107,14 +102,10 @@ function getUsagePercent(current: number, limit: number): number {
 
 function PlanIcon({ plan }: { plan: string }) {
   switch (plan) {
-    case "starter":
-      return <Zap className="w-5 h-5" />;
-    case "professional":
-      return <Star className="w-5 h-5" />;
-    case "enterprise":
-      return <Crown className="w-5 h-5" />;
-    default:
-      return <CreditCard className="w-5 h-5" />;
+    case "starter": return <Zap className="w-5 h-5" />;
+    case "professional": return <Star className="w-5 h-5" />;
+    case "enterprise": return <Crown className="w-5 h-5" />;
+    default: return <CreditCard className="w-5 h-5" />;
   }
 }
 
@@ -134,6 +125,21 @@ function BillingSkeleton() {
 
 export default function Billing() {
   const { toast } = useToast();
+  const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      setCheckoutStatus("success");
+      queryClient.invalidateQueries({ queryKey: ["/api/billing/subscription"] });
+    } else if (status === "cancelled") {
+      setCheckoutStatus("cancelled");
+    }
+    if (status) {
+      window.history.replaceState({}, "", "/billing");
+    }
+  }, []);
 
   const { data: subscription, isLoading: subLoading } = useQuery<Subscription>({
     queryKey: ["/api/billing/subscription"],
@@ -142,6 +148,12 @@ export default function Billing() {
   const { data: usage, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ["/api/billing/usage"],
   });
+
+  const { data: stripeStatus } = useQuery<{ configured: boolean }>({
+    queryKey: ["/api/stripe/status"],
+  });
+
+  const stripeConfigured = stripeStatus?.configured ?? false;
 
   const upgradeMutation = useMutation({
     mutationFn: async (plan: string) => {
@@ -157,6 +169,38 @@ export default function Billing() {
     },
   });
 
+  const checkoutMutation = useMutation({
+    mutationFn: async (plan: string) => {
+      const res = await apiRequest("POST", "/api/stripe/create-checkout-session", { plan });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.message || "Failed to create checkout session");
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: "Checkout Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handlePlanAction = (plan: string) => {
+    const planInfo = plans.find(p => p.name === plan);
+    if (!planInfo) return;
+
+    if (planInfo.price === 0) {
+      upgradeMutation.mutate(plan);
+      return;
+    }
+
+    if (stripeConfigured) {
+      checkoutMutation.mutate(plan);
+    } else {
+      upgradeMutation.mutate(plan);
+    }
+  };
+
+  const isPending = upgradeMutation.isPending || checkoutMutation.isPending;
   const isLoading = subLoading || usageLoading;
 
   if (isLoading) {
@@ -181,12 +225,38 @@ export default function Billing() {
         <p className="text-muted-foreground text-sm mt-1">Manage your subscription and billing</p>
       </div>
 
+      {checkoutStatus === "success" && (
+        <Alert data-testid="alert-checkout-success">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <AlertDescription>
+            Payment successful! Your plan has been upgraded. It may take a moment for changes to reflect.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {checkoutStatus === "cancelled" && (
+        <Alert data-testid="alert-checkout-cancelled">
+          <XCircle className="h-4 w-4 text-muted-foreground" />
+          <AlertDescription>
+            Checkout was cancelled. No charges were made. You can try again anytime.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card data-testid="card-current-plan">
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
           <CardTitle className="text-base font-semibold">Current Plan</CardTitle>
-          <Badge variant={getStatusVariant(currentStatus)} data-testid="badge-plan-status">
-            {currentStatus}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {stripeConfigured && (
+              <Badge variant="outline" className="text-xs gap-1" data-testid="badge-stripe-active">
+                <CreditCard className="w-3 h-3" />
+                Stripe Active
+              </Badge>
+            )}
+            <Badge variant={getStatusVariant(currentStatus)} data-testid="badge-plan-status">
+              {currentStatus}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3">
@@ -198,7 +268,9 @@ export default function Billing() {
                 {currentPlan}
               </div>
               <div className="text-sm text-muted-foreground">
-                ${plans.find((p) => p.name === currentPlan)?.price || 0}/month
+                {plans.find((p) => p.name === currentPlan)?.price === 0
+                  ? "Free"
+                  : `$${plans.find((p) => p.name === currentPlan)?.price || 0}/month`}
               </div>
             </div>
           </div>
@@ -223,6 +295,17 @@ export default function Billing() {
           </div>
         </CardContent>
       </Card>
+
+      {!stripeConfigured && (
+        <Alert data-testid="alert-stripe-not-configured">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Stripe is not configured. Add <code className="text-xs bg-muted px-1 py-0.5 rounded">STRIPE_SECRET_KEY</code> and{" "}
+            <code className="text-xs bg-muted px-1 py-0.5 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code> to enable real payment processing.
+            Plan changes will be applied directly without payment.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div>
         <h2 className="text-lg font-semibold mb-4">Plan Comparison</h2>
@@ -250,8 +333,10 @@ export default function Billing() {
                     <CardTitle className="text-base capitalize">{plan.name}</CardTitle>
                   </div>
                   <div className="text-2xl font-bold">
-                    ${plan.price}
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    {plan.price === 0 ? "Free" : `$${plan.price}`}
+                    {plan.price > 0 && (
+                      <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -272,14 +357,20 @@ export default function Billing() {
                       <Button
                         className="w-full"
                         variant={isUpgrade ? "default" : "outline"}
-                        onClick={() => upgradeMutation.mutate(plan.name)}
-                        disabled={upgradeMutation.isPending}
+                        onClick={() => handlePlanAction(plan.name)}
+                        disabled={isPending}
                         data-testid={`button-${isUpgrade ? "upgrade" : "downgrade"}-${plan.name}`}
                       >
-                        {upgradeMutation.isPending ? (
+                        {isPending ? (
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : isUpgrade && stripeConfigured && plan.price > 0 ? (
+                          <ExternalLink className="w-4 h-4 mr-2" />
                         ) : null}
-                        {isUpgrade ? "Upgrade" : "Downgrade"}
+                        {isUpgrade
+                          ? stripeConfigured && plan.price > 0
+                            ? "Upgrade via Stripe"
+                            : "Upgrade"
+                          : "Downgrade"}
                       </Button>
                     )}
                   </div>
@@ -330,9 +421,9 @@ export default function Billing() {
         <CardContent>
           <div className="space-y-3">
             {[
-              { date: "Dec 1, 2024", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
-              { date: "Nov 1, 2024", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
-              { date: "Oct 1, 2024", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
+              { date: "Mar 1, 2026", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
+              { date: "Feb 1, 2026", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
+              { date: "Jan 1, 2026", amount: plans.find((p) => p.name === currentPlan)?.price || 0, status: "Paid" },
             ].map((invoice, i) => (
               <div
                 key={i}
@@ -348,7 +439,7 @@ export default function Billing() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium" data-testid={`text-invoice-amount-${i}`}>
-                    ${invoice.amount.toFixed(2)}
+                    {invoice.amount === 0 ? "Free" : `$${invoice.amount.toFixed(2)}`}
                   </span>
                   <Badge variant="outline" className="text-xs">
                     {invoice.status}

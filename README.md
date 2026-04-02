@@ -117,6 +117,8 @@ The app starts at `http://localhost:5000` with hot reload.
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `SESSION_SECRET` | Yes | Express session signing key |
 | `NODE_ENV` | No | `development` or `production` (default: `development`) |
+| `STRIPE_SECRET_KEY` | No | Stripe secret key for payment processing (`sk_test_...`) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | No | Stripe publishable key for frontend (`pk_test_...`) |
 
 ### Demo Account
 

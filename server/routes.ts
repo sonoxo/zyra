@@ -20,6 +20,7 @@ import {
   insertThreatIntelItemSchema,
   insertMonitoringConfigSchema,
 } from "@shared/schema";
+import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 
 declare module "express-session" {
   interface SessionData {
@@ -710,6 +711,10 @@ export async function registerRoutes(
       const orgId = req.session.organizationId!;
       const { plan } = req.body;
       if (!plan || !PLAN_DETAILS[plan]) return res.status(400).json({ message: "Invalid plan" });
+
+      if (isStripeConfigured() && isPaidPlan(plan)) {
+        return res.status(402).json({ message: "Paid plan upgrades require Stripe Checkout. Use the upgrade button to proceed through payment." });
+      }
 
       const periodEnd = new Date();
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
@@ -1983,6 +1988,8 @@ export async function registerRoutes(
   await registerTeamOpsRoutes(app);
   const { registerEnterpriseRoutes } = await import("./enterprise");
   await registerEnterpriseRoutes(app);
+
+  registerStripeRoutes(app, requireAuth);
 
   return httpServer;
 }
