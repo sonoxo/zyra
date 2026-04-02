@@ -135,6 +135,45 @@ export const payments = {
     }),
 }
 
+// API Keys
+export const apiKeys = {
+  list: () => fetchApi<any[]>('/api/keys'),
+  create: (name?: string, expiresInDays?: number) =>
+    fetchApi<{ key: string; prefix: string }>('/api/keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, expiresInDays }),
+    }),
+  revoke: (id: string) => fetchApi(`/api/keys/${id}`, { method: 'DELETE' }),
+}
+
+// Password Reset
+export const password = {
+  requestReset: (email: string) =>
+    fetchApi('/api/password/reset-request', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  confirmReset: (token: string, newPassword: string) =>
+    fetchApi('/api/password/reset-confirm', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    }),
+  change: (currentPassword: string, newPassword: string) =>
+    fetchApi('/api/password/change', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+}
+
+// Notifications
+export const notifications = {
+  list: () => fetchApi<any[]>('/api/notifications'),
+  unread: () => fetchApi<{ count: number }>('/api/notifications/unread'),
+  markRead: (id: string) => fetchApi(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllRead: () => fetchApi('/api/notifications/read-all', { method: 'PATCH' }),
+  delete: (id: string) => fetchApi(`/api/notifications/${id}`, { method: 'DELETE' }),
+}
+
 // Save token helper
 export function setToken(token: string) {
   if (typeof window !== 'undefined') {

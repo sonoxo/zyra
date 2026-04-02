@@ -26,6 +26,8 @@ model User {
   notifications Notification[]
   organizations OrganizationUser[]
   assignedIncidents Incident[] @relation("AssignedTo")
+  apiKeys          ApiKey[]
+  passwordResets PasswordReset[]
 }
 
 model Profile {
@@ -228,4 +230,31 @@ model Activity {
   createdAt   DateTime @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+// ============== API KEYS ==============
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  key         String    @unique // hashed
+  prefix      String    // first 12 chars for display
+  userId      String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============== PASSWORD RESET ==============
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
