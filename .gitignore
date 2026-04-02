@@ -5,14 +5,8 @@ out
 .env*.local
 .vercel
 
-# Build artifacts
-apps/web/.next
-apps/web/out
-
 # Database
 prisma/dev.db
 
 # OS
-.DS_Store-e 
-# Next.js
-apps/web/next-env.d.ts
+.DS_Store
