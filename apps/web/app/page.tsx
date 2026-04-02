@@ -36,9 +36,8 @@ export default function Home() {
             <a href="/dashboard" className="inline-flex items-center px-6 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium">
               Get Started <ArrowRight className="ml-2 w-4 h-4" />
             </a>
-            <a href="#" className="inline-flex items-center px-6 py-3 border border-gray-700 hover:border-gray-600 rounded-lg font-medium">
-              Request Demo
-            </a>
+            <a href="/scan" className="inline-flex items-center px-6 py-3 border border-gray-700 hover:border-gray-600 rounded-lg font-medium">
+              Free Scan</a>
           </div>
         </section>
 
