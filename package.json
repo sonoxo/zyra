@@ -14,14 +14,16 @@
     "build:web": "npm run build --workspace=apps/web",
     "build:api": "npm run build --workspace=apps/api",
     "lint": "npm run lint --workspaces",
-    "test": "npm run test --workspaces",
+    "test": "npx tsx packages/agents/src/index.test.ts && npx tsx packages/config/src/index.test.ts && npx tsx packages/types/src/index.test.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.0",
+    "@vitest/ui": "^2.0.0"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -20,6 +20,10 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
+      - name: Test
+        run: |
+          npm run test
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
