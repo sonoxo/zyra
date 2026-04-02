@@ -4,6 +4,7 @@ import websocket from '@fastify/websocket'
 import { config } from '@zyra/config'
 import './env.js' // Validate env vars on startup
 import authRoutes from './routes/auth.js'
+import userRoutes from './routes/users.js'
 import assetRoutes from './routes/assets.js'
 import scanRoutes from './routes/scan.js'
 import threatRoutes from './routes/threats.js'
@@ -30,6 +31,7 @@ server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }))
 
 // API Routes
 await server.register(authRoutes, { prefix: '/api/auth' })
+await server.register(userRoutes, { prefix: '/api/users' })
 await server.register(assetRoutes, { prefix: '/api/assets' })
 await server.register(scanRoutes, { prefix: '/api/scan' })
 await server.register(threatRoutes, { prefix: '/api/threats' })

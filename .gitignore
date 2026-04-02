@@ -13,4 +13,6 @@ apps/web/out
 prisma/dev.db
 
 # OS
-.DS_Store
+.DS_Store-e 
+# Next.js
+apps/web/next-env.d.ts
