@@ -110,7 +110,7 @@ export default async function pricingRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      const org = await prisma.organization.findUnique({ where: { id: orgId })
+      const org = await prisma.organization.findUnique({ where: { id: orgId } })
       
       let customerId = org?.stripeCustomerId
 

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { sendToOrg } from '../websocket/index.js'
+import { getSystemHealth } from '@zyra/monitoring'
 
 // In-memory job queue (for production, use Bull/Redis)
 interface Job {
@@ -106,6 +107,15 @@ async function processJob(job: Job) {
       case 'threat_detection':
         await new Promise(r => setTimeout(r, 2000))
         result = { threatsFound: Math.floor(Math.random() * 3) }
+        break
+
+      case 'health_check':
+        const health = await getSystemHealth()
+        result = { status: health.status, timestamp: health.timestamp }
+        // If unhealthy, log error for alerting
+        if (health.status === 'unhealthy') {
+          console.error('[Health Check] Unhealthy:', JSON.stringify(health))
+        }
         break
 
       default:

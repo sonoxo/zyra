@@ -118,7 +118,7 @@ export default async function orgRoutes(fastify: FastifyInstance) {
     } catch (error: any) {
       return reply.status(500).send({ success: false, error: error.message })
     }
-  }))
+  })
 
   // PATCH /api/orgs/:id/members/:userId - update member role
   fastify.patch('/:id/members/:userId', async (req, reply) => {

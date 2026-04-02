@@ -1,8 +1,20 @@
 // Environment validation - runs on API startup
-import { config } from './config/index.js'
+// Strict validation for production: DATABASE_URL, JWT_SECRET, NEXTAUTH_SECRET, FRONTEND_URL required
 
-const requiredEnvVars = ['JWT_SECRET']
-const recommendedEnvVars = ['DATABASE_URL', 'STRIPE_SECRET_KEY', 'NEXTAUTH_SECRET']
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'NEXTAUTH_SECRET',
+  'FRONTEND_URL',
+]
+
+const recommendedEnvVars = [
+  'STRIPE_SECRET_KEY',
+  'STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'BACKEND_URL',
+  'SENTRY_DSN',
+]
 
 function validateEnv() {
   const missing: string[] = []

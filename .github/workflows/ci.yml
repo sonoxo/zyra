@@ -3,21 +3,33 @@ name: CI
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Clean install
-        run: rm -rf node_modules package-lock.json && npm install
-
-      - name: Build web app
-        run: npm run build:web
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Test
+        run: npm run test
+      
+      - name: Build (monorepo)
+        run: npm run build
+      
+      # No deploy step - deployment handled separately
