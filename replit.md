@@ -1,7 +1,7 @@
-# Sentinel Forge — Intelligent Autonomous Cybersecurity Platform
+# Zyra — AI-Native Cybersecurity Platform
 
 ## Overview
-Sentinel Forge is a globally scalable, AI-powered SecOps platform combining vulnerability scanning, AI pentesting, cloud security posture management, threat intelligence, compliance automation, DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, security awareness training, vendor risk management, dark web monitoring, security roadmap planning, bug bounty management, container/Kubernetes security, SOAR automation, Security Data Lake, threat correlation, security graph visualization, platform metrics/observability, and CAASM (Cyber Asset Attack Surface Management) into a unified enterprise platform.
+Zyra is an AI-native cybersecurity ecosystem combining vulnerability scanning, AI pentesting, cloud security posture management, threat intelligence, compliance automation, DevSecOps monitoring, incident response, risk management, supply chain security, secrets scanning, security awareness training, vendor risk management, dark web monitoring, security roadmap planning, bug bounty management, container/Kubernetes security, SOAR automation, exposure management, Security Data Lake, threat correlation, security graph visualization, platform metrics/observability, and CAASM (Cyber Asset Attack Surface Management) into a unified enterprise platform.
 
 ## Architecture
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui + Recharts

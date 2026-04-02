@@ -55,21 +55,21 @@ export function getPrometheusMetrics(): string {
   const metrics = getMetrics();
 
   for (const [name, value] of Object.entries(metrics.counters)) {
-    lines.push(`# HELP sentinel_${name} Sentinel Forge counter`);
-    lines.push(`# TYPE sentinel_${name} counter`);
-    lines.push(`sentinel_${name} ${value}`);
+    lines.push(`# HELP zyra_${name} Zyra counter`);
+    lines.push(`# TYPE zyra_${name} counter`);
+    lines.push(`zyra_${name} ${value}`);
   }
 
   for (const [name, stats] of Object.entries(metrics.histograms)) {
-    lines.push(`# HELP sentinel_${name} Sentinel Forge histogram`);
-    lines.push(`# TYPE sentinel_${name} summary`);
-    lines.push(`sentinel_${name}{quantile="0.5"} ${(stats as any).p50 || 0}`);
-    lines.push(`sentinel_${name}{quantile="0.95"} ${(stats as any).p95 || 0}`);
-    lines.push(`sentinel_${name}{quantile="0.99"} ${(stats as any).p99 || 0}`);
-    lines.push(`sentinel_${name}_count ${(stats as any).count || 0}`);
+    lines.push(`# HELP zyra_${name} Zyra histogram`);
+    lines.push(`# TYPE zyra_${name} summary`);
+    lines.push(`zyra_${name}{quantile="0.5"} ${(stats as any).p50 || 0}`);
+    lines.push(`zyra_${name}{quantile="0.95"} ${(stats as any).p95 || 0}`);
+    lines.push(`zyra_${name}{quantile="0.99"} ${(stats as any).p99 || 0}`);
+    lines.push(`zyra_${name}_count ${(stats as any).count || 0}`);
   }
 
-  lines.push(`sentinel_process_uptime_seconds ${Math.floor(metrics.uptime)}`);
+  lines.push(`zyra_process_uptime_seconds ${Math.floor(metrics.uptime)}`);
   return lines.join("\n");
 }
 
@@ -161,7 +161,7 @@ export async function seedSecurityEvents(orgId: string): Promise<void> {
 
   const seedEvents = [
     { eventType: "vulnerability_detected", source: "trivy", severity: "critical", title: "CVE-2021-44228 Log4Shell detected in log4j-core:2.14.1", description: "Log4j RCE vulnerability found in SBOM package log4j-core version 2.14.1", assetId: "api-server-prod" },
-    { eventType: "scan_completed", source: "semgrep", severity: "high", title: "Semgrep scan completed: 3 critical findings", description: "Code scan on sentinel-app detected SQL injection, hardcoded secret, and path traversal" },
+    { eventType: "scan_completed", source: "semgrep", severity: "high", title: "Semgrep scan completed: 3 critical findings", description: "Code scan on zyra-app detected SQL injection, hardcoded secret, and path traversal" },
     { eventType: "threat_detected", source: "threat_hunting", severity: "critical", title: "Lateral movement detected from compromised host", description: "Unusual network connections detected from api-server-01 to internal database nodes", assetId: "api-server-01" },
     { eventType: "secret_exposed", source: "secrets_scanner", severity: "high", title: "AWS access key exposed in git history", description: "AKIA... key found in commit history of frontend-app repository" },
     { eventType: "anomaly_detected", source: "dark_web_monitor", severity: "medium", title: "Company email found on dark web forum", description: "admin@company.com credential found in dark web breach dataset" },

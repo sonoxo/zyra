@@ -68,7 +68,7 @@ export async function registerRoutes(
         conString: process.env.DATABASE_URL,
         createTableIfMissing: true,
       }),
-      secret: process.env.SESSION_SECRET || "sentinel-forge-secret-key-change-in-prod",
+      secret: process.env.SESSION_SECRET || "zyra-secret-key-change-in-prod",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -1063,8 +1063,8 @@ export async function registerRoutes(
 
   app.get("/api/pipelines/webhook-docs", requireAuth, (req: Request, res: Response) => {
     const docs = {
-      github_actions: "name: Sentinel Scan\non: [push]\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - name: Sentinel Scan\n        run: curl -X POST https://api.sentinel-forge.com/webhook -H 'X-Sentinel-Secret: ${{ secrets.SENTINEL_SECRET }}'",
-      gitlab_ci: "sentinel_scan:\n  script:\n    - curl -X POST https://api.sentinel-forge.com/webhook -H 'X-Sentinel-Secret: $SENTINEL_SECRET'",
+      github_actions: "name: Zyra Scan\non: [push]\njobs:\n  scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - name: Zyra Scan\n        run: curl -X POST https://api.zyra.security/webhook -H 'X-Zyra-Secret: ${{ secrets.ZYRA_SECRET }}'",
+      gitlab_ci: "zyra_scan:\n  script:\n    - curl -X POST https://api.zyra.security/webhook -H 'X-Zyra-Secret: $ZYRA_SECRET'",
     };
     res.json(docs);
   });
@@ -1990,7 +1990,7 @@ export async function registerRoutes(
 function generatePDFContent(report: any): Buffer {
   const lines = [
     `%PDF-1.4`,
-    `SENTINEL FORGE - SECURITY AUDIT REPORT`,
+    `ZYRA - SECURITY AUDIT REPORT`,
     ``,
     `Title: ${report.title}`,
     `Generated: ${report.generatedAt || new Date().toISOString()}`,

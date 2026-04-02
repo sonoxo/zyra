@@ -140,7 +140,7 @@ export default function SecurityCopilotPage() {
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Bot className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-1">Sentinel AI Copilot</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-1">Zyra AI Copilot</h3>
             <p className="text-sm text-muted-foreground max-w-md">
               I have access to all your security data — vulnerabilities, incidents, risks, assets, attack paths, and more. Ask me anything.
             </p>

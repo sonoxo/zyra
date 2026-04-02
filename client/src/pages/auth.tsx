@@ -30,11 +30,11 @@ type LoginForm = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const features = [
-  "Multi-framework compliance mapping (SOC2, HIPAA, ISO27001, PCI-DSS, FedRAMP, GDPR)",
-  "Automated scans with Semgrep, Trivy, Bandit & OWASP ZAP",
-  "AI-powered security audit report generation",
-  "Real-time vulnerability dashboards & analytics",
-  "Multi-tenant architecture with role-based access",
+  "AI-native threat detection and autonomous remediation",
+  "Multi-framework compliance (SOC2, HIPAA, ISO27001, PCI-DSS, FedRAMP, GDPR)",
+  "Continuous exposure management with attack path visualization",
+  "Intelligent SOAR automation and security orchestration",
+  "Enterprise-grade multi-tenant architecture with RBAC",
 ];
 
 export default function AuthPage() {
@@ -81,20 +81,20 @@ export default function AuthPage() {
               <Shield className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-bold text-lg text-foreground tracking-tight">Sentinel Forge</div>
-              <div className="text-xs text-muted-foreground">AI-Powered Security Compliance</div>
+              <div className="font-bold text-lg text-foreground tracking-tight">Zyra</div>
+              <div className="text-xs text-muted-foreground">AI-Native Cybersecurity Platform</div>
             </div>
           </div>
 
           <div className="mb-8">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
-              Globally Scalable Platform
+              AI-Native Security Ecosystem
             </Badge>
             <h1 className="text-3xl font-bold text-foreground leading-tight mb-4">
-              Enterprise-grade security<br />compliance, simplified.
+              Autonomous cybersecurity<br />intelligence, unified.
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Unify vulnerability scanning, compliance mapping, and audit reporting across your entire infrastructure — from code to cloud.
+              From vulnerability scanning to threat hunting, compliance to remediation — Zyra protects your entire infrastructure with AI-powered precision.
             </p>
           </div>
 
@@ -130,7 +130,7 @@ export default function AuthPage() {
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <Shield className="w-4.5 h-4.5 text-primary-foreground" />
             </div>
-            <div className="font-bold text-lg tracking-tight">Sentinel Forge</div>
+            <div className="font-bold text-lg tracking-tight">Zyra</div>
           </div>
 
           <Tabs value={tab} onValueChange={setTab} className="w-full">

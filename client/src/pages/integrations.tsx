@@ -358,13 +358,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trigger Sentinel Forge Scan
+      - name: Trigger Zyra Scan
         run: |
           curl -X POST \\
-            -H "Authorization: Bearer \${{ secrets.SENTINEL_TOKEN }}" \\
+            -H "Authorization: Bearer \${{ secrets.ZYRA_TOKEN }}" \\
             -H "Content-Type: application/json" \\
             -d '{"scanType":"semgrep","targetName":"$\{{ github.repository }}"}' \\
-            $\{{ secrets.SENTINEL_API_URL }}/api/scans`,
+            $\{{ secrets.ZYRA_API_URL }}/api/scans`,
   },
   {
     title: "GitLab CI",
@@ -373,10 +373,10 @@ jobs:
   script:
     - |
       curl -X POST \\
-        -H "Authorization: Bearer $SENTINEL_TOKEN" \\
+        -H "Authorization: Bearer $ZYRA_TOKEN" \\
         -H "Content-Type: application/json" \\
         -d '{"scanType":"trivy","targetName":"$CI_PROJECT_PATH"}' \\
-        $SENTINEL_API_URL/api/scans`,
+        $ZYRA_API_URL/api/scans`,
   },
 ];
 

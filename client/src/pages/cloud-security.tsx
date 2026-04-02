@@ -189,7 +189,7 @@ export default function CloudSecurityPage() {
             <DialogHeader>
               <DialogTitle>Add Cloud Target</DialogTitle>
               <DialogDescription>
-                Sentinel Forge uses read-only access for security audits. Credentials are managed via IAM roles.
+                Zyra uses read-only access for security audits. Credentials are managed via IAM roles.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -262,7 +262,7 @@ export default function CloudSecurityPage() {
                 />
                 <div className="bg-muted/50 p-3 rounded-md text-xs text-muted-foreground flex gap-2">
                   <Info className="w-4 h-4 shrink-0" />
-                  <p>Credentials are managed through your cloud provider's IAM roles. Sentinel Forge uses read-only access for security audits.</p>
+                  <p>Credentials are managed through your cloud provider's IAM roles. Zyra uses read-only access for security audits.</p>
                 </div>
                 <Button type="submit" className="w-full" disabled={addTargetMutation.isPending} data-testid="button-submit-target">
                   {addTargetMutation.isPending ? "Adding..." : "Add Target"}

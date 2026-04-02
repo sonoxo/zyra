@@ -1,0 +1,91 @@
+Rebrand the entire platform and ecosystem to “Zyra” and make it publish-ready.
+
+OBJECTIVE:
+Replace all old brand references, placeholder naming, inconsistent visuals, and unfinished product text so the app is fully branded as Zyra across the entire ecosystem and ready for public launch.
+
+EXECUTION MODE:
+Autonomous. Do not ask unnecessary questions. Preserve working infrastructure. Build on the current codebase. Do not rebuild from scratch.
+
+CORE BRAND RULE:
+Zyra is the official product, company, and ecosystem name everywhere user-facing and system-facing unless a legacy/internal reference must temporarily remain for technical stability. If any old names exist, replace them safely.
+
+TASKS:
+
+1. GLOBAL REBRAND
+- Replace old product names, repo references, app labels, placeholder names, and branding text with “Zyra”
+- Update app name, browser title, metadata, manifest, footer, navbar, auth pages, dashboard, settings, notifications, emails, and landing page copy
+- Replace any internal visible references to Sonoxo, Sentinel Forge, temp names, or demo labels where safe
+
+2. BRAND IDENTITY
+- Establish Zyra as:
+  - AI-native cybersecurity platform
+  - premium, modern, intelligent, scalable ecosystem
+- Create a consistent tagline and short description across the app
+- Make all copy clear, polished, and launch-ready
+
+3. UI/UX POLISH
+- Apply a consistent premium dark-mode design system
+- Ensure branding colors, icons, logo placement, buttons, cards, typography, spacing, and empty states all feel unified
+- Remove anything that feels unfinished, generic, or template-like
+- Make dashboard, auth flow, settings, onboarding, and landing page look market-ready
+
+4. LOGO + VISUAL SYSTEM
+- Ensure the Zyra logo appears correctly in all required places:
+  - app shell
+  - navbar
+  - auth screens
+  - landing page
+  - metadata/social preview if supported
+- Fix any broken or missing brand assets
+- Use a cohesive visual system that matches Zyra’s premium security positioning
+
+5. COPY + MESSAGING
+- Rewrite placeholder copy into real launch-ready product messaging
+- Position Zyra as an AI-powered cybersecurity ecosystem
+- Make feature descriptions compelling, modern, and commercially strong
+- Ensure homepage, dashboard modules, onboarding, and pricing language all align
+
+6. PRODUCT CONSISTENCY
+- Make sure all modules feel part of one Zyra ecosystem:
+  - incidents
+  - vulnerabilities
+  - audit logs
+  - alerts
+  - AI copilot
+  - onboarding
+  - billing
+  - settings
+- Standardize naming across routes, menus, components, and section headers
+
+7. PUBLISH-READY CLEANUP
+- Remove mock/demo text in production paths
+- Remove test branding, filler content, lorem ipsum, fake numbers, and broken states
+- Replace with real empty states and polished defaults
+- Ensure no user-facing references make the app feel unfinished
+
+8. TECHNICAL REBRAND SUPPORT
+- Update environment naming, app config, metadata, constants, config files, and documentation where needed
+- Preserve stability of working auth, database, routes, and deployment
+- Only rename internals when safe and non-breaking
+- Keep Replit as primary infrastructure
+
+9. DOCS + LAUNCH READINESS
+- Update README and product documentation to reflect Zyra branding
+- Add concise product description, setup, and deployment notes
+- Make repo presentation match a serious launch-stage startup
+
+10. FINAL QA
+- Search entire codebase for old names and replace remaining public-facing references
+- Verify there are no inconsistent brand labels
+- Verify pages render correctly and branding is consistent on desktop and mobile
+- Confirm the platform feels cohesive and ready to publish
+
+CONSTRAINTS:
+- Do not rebuild from scratch
+- Do not break working functionality
+- Preserve current Replit-based architecture
+- Prioritize clean rebrand, consistency, and launch readiness
+- Everything should feel like one premium product ecosystem
+
+END STATE:
+Zyra is fully rebranded across the entire platform, visually consistent, commercially polished, and publish-ready for public launch.

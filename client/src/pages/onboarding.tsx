@@ -47,7 +47,7 @@ export default function OnboardingPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Getting Started</h1>
-          <p className="text-sm text-muted-foreground">Complete these steps to fully activate Sentinel Forge</p>
+          <p className="text-sm text-muted-foreground">Complete these steps to fully activate Zyra</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export default function OnboardingPage() {
               <Shield className="w-8 h-8 text-green-500" />
               <PartyPopper className="w-8 h-8 text-green-500" />
             </div>
-            <h2 className="text-lg font-bold text-green-600 dark:text-green-400 mb-1">Sentinel Forge platform fully operational.</h2>
+            <h2 className="text-lg font-bold text-green-600 dark:text-green-400 mb-1">Zyra platform fully operational.</h2>
             <p className="text-sm text-muted-foreground">All setup steps are complete. Your enterprise security platform is ready.</p>
             <Button className="mt-4" asChild data-testid="button-go-dashboard">
               <Link href="/dashboard">Go to Dashboard <ChevronRight className="w-4 h-4 ml-1" /></Link>

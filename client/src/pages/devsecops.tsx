@@ -499,30 +499,30 @@ function WebhookDocsDialog({ config, onOpenChange }: { config: PipelineConfig | 
     
     switch (config.provider) {
       case "github_actions":
-        return `name: Sentinel Security Scan
+        return `name: Zyra Security Scan
 on: [push, pull_request]
 jobs:
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Trigger Sentinel Scan
+      - name: Trigger Zyra Scan
         run: |
           curl -X POST "${webhookUrl}" \\
-            -H "X-Sentinel-Secret: \${{ secrets.SENTINEL_WEBHOOK_SECRET }}" \\
+            -H "X-Zyra-Secret: \${{ secrets.ZYRA_WEBHOOK_SECRET }}" \\
             -d '{"commit": "\${{ github.sha }}", "ref": "\${{ github.ref }}"}'`;
       case "gitlab_ci":
-        return `sentinel_scan:
+        return `zyra_scan:
   stage: test
   script:
     - curl -X POST "${webhookUrl}" \\
-        -H "X-Sentinel-Secret: $SENTINEL_WEBHOOK_SECRET" \\
+        -H "X-Zyra-Secret: $ZYRA_WEBHOOK_SECRET" \\
         -d "{\\\"commit\\\": \\\"$CI_COMMIT_SHA\\\", \\\"ref\\\": \\\"$CI_COMMIT_REF_NAME\\\"}"
   only:
     - main
     - merge_requests`;
       default:
-        return `# Webhook URL: ${webhookUrl}\n# Header: X-Sentinel-Secret: <your_secret>`;
+        return `# Webhook URL: ${webhookUrl}\n# Header: X-Zyra-Secret: <your_secret>`;
     }
   };
 

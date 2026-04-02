@@ -35,34 +35,34 @@ const SIEM_PROVIDERS: Record<string, { name: string; format: string; defaultEndp
     name: "Splunk",
     format: "HEC JSON",
     defaultEndpoint: "https://splunk.example.com:8088/services/collector",
-    defaultIndex: "sentinel_forge_security",
+    defaultIndex: "zyra_security",
   },
   elastic: {
     name: "Elastic SIEM",
     format: "ECS JSON",
     defaultEndpoint: "https://elastic.example.com:9200",
-    defaultIndex: "sentinel-forge-events",
+    defaultIndex: "zyra-events",
   },
   sentinel: {
     name: "Microsoft Sentinel",
     format: "CEF/Syslog",
     defaultEndpoint: "https://<workspace-id>.ods.opinsights.azure.com",
-    defaultIndex: "SentinelForge_CL",
+    defaultIndex: "Zyra_CL",
   },
   qradar: {
     name: "IBM QRadar",
     format: "LEEF",
     defaultEndpoint: "https://qradar.example.com/api/ariel",
-    defaultIndex: "sentinel_forge",
+    defaultIndex: "zyra_security",
   },
 };
 
 function formatForSplunk(event: SiemEvent) {
   return {
     time: new Date(event.timestamp).getTime() / 1000,
-    host: "sentinel-forge",
+    host: "zyra",
     source: event.source,
-    sourcetype: "sentinel:security",
+    sourcetype: "zyra:security",
     event: {
       severity: event.severity,
       category: event.category,
@@ -79,7 +79,7 @@ function formatForElastic(event: SiemEvent) {
     event: { kind: "alert", category: [event.category], severity: severityToNumber(event.severity) },
     message: event.description,
     organization: { id: event.organizationId },
-    source: { provider: "sentinel-forge", module: event.source },
+    source: { provider: "zyra", module: event.source },
     ...event.metadata,
   };
 }
@@ -208,10 +208,10 @@ export async function registerEnterpriseRoutes(app: Express) {
       const testEvent: SiemEvent = {
         id: `test-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        source: "sentinel-forge-test",
+        source: "zyra-test",
         severity: "info",
         category: "test",
-        description: "SIEM integration test event from Sentinel Forge",
+        description: "SIEM integration test event from Zyra",
         organizationId: orgId,
         metadata: { test: true },
       };
