@@ -107,7 +107,7 @@ shared/
 | /settings | 7-tab settings center |
 
 ## API Endpoints (grouped by module)
-- `POST/GET /api/auth/*` — Authentication
+- `POST/GET /api/auth/*` — Authentication (register, login with username or email, verify-email, forgot-password, reset-password, refresh, logout)
 - `GET /api/dashboard/stats` — Dashboard stats
 - `GET/POST /api/scans` + findings — Security scan management
 - `GET/POST /api/pentest/sessions` + findings — AI pentest sessions
@@ -174,7 +174,9 @@ shared/
 - `requireAuth` middleware validates Bearer token and populates `req.user` (JwtPayload: userId, organizationId, role)
 - `requireRole(...roles)` middleware for RBAC enforcement (owner > admin > analyst > viewer)
 - Frontend `queryClient.ts` auto-attaches Bearer header and handles 401 with token refresh
-- Rate limiting: 200 req/15min general, 20 req/15min auth endpoints
+- Login accepts username OR email (auto-detected via `@` presence)
+- Password reset flow: forgot-password → email with 1hr token → reset-password page → new password
+- Rate limiting: 200 req/15min general, 20 req/15min auth endpoints (login, register, resend-verification, forgot-password, reset-password)
 
 ## Environment Validation
 - Startup env validation in `server/index.ts`

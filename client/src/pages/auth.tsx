@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Shield, Eye, EyeOff, ArrowRight, ChevronRight, Mail, Loader2 } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username required"),
+  username: z.string().min(1, "Username or email required"),
   password: z.string().min(1, "Password required"),
 });
 
@@ -219,11 +220,11 @@ export default function AuthPage() {
               </div>
               <form onSubmit={loginForm.handleSubmit((d) => loginMutation.mutate(d))} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="login-username" className="text-sm font-medium">Username</Label>
+                  <Label htmlFor="login-username" className="text-sm font-medium">Username or email</Label>
                   <Input
                     id="login-username"
                     data-testid="input-username"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                     autoComplete="username"
                     {...loginForm.register("username")}
                     className="h-10"
@@ -255,6 +256,11 @@ export default function AuthPage() {
                   {loginForm.formState.errors.password && (
                     <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
                   )}
+                  <div className="text-right">
+                    <Link href="/reset-password" className="text-xs text-primary hover:underline" data-testid="link-forgot-password">
+                      Forgot password?
+                    </Link>
+                  </div>
                 </div>
                 <Button
                   type="submit"

@@ -21,7 +21,7 @@ import {
 } from "@shared/schema";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 import { executeTask, processPendingTasks, getTaskExecutionHistory } from "./task-runner";
-import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "./email";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "./email";
 import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken } from "./auth";
 import { z } from "zod";
 export { requireAuth } from "./auth";
@@ -37,6 +37,15 @@ const registerBodySchema = z.object({
 const loginBodySchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8).max(128),
 });
 
 async function logAudit(orgId: string, userId: string, action: string, resourceType?: string, resourceId?: string, details?: any, ipAddress?: string) {
@@ -134,7 +143,10 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Username and password are required" });
       }
       const { username, password } = parsed.data;
-      const user = await storage.getUserByUsername(username);
+      const isEmail = username.includes("@");
+      const user = isEmail
+        ? await storage.getUserByEmail(username)
+        : await storage.getUserByUsername(username);
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -244,6 +256,69 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("Resend verification error:", err);
       return res.status(500).json({ message: "Failed to resend verification email" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const parsed = forgotPasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+      const { email } = parsed.data;
+      const user = await storage.getUserByEmail(email);
+
+      if (user) {
+        const resetToken = generateVerificationToken();
+        const resetExpires = new Date();
+        resetExpires.setHours(resetExpires.getHours() + 1);
+
+        await storage.updateUser(user.id, {
+          passwordResetToken: resetToken,
+          passwordResetExpires: resetExpires,
+        });
+
+        await sendPasswordResetEmail(email, resetToken, user.fullName);
+      }
+
+      return res.json({ message: "If that email exists, a password reset link has been sent." });
+    } catch (err: any) {
+      console.error("Forgot password error:", err);
+      return res.status(500).json({ message: "Failed to send password reset email" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const parsed = resetPasswordSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.issues.map(i => i.message).join(", ");
+        return res.status(400).json({ message: errors });
+      }
+      const { token, password } = parsed.data;
+
+      const allUsers = await storage.getUserByPasswordResetToken(token);
+      if (!allUsers) {
+        return res.status(400).json({ message: "Invalid or expired reset link" });
+      }
+
+      if (!allUsers.passwordResetExpires || new Date(allUsers.passwordResetExpires) < new Date()) {
+        return res.status(400).json({ message: "Reset link has expired. Please request a new one." });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await storage.updateUser(allUsers.id, {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      });
+
+      await logAudit(allUsers.organizationId, allUsers.id, "user.password_reset", "user", allUsers.id, {}, req.ip);
+
+      return res.json({ message: "Password has been reset successfully. You can now sign in." });
+    } catch (err: any) {
+      console.error("Reset password error:", err);
+      return res.status(500).json({ message: "Failed to reset password" });
     }
   });
 
