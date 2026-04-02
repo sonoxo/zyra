@@ -43,6 +43,7 @@ waitForPort = 5000
 [userenv.shared]
 JWT_SECRET = "a86d0326305dbfe90d874933a5aeec4a5cdde9793e81e61510140b51040c1426"
 EMAIL_FROM = "Zyra <noreply@zyra.host>"
+BOOTSTRAP_SECRET = "zyra-bootstrap-2026"
 
 [userenv.production]
 FRONTEND_URL = "https://zyra.host"

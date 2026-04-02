@@ -62,6 +62,59 @@ export async function registerRoutes(
 ): Promise<Server> {
   app.use(requestMetricsMiddleware());
 
+  app.post("/api/bootstrap/admin", async (req: Request, res: Response) => {
+    try {
+      const { email, password, secret, username, fullName } = req.body;
+      const bootstrapSecret = process.env.BOOTSTRAP_SECRET;
+      if (!bootstrapSecret || secret !== bootstrapSecret) {
+        return res.status(403).json({ message: "Invalid bootstrap secret" });
+      }
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      const existing = await storage.getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ message: "User with this email already exists" });
+      }
+      const uname = username || email.split("@")[0];
+      const existingUsername = await storage.getUserByUsername(uname);
+      if (existingUsername) {
+        return res.status(409).json({ message: "Username already taken" });
+      }
+      const orgName = req.body.organization || "Zyra";
+      const orgSlug = orgName.toLowerCase().replace(/\s+/g, "-");
+      let org: any;
+      try {
+        const { db } = await import("./db");
+        const { organizations } = await import("@shared/schema");
+        const { eq } = await import("drizzle-orm");
+        const [existing] = await db.select().from(organizations).where(eq(organizations.slug, orgSlug)).limit(1);
+        org = existing;
+      } catch {}
+      if (!org) {
+        org = await storage.createOrganization({ name: orgName, slug: orgSlug, plan: "enterprise" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createUser({
+        organizationId: org.id,
+        username: uname,
+        email,
+        password: hashedPassword,
+        fullName: fullName || "Zyra Admin",
+        role: "owner",
+        emailVerified: true,
+      });
+      await logAudit(org.id, user.id, "bootstrap.admin_created", "user", user.id, { email }, req.ip || "unknown");
+      res.json({
+        message: "Master admin created successfully",
+        user: { id: user.id, username: user.username, email: user.email, role: user.role, organization: org.name },
+      });
+    } catch (err: any) {
+      console.error("[bootstrap] Error:", err);
+      res.status(500).json({ message: "Bootstrap failed" });
+    }
+  });
+
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const parsed = registerBodySchema.safeParse(req.body);
