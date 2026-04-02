@@ -1,0 +1,78 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature. Please provide as much detail as possible.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What is the user pain point?
+      placeholder: As a security analyst, I need to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - Dashboard / Analytics
+        - Vulnerability Scanning
+        - AI Pentesting
+        - Cloud Security (CSPM)
+        - Container Security
+        - Exposure Management
+        - Threat Intelligence
+        - SOAR Automation
+        - Compliance
+        - SIEM Integration
+        - Authentication / Authorization
+        - API / Backend
+        - UI / Frontend
+        - New Module
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical (blocking adoption)
+        - High (significant impact)
+        - Medium (nice to have)
+        - Low (long-term consideration)
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, mockups, or references.
+    validations:
+      required: false

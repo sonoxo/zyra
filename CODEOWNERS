@@ -1,0 +1,30 @@
+# Zyra Code Ownership
+# Each line is a file pattern followed by one or more owners.
+# Order matters — later patterns take precedence.
+
+# Default owners for everything
+* @zyra-security/core
+
+# Frontend
+/client/ @zyra-security/frontend
+
+# Backend & API
+/server/ @zyra-security/backend
+
+# Database schema
+/shared/schema.ts @zyra-security/backend @zyra-security/core
+
+# Security-sensitive modules
+/server/exposure-manager.ts @zyra-security/security
+/server/enterprise.ts @zyra-security/security
+/server/soar.ts @zyra-security/security
+SECURITY.md @zyra-security/security
+
+# CI/CD and infrastructure
+/.github/ @zyra-security/platform
+/.replit @zyra-security/platform
+
+# Documentation
+/docs/ @zyra-security/core
+README.md @zyra-security/core
+CONTRIBUTING.md @zyra-security/core
