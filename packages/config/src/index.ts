@@ -1,13 +1,13 @@
 export const config = {
   // Database
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://zyra:zyra@localhost:5432/zyra',
+    url: process.env.DATABASE_URL || 'file:./prisma/dev.db',
   },
   
   // Auth
   auth: {
-    secret: process.env.NEXTAUTH_SECRET || 'change-me-in-production',
-    url: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'change-me-in-production',
+    url: process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000',
   },
   
   // Stripe
@@ -40,14 +40,18 @@ export const config = {
   
   // Security
   security: {
-    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || (process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : ['http://localhost:3000']),
     maxRequestSize: '10mb',
   },
   
-  // WebSocket
+  // WebSocket / Server
   websocket: {
-    port: parseInt(process.env.WS_PORT || '3001'),
+    port: parseInt(process.env.WS_PORT || process.env.PORT || '3001'),
   },
+  
+  // Environment
+  env: process.env.NODE_ENV || 'development',
+  isProd: process.env.NODE_ENV === 'production',
 }
 
 export const plans = {

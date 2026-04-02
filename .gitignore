@@ -1,21 +1,16 @@
 node_modules
 .next
 out
-.env*.local
--e 
 .env
+.env*.local
 .vercel
--e 
+
 # Build artifacts
 apps/web/.next
 apps/web/out
--e 
-# TypeScript
-*.ts
-!*.d.ts
 
 # Database
 prisma/dev.db
--e 
-.env
-.env.example
+
+# OS
+.DS_Store

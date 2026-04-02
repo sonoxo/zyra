@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import websocket from '@fastify/websocket'
 import { config } from '@zyra/config'
+import './env.js' // Validate env vars on startup
 import authRoutes from './routes/auth.js'
 import assetRoutes from './routes/assets.js'
 import scanRoutes from './routes/scan.js'

@@ -1,18 +1,22 @@
 version: 2
 updates:
+  # Root level npm dependencies only
+  # Workspace packages use file: paths - skip them to avoid resolution errors
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "security"
-    reviewers:
-      - "maintainers"
     commit-message:
       prefix: "deps"
       include: "scope"
+    # Ignore workspace packages with local file: dependencies
+    ignore:
+      - dependency-name: "@zyra/*"
+        versions: ["*"]
       
   - package-ecosystem: "github-actions"
     directory: "/"
