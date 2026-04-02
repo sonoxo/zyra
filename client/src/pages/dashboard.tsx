@@ -38,6 +38,10 @@ interface DashboardStats {
   cloudStats?: { targets: number; criticalMisconfigs: number };
   threatIntelStats?: { activeThreats: number; criticalCVEs: number; severityBreakdown?: Record<string, number> };
   monitoringActive?: boolean;
+  incidentsStats?: { total: number; open: number; critical: number };
+  vulnerabilitiesStats?: { total: number; open: number; critical: number; high: number };
+  risksStats?: { total: number; critical: number; high: number };
+  latestPostureScore?: number | null;
   teamMemberCount?: number;
   subscriptionStatus?: string;
   subscriptionPlan?: string;
@@ -289,55 +293,63 @@ function ComplianceMaturity({ stats }: { stats?: DashboardStats }) {
   );
 }
 
-function DependencyVulnerabilitySummary({ stats }: { stats?: DashboardStats }) {
-  const hasData = stats?.threatIntelStats && stats.threatIntelStats.activeThreats > 0;
-
-  // Mock data for breakdown if none provided by API
-  const data = [
-    { name: 'npm', count: 12 },
-    { name: 'pypi', count: 5 },
-    { name: 'go', count: 3 },
-    { name: 'maven', count: 8 },
+function OperationsOverview({ stats }: { stats?: DashboardStats }) {
+  const items = [
+    {
+      label: "Incidents",
+      total: stats?.incidentsStats?.total ?? 0,
+      open: stats?.incidentsStats?.open ?? 0,
+      critical: stats?.incidentsStats?.critical ?? 0,
+      href: "/incidents",
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+    },
+    {
+      label: "Vulnerabilities",
+      total: stats?.vulnerabilitiesStats?.total ?? 0,
+      open: stats?.vulnerabilitiesStats?.open ?? 0,
+      critical: stats?.vulnerabilitiesStats?.critical ?? 0,
+      href: "/vulnerabilities",
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+    },
+    {
+      label: "Risks",
+      total: stats?.risksStats?.total ?? 0,
+      open: 0,
+      critical: stats?.risksStats?.critical ?? 0,
+      href: "/risks",
+      color: "text-yellow-500",
+      bg: "bg-yellow-500/10",
+    },
   ];
 
   return (
     <Card className="border-card-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-foreground">Dependency Vulnerability Summary</CardTitle>
+        <CardTitle className="text-sm font-semibold text-foreground">Security Operations</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center min-h-[150px]">
-        {hasData ? (
-          <div className="w-full h-[150px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-popover border border-popover-border rounded-lg p-2 shadow-lg text-xs">
-                          <p className="font-semibold text-foreground">{payload[0].payload.name}</p>
-                          <p className="text-muted-foreground">Vulnerabilities: {payload[0].value}</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="text-center p-4">
-            <Shield className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-20" />
-            <p className="text-xs text-muted-foreground">Run CVE refresh to see dependency vulnerabilities</p>
-            <Link href="/threat-intel">
-              <Button variant="ghost" size="sm" className="h-auto p-0 text-xs mt-1 text-primary hover:bg-transparent">Go to Threat Intel</Button>
-            </Link>
+      <CardContent className="space-y-3">
+        {items.map(item => (
+          <Link key={item.label} href={item.href}>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors" data-testid={`ops-${item.label.toLowerCase()}`}>
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", item.bg)}>
+                <AlertTriangle className={cn("w-4 h-4", item.color)} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium">{item.label}</div>
+                <div className="text-xs text-muted-foreground">{item.total} total{item.open > 0 ? ` · ${item.open} open` : ""}</div>
+              </div>
+              {item.critical > 0 && (
+                <Badge variant="destructive" className="text-xs h-5 px-1.5">{item.critical} crit</Badge>
+              )}
+            </div>
+          </Link>
+        ))}
+        {items.every(i => i.total === 0) && (
+          <div className="text-center py-4">
+            <Shield className="w-6 h-6 text-muted-foreground mx-auto mb-2 opacity-20" />
+            <p className="text-xs text-muted-foreground">No incidents, vulnerabilities, or risks recorded yet</p>
           </div>
         )}
       </CardContent>
@@ -699,7 +711,7 @@ export default function Dashboard() {
             <ComplianceMaturity stats={stats} />
           </div>
           <div className="lg:col-span-2">
-            <DependencyVulnerabilitySummary stats={stats} />
+            <OperationsOverview stats={stats} />
           </div>
         </div>
 
