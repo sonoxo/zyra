@@ -125,6 +125,22 @@ export async function registerRoutes(
         emailVerificationExpires: verificationExpires,
       });
 
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 3);
+      const trialPeriodEnd = new Date(trialEndsAt);
+
+      await storage.createSubscription({
+        organizationId: org.id,
+        plan: "starter",
+        status: "trialing",
+        trialEndsAt,
+        currentPeriodEnd: trialPeriodEnd,
+        maxUsers: 25,
+        maxScansPerMonth: 500,
+        maxRepositories: 50,
+        features: ["Full platform access", "All scan tools", "All compliance frameworks", "3-day free trial"],
+      });
+
       await seedComplianceData(org.id);
       await logAudit(org.id, user.id, "user.register", "user", user.id, { username }, req.ip);
 
@@ -784,7 +800,6 @@ export async function registerRoutes(
 
   // === BILLING & SUBSCRIPTIONS ===
   const PLAN_DETAILS: Record<string, any> = {
-    starter: { name: "Starter", price: 0, maxUsers: 5, maxScansPerMonth: 50, maxRepositories: 10, features: ["Basic scanning", "3 compliance frameworks", "Email support", "Community access"] },
     professional: { name: "Professional", price: 99, maxUsers: 25, maxScansPerMonth: 500, maxRepositories: 50, features: ["All scan tools", "All compliance frameworks", "Priority support", "API access", "SSO integration", "Advanced analytics", "CSV/PDF export"] },
     enterprise: { name: "Enterprise", price: 499, maxUsers: -1, maxScansPerMonth: -1, maxRepositories: -1, features: ["Unlimited everything", "All compliance frameworks", "Dedicated support", "SSO & SAML", "Custom integrations", "SLA guarantee", "Multi-region deployment", "Audit log export", "Advanced RBAC"] },
   };
@@ -797,41 +812,62 @@ export async function registerRoutes(
     const orgId = req.session.organizationId!;
     let sub = await storage.getSubscription(orgId);
     if (!sub) {
-      const periodEnd = new Date();
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 3);
       sub = await storage.createSubscription({
         organizationId: orgId,
         plan: "starter",
-        status: "active",
-        maxUsers: 5,
-        maxScansPerMonth: 50,
-        maxRepositories: 10,
-        features: PLAN_DETAILS.starter.features,
-        currentPeriodEnd: periodEnd,
+        status: "trialing",
+        trialEndsAt,
+        currentPeriodEnd: trialEndsAt,
+        maxUsers: 25,
+        maxScansPerMonth: 500,
+        maxRepositories: 50,
+        features: ["Full platform access", "3-day free trial"],
       });
     }
-    return res.json(sub);
+
+    if (sub.status === "trialing" && sub.trialEndsAt && new Date() > new Date(sub.trialEndsAt)) {
+      sub = (await storage.updateSubscription(orgId, {
+        status: "expired",
+        maxUsers: 1,
+        maxScansPerMonth: 0,
+        maxRepositories: 0,
+      }))!;
+    }
+
+    const trialDaysRemaining = sub.trialEndsAt
+      ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : 0;
+
+    return res.json({
+      ...sub,
+      trialDaysRemaining,
+      trialExpired: sub.status === "expired",
+    });
   });
 
   app.put("/api/billing/subscription", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
       const orgId = req.session.organizationId!;
       const { plan } = req.body;
-      if (!plan || !PLAN_DETAILS[plan]) return res.status(400).json({ message: "Invalid plan" });
+      if (!plan || !PLAN_DETAILS[plan]) return res.status(400).json({ message: "Invalid plan. Choose: professional or enterprise." });
 
-      if (isStripeConfigured() && isPaidPlan(plan)) {
-        return res.status(402).json({ message: "Paid plan upgrades require Stripe Checkout. Use the upgrade button to proceed through payment." });
+      if (isStripeConfigured()) {
+        return res.status(402).json({ message: "Plan upgrades require payment. Use the upgrade button to proceed through checkout." });
       }
 
       const periodEnd = new Date();
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
 
       const sub = await storage.updateSubscription(orgId, {
         plan,
+        status: "active",
         maxUsers: PLAN_DETAILS[plan].maxUsers,
         maxScansPerMonth: PLAN_DETAILS[plan].maxScansPerMonth,
         maxRepositories: PLAN_DETAILS[plan].maxRepositories,
         features: PLAN_DETAILS[plan].features,
+        currentPeriodStart: new Date(),
         currentPeriodEnd: periodEnd,
       });
 

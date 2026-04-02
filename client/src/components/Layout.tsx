@@ -10,7 +10,7 @@ import {
   Users, ClipboardList, Rocket, Check, X,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2, Layers
+  Share2, Database, BarChart2, Layers, Clock, AlertTriangle
 } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,12 @@ import type { AuthUser } from "@/lib/auth";
 import { useLocation as useWouterLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
-import type { Notification } from "@shared/schema";
+import type { Notification, Subscription } from "@shared/schema";
+
+interface SubscriptionWithTrial extends Subscription {
+  trialDaysRemaining: number;
+  trialExpired: boolean;
+}
 
 const navGroups = [
   {
@@ -229,6 +234,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [, navigate] = useLocation();
 
   const { data: user } = useQuery<AuthUser>({ queryKey: ["/api/auth/me"] });
+  const { data: subscription } = useQuery<SubscriptionWithTrial>({
+    queryKey: ["/api/billing/subscription"],
+    refetchInterval: 60000,
+  });
+
+  const isTrialing = subscription?.status === "trialing";
+  const isExpired = subscription?.status === "expired" || subscription?.trialExpired;
+  const isActive = subscription?.status === "active";
+  const trialDaysRemaining = subscription?.trialDaysRemaining ?? 0;
 
   const logoutMutation = useMutation({
     mutationFn: logout,
@@ -254,8 +268,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div>
                 <div className="text-sm font-bold text-sidebar-foreground tracking-tight">Zyra</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                  {user?.organization?.plan ? `${user.organization.plan} plan` : "Active"}
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full inline-block",
+                    isExpired ? "bg-red-500" : isTrialing ? "bg-blue-500" : "bg-green-500"
+                  )}></span>
+                  {isExpired ? "Trial Expired" :
+                   isTrialing ? `Trial — ${trialDaysRemaining}d left` :
+                   isActive && subscription?.plan ? `${subscription.plan} plan` : "Active"}
                 </div>
               </div>
             </div>
@@ -286,8 +305,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </span>
             </div>
             <NotificationBell orgId={user?.organizationId} />
-            <Badge variant="outline" className="text-xs h-4 px-1.5 shrink-0 border-green-500/30 text-green-600 dark:text-green-400">
-              Active
+            <Badge variant="outline" className={cn(
+              "text-xs h-4 px-1.5 shrink-0",
+              isExpired ? "border-red-500/30 text-red-600 dark:text-red-400" :
+              isTrialing ? "border-blue-500/30 text-blue-600 dark:text-blue-400" :
+              "border-green-500/30 text-green-600 dark:text-green-400"
+            )}>
+              {isExpired ? "Expired" : isTrialing ? "Trial" : "Active"}
             </Badge>
           </div>
           <DropdownMenu>
@@ -330,6 +354,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 overflow-y-auto flex flex-col min-w-0">
+        {isTrialing && trialDaysRemaining <= 2 && !isExpired && (
+          <div className="bg-blue-500/10 border-b border-blue-500/20 px-4 py-2 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-blue-500" />
+              <span className="text-blue-700 dark:text-blue-300">
+                Your free trial ends in {trialDaysRemaining === 0 ? "less than a day" : `${trialDaysRemaining} day${trialDaysRemaining !== 1 ? "s" : ""}`}.
+              </span>
+            </div>
+            <Link href="/billing">
+              <Button size="sm" variant="default" className="h-7 text-xs" data-testid="button-trial-upgrade">
+                Choose a plan
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {isExpired && (
+          <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-3 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <span className="text-destructive font-medium">
+                Your free trial has ended. Select a plan to continue using Zyra.
+              </span>
+            </div>
+            <Link href="/billing">
+              <Button size="sm" variant="destructive" className="h-7 text-xs" data-testid="button-expired-upgrade">
+                Select a plan
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {children}
       </main>
     </div>

@@ -1,19 +1,24 @@
 import Stripe from "stripe";
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
+import { storage } from "./storage";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
 const PRICE_MAP: Record<string, { amount: number; name: string }> = {
-  starter: { amount: 0, name: "Zyra Starter" },
   professional: { amount: 9900, name: "Zyra Professional" },
   enterprise: { amount: 49900, name: "Zyra Enterprise" },
+};
+
+const PLAN_LIMITS: Record<string, { maxUsers: number; maxScansPerMonth: number; maxRepositories: number; features: string[] }> = {
+  professional: { maxUsers: 25, maxScansPerMonth: 500, maxRepositories: 50, features: ["All scan tools", "All compliance frameworks", "Priority support", "API access", "SSO integration", "Advanced analytics", "CSV/PDF export"] },
+  enterprise: { maxUsers: -1, maxScansPerMonth: -1, maxRepositories: -1, features: ["Unlimited everything", "All compliance frameworks", "Dedicated support", "SSO & SAML", "Custom integrations", "SLA guarantee", "Multi-region deployment", "Audit log export", "Advanced RBAC"] },
 };
 
 const PAID_PLANS = ["professional", "enterprise"];
 
 const checkoutSchema = z.object({
-  plan: z.enum(["starter", "professional", "enterprise"]),
+  plan: z.enum(["professional", "enterprise"]),
 });
 
 function getStripe(): Stripe | null {
@@ -53,17 +58,14 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
 
       const parsed = checkoutSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({ message: "Invalid plan. Choose: starter, professional, or enterprise." });
+        return res.status(400).json({ message: "Invalid plan. Choose: professional or enterprise." });
       }
 
       const { plan } = parsed.data;
       const priceInfo = PRICE_MAP[plan];
 
-      if (priceInfo.amount === 0) {
-        return res.status(400).json({ message: "Starter plan is free. No checkout required." });
-      }
-
       const baseUrl = getCanonicalBaseUrl(req);
+      const orgId = req.session.organizationId || "";
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -84,7 +86,7 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
         ],
         metadata: {
           userId: req.session.userId || "",
-          orgId: req.session.organizationId || "",
+          orgId,
           plan,
         },
         success_url: `${baseUrl}/billing?session_id={CHECKOUT_SESSION_ID}&status=success`,
@@ -115,6 +117,25 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
       const requestOrgId = req.session.organizationId || "";
       if (session.metadata?.orgId && session.metadata.orgId !== requestOrgId) {
         return res.status(403).json({ message: "Access denied." });
+      }
+
+      if (session.payment_status === "paid" && session.metadata?.plan && session.metadata?.orgId) {
+        const plan = session.metadata.plan;
+        const limits = PLAN_LIMITS[plan];
+        if (limits) {
+          const periodEnd = new Date();
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+          await storage.updateSubscription(session.metadata.orgId, {
+            plan,
+            status: "active",
+            ...limits,
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: periodEnd,
+            stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id || null,
+            stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : (session.subscription as any)?.id || null,
+          });
+        }
       }
 
       return res.json({
