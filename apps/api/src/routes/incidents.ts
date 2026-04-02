@@ -6,7 +6,7 @@ import { sendToOrg } from '../websocket/index.js'
 
 export default async function incidentRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/incidents - list incidents

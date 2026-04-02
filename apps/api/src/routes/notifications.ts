@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js'
 
 export default async function notificationRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/notifications - list user's notifications

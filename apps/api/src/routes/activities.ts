@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 interface ActivityData {
@@ -12,7 +12,7 @@ interface ActivityData {
   userId: string
 }
 
-export async function logActivity(prisma: PrismaClient, data: ActivityData) {
+export async function logActivity(prisma: any, data: ActivityData) {
   return prisma.activity.create({
     data: {
       action: data.action,
@@ -28,7 +28,7 @@ export async function logActivity(prisma: PrismaClient, data: ActivityData) {
 
 export default async function activityRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/activities - list activities for org

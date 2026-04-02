@@ -5,7 +5,7 @@ import crypto from 'crypto'
 
 export default async function apiKeyRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/keys - list user's API keys

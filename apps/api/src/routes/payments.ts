@@ -74,7 +74,7 @@ export default async function paymentRoutes(fastify: FastifyInstance) {
     
     // Verify webhook (skip for demo)
     try {
-      const event = req.body
+      const event = req.body as any
       
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as any

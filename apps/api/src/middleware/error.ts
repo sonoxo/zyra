@@ -8,11 +8,12 @@ export function errorMiddleware(fastify: FastifyInstance) {
 
     // Zod validation errors
     if (error instanceof ZodError) {
+      const issues = (error as any).errors || (error as any).issues
       return reply.status(400).send({
         success: false,
         error: 'Validation failed',
-        details: error.errors.map(e => ({
-          path: e.path.join('.'),
+        details: (Array.isArray(issues) ? issues : []).map((e: any) => ({
+          path: e.path?.join('.') || '',
           message: e.message,
         })),
       })

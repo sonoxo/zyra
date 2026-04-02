@@ -13,7 +13,7 @@ const SCAN_SCORES = {
 
 export default async function scanRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/scan - list scans

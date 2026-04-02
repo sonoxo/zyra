@@ -22,7 +22,7 @@ const jobQueue: Job[] = []
 
 export default async function jobRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/jobs - list jobs

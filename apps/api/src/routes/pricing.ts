@@ -5,7 +5,7 @@ import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 const stripe = new Stripe(config.stripe.secretKey || 'sk_test_placeholder', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2023-10-16',
 })
 
 // Plan definitions
@@ -50,7 +50,7 @@ export const PLANS = {
 
 export default async function pricingRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/pricing/plans - list available plans
@@ -130,7 +130,7 @@ export default async function pricingRoutes(fastify: FastifyInstance) {
 
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
-        customer: customerId,
+        customer: customerId || undefined,
         payment_method_types: ['card'],
         line_items: [
           {

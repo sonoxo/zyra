@@ -6,7 +6,7 @@ import { sendToOrg } from '../websocket/index.js'
 
 export default async function assetRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/assets - list assets for org

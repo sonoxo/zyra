@@ -32,9 +32,10 @@ import stripeRoutes from './routes/stripe.js'
 import pricingRoutes from './routes/pricing.js'
 import apiKeyRoutes from './routes/keys.js'
 import passwordResetRoutes from './routes/password.js'
+import notificationRoutes from './routes/notifications.js'
 import healthRoutes from './routes/health.js'
 import { getSystemHealth } from '@zyra/monitoring'
-import websocketRoutes from './websocket/index.js'
+import { websocketRoutes } from './websocket/index.js'
 
 const server = Fastify({
   logger: true,

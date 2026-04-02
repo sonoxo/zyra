@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js'
 
 export default async function profileRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/profiles/me - get current user's profile

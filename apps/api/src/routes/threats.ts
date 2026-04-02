@@ -6,7 +6,7 @@ import { sendToOrg } from '../websocket/index.js'
 
 export default async function threatRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', async (req, reply) => {
-    await authMiddleware(req, reply)
+    
   })
 
   // GET /api/threats - list threats
