@@ -40,6 +40,7 @@ import analyticsRoutes from './routes/analytics.js'
 import integrationsRoutes from './routes/integrations.js'
 import auditRoutes from './routes/audit.js'
 import bootstrapRoutes from './routes/bootstrap.js'
+import replitRoutes from './routes/replit.js'
 import { getSystemHealth } from '@zyra/monitoring'
 import { websocketRoutes } from './websocket/index.js'
 
@@ -71,6 +72,7 @@ await server.register(analyticsRoutes, { prefix: '/api/analytics' })
 await server.register(integrationsRoutes, { prefix: '/api/integrations' })
 await server.register(auditRoutes, { prefix: '/api/audit' })
 await server.register(bootstrapRoutes, { prefix: '/api/bootstrap' })
+await server.register(replitRoutes, { prefix: '/api/replit' })
 
 // API Routes
 await server.register(authRoutes, { prefix: '/api/auth' })
