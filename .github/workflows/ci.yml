@@ -14,11 +14,11 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
       - name: Build
-        run: |
-          cd apps/web
-          npm install --legacy-peer-deps
-          npm run build
+        run: npm run build
 
       - name: Test
         run: |
