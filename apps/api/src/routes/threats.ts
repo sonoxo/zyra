@@ -1,43 +1,96 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import type { Threat, Severity } from '@zyra/types'
-import { broadcast } from '../websocket/index.js'
+import type { FastifyInstance } from 'fastify'
+import { prisma } from '../lib/prisma.js'
+import { authMiddleware } from '../middleware/auth.js'
 
-const threats: Threat[] = []
+export default async function threatRoutes(fastify: FastifyInstance) {
+  await fastify.addHook('onRequest', async (req, reply) => {
+    await authMiddleware(req, reply)
+  })
 
-export default async function (fastify: FastifyInstance) {
-  fastify.get('/', async (req: FastifyRequest, reply) => {
-    const orgId = (req.headers['x-org-id'] as string) || 'org_1'
-    const orgThreats = threats.filter(t => t.assetId.startsWith('asset_'))
-    reply.send({ success: true, data: orgThreats })
-  })
-  
-  fastify.post('/', async (req: FastifyRequest<{ Body: Omit<Threat, 'id' | 'createdAt'> }>, reply) => {
-    const newThreat: Threat = {
-      ...req.body,
-      id: `threat_${Date.now()}`,
-      createdAt: new Date(),
+  // GET /api/threats - list threats
+  fastify.get('/', async (req, reply) => {
+    const orgId = (req.query as any)?.orgId || req.user?.orgId
+    
+    if (!orgId) {
+      return reply.status(400).send({ success: false, error: 'orgId required' })
     }
-    threats.push(newThreat)
-    
-    broadcast('threat:new', newThreat)
-    
-    if (newThreat.severity === 'CRITICAL') {
-      broadcast('alert:critical', newThreat)
+
+    try {
+      const threats = await prisma.threat.findMany({
+        where: { orgId },
+        include: { asset: true },
+        orderBy: { createdAt: 'desc' },
+      })
+      return reply.send({ success: true, data: threats })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
-    
-    reply.status(201).send({ success: true, data: newThreat })
   })
-  
-  fastify.patch('/:id', async (req: FastifyRequest<{ Params: { id: string }; Body: Partial<Threat> }>, reply) => {
-    const { id } = req.params
-    const index = threats.findIndex(t => t.id === id)
+
+  // POST /api/threats - create threat (usually from scan)
+  fastify.post('/', async (req, reply) => {
+    const { title, description, severity, assetId } = req.body as any
+    const orgId = req.user?.orgId
+
+    if (!orgId || !assetId) {
+      return reply.status(400).send({ success: false, error: 'orgId and assetId required' })
+    }
+
+    try {
+      const threat = await prisma.threat.create({
+        data: {
+          title,
+          description: description || null,
+          severity: severity || 'MEDIUM',
+          status: 'OPEN',
+          assetId,
+          orgId,
+        },
+      })
+      return reply.status(201).send({ success: true, data: threat })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
+    }
+  })
+
+  // PATCH /api/threats/:id - update threat status
+  fastify.patch('/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const { status } = req.body as { status: string }
+
+    try {
+      const threat = await prisma.threat.update({
+        where: { id },
+        data: status === 'RESOLVED' ? { status, resolvedAt: new Date() } : { status },
+      })
+      return reply.send({ success: true, data: threat })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
+    }
+  })
+
+  // GET /api/threats/stats - get threat statistics
+  fastify.get('/stats', async (req, reply) => {
+    const orgId = req.user?.orgId
     
-    if (index > -1) {
-      threats[index] = { ...threats[index], ...req.body }
-      broadcast('threat:updated', threats[index])
-      reply.send({ success: true, data: threats[index] })
-    } else {
-      reply.status(404).send({ success: false, error: 'Threat not found' })
+    if (!orgId) {
+      return reply.status(400).send({ success: false, error: 'orgId required' })
+    }
+
+    try {
+      const [total, open, critical, high] = await Promise.all([
+        prisma.threat.count({ where: { orgId } }),
+        prisma.threat.count({ where: { orgId, status: 'OPEN' } }),
+        prisma.threat.count({ where: { orgId, severity: 'CRITICAL', status: 'OPEN' } }),
+        prisma.threat.count({ where: { orgId, severity: 'HIGH', status: 'OPEN' } }),
+      ])
+
+      return reply.send({
+        success: true,
+        data: { total, open, critical, high },
+      })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
   })
 }

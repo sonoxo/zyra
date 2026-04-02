@@ -1,53 +1,103 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import type { Incident } from '@zyra/types'
-import { broadcast } from '../websocket/index.js'
+import type { FastifyInstance } from 'fastify'
+import { prisma } from '../lib/prisma.js'
+import { authMiddleware } from '../middleware/auth.js'
 
-const incidents: Incident[] = []
-
-export default async function (fastify: FastifyInstance) {
-  fastify.get('/', async (req: FastifyRequest, reply) => {
-    const orgId = (req.headers['x-org-id'] as string) || 'org_1'
-    const orgIncidents = incidents.filter(i => i.orgId === orgId)
-    reply.send({ success: true, data: orgIncidents })
+export default async function incidentRoutes(fastify: FastifyInstance) {
+  await fastify.addHook('onRequest', async (req, reply) => {
+    await authMiddleware(req, reply)
   })
-  
-  fastify.post('/', async (req: FastifyRequest<{ Body: Omit<Incident, 'id' | 'createdAt' | 'updatedAt'> }>, reply) => {
-    const newIncident: Incident = {
-      ...req.body,
-      id: `incident_${Date.now()}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+
+  // GET /api/incidents - list incidents
+  fastify.get('/', async (req, reply) => {
+    const orgId = (req.query as any)?.orgId || req.user?.orgId
+    
+    if (!orgId) {
+      return reply.status(400).send({ success: false, error: 'orgId required' })
     }
-    incidents.push(newIncident)
-    
-    broadcast('incident:new', newIncident)
-    reply.status(201).send({ success: true, data: newIncident })
-  })
-  
-  fastify.patch('/:id', async (req: FastifyRequest<{ Params: { id: string }; Body: Partial<Incident> }>, reply) => {
-    const { id } = req.params
-    const index = incidents.findIndex(i => i.id === id)
-    
-    if (index > -1) {
-      incidents[index] = { ...incidents[index], ...req.body, updatedAt: new Date() }
-      broadcast('incident:updated', incidents[index])
-      reply.send({ success: true, data: incidents[index] })
-    } else {
-      reply.status(404).send({ success: false, error: 'Incident not found' })
+
+    try {
+      const incidents = await prisma.incident.findMany({
+        where: { orgId },
+        include: { assignedTo: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+      return reply.send({ success: true, data: incidents })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
   })
-  
-  fastify.post('/:id/assign', async (req: FastifyRequest<{ Params: { id: string }; Body: { userId: string } }>, reply) => {
-    const { id } = req.params
-    const { userId } = req.body
-    const index = incidents.findIndex(i => i.id === id)
+
+  // POST /api/incidents - create incident
+  fastify.post('/', async (req, reply) => {
+    const { title, description, priority, assignedToId } = req.body as any
+    const orgId = req.user?.orgId
+
+    if (!orgId) {
+      return reply.status(400).send({ success: false, error: 'No organization selected' })
+    }
+
+    if (!title) {
+      return reply.status(400).send({ success: false, error: 'Title required' })
+    }
+
+    try {
+      const incident = await prisma.incident.create({
+        data: {
+          title,
+          description: description || null,
+          priority: priority || 'MEDIUM',
+          status: 'OPEN',
+          orgId,
+          assignedToId: assignedToId || null,
+        },
+      })
+      return reply.status(201).send({ success: true, data: incident })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
+    }
+  })
+
+  // PATCH /api/incidents/:id - update incident
+  fastify.patch('/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const { status, priority, assignedToId } = req.body as any
+
+    try {
+      const incident = await prisma.incident.update({
+        where: { id },
+        data: {
+          ...(status && { status }),
+          ...(priority && { priority }),
+          ...(assignedToId !== undefined && { assignedToId }),
+        },
+      })
+      return reply.send({ success: true, data: incident })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
+    }
+  })
+
+  // GET /api/incidents/stats - get incident statistics
+  fastify.get('/stats', async (req, reply) => {
+    const orgId = req.user?.orgId
     
-    if (index > -1) {
-      incidents[index].assignedToId = userId
-      broadcast('incident:updated', incidents[index])
-      reply.send({ success: true, data: incidents[index] })
-    } else {
-      reply.status(404).send({ success: false, error: 'Incident not found' })
+    if (!orgId) {
+      return reply.status(400).send({ success: false, error: 'orgId required' })
+    }
+
+    try {
+      const [total, open, critical] = await Promise.all([
+        prisma.incident.count({ where: { orgId } }),
+        prisma.incident.count({ where: { orgId, status: 'OPEN' } }),
+        prisma.incident.count({ where: { orgId, priority: 'CRITICAL', status: 'OPEN' } }),
+      ])
+
+      return reply.send({
+        success: true,
+        data: { total, open, critical },
+      })
+    } catch (error: any) {
+      return reply.status(500).send({ success: false, error: error.message })
     }
   })
 }
