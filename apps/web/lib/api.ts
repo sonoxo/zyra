@@ -54,6 +54,28 @@ export const users = {
   get: (id: string) => fetchApi<any>(`/api/users/${id}`),
 }
 
+// Organizations
+export const orgs = {
+  list: () => fetchApi<any[]>('/api/orgs'),
+  get: (id: string) => fetchApi<any>(`/api/orgs/${id}`),
+  create: (name: string, slug?: string) =>
+    fetchApi('/api/orgs', { method: 'POST', body: JSON.stringify({ name, slug }) }),
+  addMember: (orgId: string, userId: string, role?: string) =>
+    fetchApi(`/api/orgs/${orgId}/members`, { method: 'POST', body: JSON.stringify({ userId, role }) }),
+  removeMember: (orgId: string, userId: string) =>
+    fetchApi(`/api/orgs/${orgId}/members/${userId}`, { method: 'DELETE' }),
+}
+
+// Activities
+export const activities = {
+  list: (orgId?: string) => fetchApi<any[]>(`/api/activities${orgId ? `?orgId=${orgId}` : ''}`),
+  log: (action: string, entityType: string, entityId?: string, description?: string) =>
+    fetchApi('/api/activities', {
+      method: 'POST',
+      body: JSON.stringify({ action, entityType, entityId, description }),
+    }),
+}
+
 // Profiles
 export const profiles = {
   update: (data: any) =>
