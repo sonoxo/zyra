@@ -88,7 +88,7 @@ const navGroups = [
       { href: "/cve-intelligence", label: "CVE Intelligence", icon: DatabaseZap },
       { href: "/attack-paths", label: "Exposure Management", icon: GitFork },
       { href: "/threat-hunting", label: "Threat Hunting", icon: ScanSearch },
-      { href: "/security-copilot", label: "Security Copilot", icon: Bot },
+      { href: "/security-copilot", label: "ZyraCopilot", icon: Bot },
       { href: "/security-events", label: "Security Data Lake", icon: Database },
       { href: "/security-graph", label: "Security Graph", icon: Share2 },
     ],

@@ -2144,7 +2144,7 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
-  // ── Security Copilot ──────────────────────────────────────────────────────
+  // ── ZyraCopilot ─────────────────────────────────────────────────────────
   app.post("/api/copilot/chat", requireAuth, async (req: Request, res: Response) => {
     const { message, conversationId } = req.body;
     if (!message?.trim()) return res.status(400).json({ message: "Message is required" });

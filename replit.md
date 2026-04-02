@@ -66,7 +66,7 @@ shared/
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
 - **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty, SOAR Automation
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
-- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management, Threat Hunting, Security Copilot, Security Data Lake, Security Graph
+- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management, Threat Hunting, ZyraCopilot (real-time AI security analyst), Security Data Lake, Security Graph
 - **Assets**: Repositories, Documents, Integrations
 - **Platform**: Task Center, Admin Panel, Team, Audit Logs, Platform Metrics, Enterprise Readiness, Enterprise / SSO, Billing, API Keys, Settings
 

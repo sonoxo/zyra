@@ -17,17 +17,39 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  { icon: AlertTriangle, label: "Cloud vulnerabilities", q: "What vulnerabilities affect our cloud assets?" },
-  { icon: Target, label: "Attack paths", q: "What are the active attack paths in our environment?" },
-  { icon: Shield, label: "Critical risks", q: "Which risks have the highest severity?" },
-  { icon: Activity, label: "Recent incidents", q: "Show open incidents from the last week" },
-  { icon: Bot, label: "SBOM status", q: "What is our SBOM and supply chain risk status?" },
-  { icon: Sparkles, label: "Security overview", q: "Give me a full security overview" },
+  { icon: Target, label: "Security posture", q: "What's my current security posture score?" },
+  { icon: AlertTriangle, label: "Prioritized actions", q: "What should I prioritize right now?" },
+  { icon: Shield, label: "Critical vulnerabilities", q: "Show me critical unpatched vulnerabilities" },
+  { icon: Activity, label: "Open incidents", q: "Show open incidents and MTTR" },
+  { icon: Bot, label: "Attack paths", q: "What are the active attack paths in our environment?" },
+  { icon: Sparkles, label: "Full overview", q: "Give me a full security overview" },
 ];
+
+function renderFormattedContent(content: string) {
+  const parts: Array<{ type: "text" | "bold"; value: string }> = [];
+  let remaining = content;
+  const boldRegex = /\*\*(.*?)\*\*/g;
+  let match;
+  let lastIndex = 0;
+  while ((match = boldRegex.exec(remaining)) !== null) {
+    if (match.index > lastIndex) parts.push({ type: "text", value: remaining.slice(lastIndex, match.index) });
+    parts.push({ type: "bold", value: match[1] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < remaining.length) parts.push({ type: "text", value: remaining.slice(lastIndex) });
+
+  return parts.map((part, i) => {
+    const lines = part.value.split("\n");
+    const elements = lines.flatMap((line, li) => {
+      const el = part.type === "bold" ? <strong key={`${i}-${li}`}>{line}</strong> : <span key={`${i}-${li}`}>{line}</span>;
+      return li < lines.length - 1 ? [el, <br key={`br-${i}-${li}`} />] : [el];
+    });
+    return elements;
+  });
+}
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
-  const formatted = message.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br />");
 
   return (
     <div data-testid={`message-${message.role}`} className={cn("flex gap-3 items-start", isUser && "flex-row-reverse")}>
@@ -41,7 +63,7 @@ function MessageBubble({ message }: { message: Message }) {
         "max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed",
         isUser ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted border border-border rounded-tl-sm text-foreground"
       )}>
-        <div dangerouslySetInnerHTML={{ __html: formatted }} />
+        <div>{renderFormattedContent(message.content)}</div>
         <div className={cn("text-[10px] mt-1.5 opacity-60", isUser ? "text-right" : "text-left")}>
           {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
@@ -107,9 +129,9 @@ export default function SecurityCopilotPage() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <Bot className="w-5 h-5 text-primary" />
             </div>
-            Security Copilot
+            ZyraCopilot
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">AI assistant powered by your security data — ask anything about your posture</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Real-time AI security analyst — live data, prioritized actions, zero guesswork</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-green-500 border-green-500/30 bg-green-500/10">
@@ -140,9 +162,9 @@ export default function SecurityCopilotPage() {
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Bot className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-1">Zyra AI Copilot</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-1">ZyraCopilot</h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              I have access to all your security data — vulnerabilities, incidents, risks, assets, attack paths, and more. Ask me anything.
+              Real-time security analyst connected to your live data. I compute posture scores, prioritize actions, correlate threats, and guide remediation — all from your actual environment. Ask me anything.
             </p>
             <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-lg">
               {SUGGESTED_QUESTIONS.map(({ icon: Icon, label, q }) => (
@@ -215,7 +237,7 @@ export default function SecurityCopilotPage() {
           </Button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          Responses are generated from your live security data. Always verify before taking action.
+          ZyraCopilot analyzes your live environment data in real time. Always verify before taking action.
         </p>
       </div>
     </div>
