@@ -29,6 +29,9 @@ export const users = pgTable("users", {
   fullName: text("full_name"),
   role: userRoleEnum("role").notNull().default("analyst"),
   avatarUrl: text("avatar_url"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  emailVerificationToken: text("email_verification_token"),
+  emailVerificationExpires: timestamp("email_verification_expires"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

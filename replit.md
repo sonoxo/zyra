@@ -152,4 +152,7 @@ shared/
 - CVSS score auto-maps to severity in vulnerability form (≥9=critical, ≥7=high, ≥4=medium)
 - Risk score = likelihood × impact (both 1–5 via Select dropdowns)
 - All 7 new SecOps tables use UUID primary keys (`varchar` with `gen_random_uuid()`)
-- Demo account: `demo` / `password123`
+- Email verification required for new accounts (via Resend API)
+- Account self-deletion available in Settings > Account tab
+- `RESEND_API_KEY` secret required for sending verification emails
+- `EMAIL_FROM` env var optional (defaults to `Zyra <noreply@zyra.dev>`)

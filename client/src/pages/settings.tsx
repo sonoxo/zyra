@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import {
   Building2, ScanSearch, ShieldCheck, Bell, Database, Sparkles,
-  ClipboardList, Save, Loader2
+  ClipboardList, Save, Loader2, Trash2, AlertTriangle
 } from "lucide-react";
 import type { Setting, AuditLog } from "@shared/schema";
 import type { AuthUser } from "@/lib/auth";
@@ -598,6 +598,79 @@ function AuditLogTab() {
   );
 }
 
+function AccountTab() {
+  const { toast } = useToast();
+  const [deletePassword, setDeletePassword] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", "/api/auth/account", { password: deletePassword });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      window.location.href = "/auth";
+    },
+    onError: (err: any) => {
+      toast({ title: "Failed to delete account", description: err.message || "Please try again", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="w-5 h-5" />
+            Delete Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Enter your password to confirm</Label>
+              <Input
+                data-testid="input-delete-password"
+                type="password"
+                placeholder="Your current password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                data-testid="checkbox-confirm-delete"
+                checked={confirmDelete}
+                onCheckedChange={(v) => setConfirmDelete(v === true)}
+              />
+              <Label className="text-sm text-muted-foreground">
+                I understand this action is permanent and irreversible
+              </Label>
+            </div>
+            <Button
+              data-testid="button-delete-account"
+              variant="destructive"
+              disabled={!deletePassword || !confirmDelete || deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate()}
+            >
+              {deleteMutation.isPending ? (
+                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</span>
+              ) : (
+                <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete my account</span>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 const tabConfig = [
   { value: "organization", label: "Organization", icon: Building2 },
   { value: "scanning", label: "Scanning", icon: ScanSearch },
@@ -606,6 +679,7 @@ const tabConfig = [
   { value: "retention", label: "Data Retention", icon: Database },
   { value: "ai_reports", label: "AI Reports", icon: Sparkles },
   { value: "audit_log", label: "Audit Log", icon: ClipboardList },
+  { value: "account", label: "Account", icon: Trash2 },
 ];
 
 export default function SettingsPage() {
@@ -696,6 +770,10 @@ export default function SettingsPage() {
               <AuditLogTab />
             </TabsContent>
           )}
+
+          <TabsContent value="account">
+            <AccountTab />
+          </TabsContent>
         </Tabs>
       </div>
     </div>

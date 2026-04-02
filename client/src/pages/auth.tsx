@@ -3,14 +3,15 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Shield, Lock, Eye, EyeOff, ArrowRight, ChevronRight } from "lucide-react";
+import { Shield, Eye, EyeOff, ArrowRight, ChevronRight, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { login, register } from "@/lib/auth";
+import { login } from "@/lib/auth";
+import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 
 const loginSchema = z.object({
@@ -43,6 +44,7 @@ export default function AuthPage() {
   const qc = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [tab, setTab] = useState("login");
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
   const loginForm = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { username: "", password: "" } });
   const registerForm = useForm<RegisterForm>({
@@ -51,21 +53,54 @@ export default function AuthPage() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) => login(data.username, data.password),
+    mutationFn: async (data: LoginForm) => {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        if (body.requiresVerification) {
+          setVerificationEmail(body.email);
+          throw new Error("VERIFICATION_REQUIRED");
+        }
+        throw new Error(body.message || "Invalid credentials");
+      }
+      return body;
+    },
     onSuccess: (user) => {
       qc.setQueryData(["/api/auth/me"], user);
       navigate("/dashboard");
     },
-    onError: () => toast({ title: "Login failed", description: "Invalid credentials", variant: "destructive" }),
+    onError: (err: any) => {
+      if (err.message === "VERIFICATION_REQUIRED") return;
+      toast({ title: "Login failed", description: err.message || "Invalid credentials", variant: "destructive" });
+    },
   });
 
   const registerMutation = useMutation({
-    mutationFn: (data: RegisterForm) => register(data),
-    onSuccess: (user) => {
-      qc.setQueryData(["/api/auth/me"], user);
-      navigate("/dashboard");
+    mutationFn: async (data: RegisterForm) => {
+      const res = await apiRequest("POST", "/api/auth/register", data);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.requiresVerification) {
+        setVerificationEmail(data.email);
+      }
     },
     onError: (err: any) => toast({ title: "Registration failed", description: err.message || "Try again", variant: "destructive" }),
+  });
+
+  const resendMutation = useMutation({
+    mutationFn: async () => {
+      if (!verificationEmail) return;
+      const res = await apiRequest("POST", "/api/auth/resend-verification", { email: verificationEmail });
+      return res.json();
+    },
+    onSuccess: () => toast({ title: "Verification email sent", description: "Please check your inbox." }),
+    onError: () => toast({ title: "Failed to resend", description: "Please try again.", variant: "destructive" }),
   });
 
   return (
@@ -133,6 +168,44 @@ export default function AuthPage() {
             <div className="font-bold text-lg tracking-tight">Zyra</div>
           </div>
 
+          {verificationEmail ? (
+            <div className="text-center space-y-6">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Mail className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Check your email</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  We sent a verification link to<br />
+                  <span className="font-medium text-foreground">{verificationEmail}</span>
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Click the link in the email to verify your account. The link expires in 24 hours.
+              </p>
+              <div className="space-y-3">
+                <Button
+                  data-testid="button-resend-verification"
+                  variant="outline"
+                  className="w-full"
+                  disabled={resendMutation.isPending}
+                  onClick={() => resendMutation.mutate()}
+                >
+                  {resendMutation.isPending ? (
+                    <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Sending...</span>
+                  ) : "Resend verification email"}
+                </Button>
+                <Button
+                  data-testid="button-back-to-signin"
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={() => setVerificationEmail(null)}
+                >
+                  Back to sign in
+                </Button>
+              </div>
+            </div>
+          ) : (
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50">
               <TabsTrigger value="login" data-testid="tab-login">Sign In</TabsTrigger>
@@ -192,11 +265,6 @@ export default function AuthPage() {
                   )}
                 </Button>
               </form>
-              <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
-                <p className="text-xs text-muted-foreground text-center">
-                  Demo: <span className="font-mono font-medium text-foreground">demo</span> / <span className="font-mono font-medium text-foreground">password123</span>
-                </p>
-              </div>
             </TabsContent>
 
             <TabsContent value="register" className="space-y-0">
@@ -287,6 +355,7 @@ export default function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </div>
       </div>
     </div>

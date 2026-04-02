@@ -50,6 +50,7 @@ import SecurityGraphPage from "@/pages/security-graph";
 import PlatformMetricsPage from "@/pages/platform-metrics";
 import TeamPage from "@/pages/team";
 import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
+import VerifyEmailPage from "@/pages/verify-email";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -110,6 +111,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthRoute} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>

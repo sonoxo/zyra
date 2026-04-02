@@ -21,6 +21,7 @@ import {
   insertMonitoringConfigSchema,
 } from "@shared/schema";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail } from "./email";
 
 declare module "express-session" {
   interface SessionData {
@@ -109,6 +110,9 @@ export async function registerRoutes(
       });
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const verificationToken = generateVerificationToken();
+      const verificationExpires = getVerificationExpiry();
+
       const user = await storage.createUser({
         organizationId: org.id,
         username,
@@ -116,25 +120,20 @@ export async function registerRoutes(
         password: hashedPassword,
         fullName,
         role: "owner",
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
       });
 
       await seedComplianceData(org.id);
-
-      req.session.userId = user.id;
-      req.session.organizationId = org.id;
-      req.session.role = user.role;
-
       await logAudit(org.id, user.id, "user.register", "user", user.id, { username }, req.ip);
 
+      await sendVerificationEmail(email, verificationToken, fullName);
+
       return res.json({
-        id: user.id,
-        username: user.username,
+        message: "Account created. Please check your email to verify your account.",
+        requiresVerification: true,
         email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        avatarUrl: user.avatarUrl,
-        organizationId: user.organizationId,
-        organization: { id: org.id, name: org.name, slug: org.slug, plan: org.plan },
       });
     } catch (err: any) {
       console.error("Register error:", err);
@@ -153,6 +152,14 @@ export async function registerRoutes(
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) {
         return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      if (!user.emailVerified) {
+        return res.status(403).json({
+          message: "Please verify your email before signing in.",
+          requiresVerification: true,
+          email: user.email,
+        });
       }
 
       const org = await storage.getOrganization(user.organizationId);
@@ -178,10 +185,110 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ message: "Invalid verification token" });
+      }
+
+      const user = await storage.getUserByVerificationToken(token);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired verification link" });
+      }
+
+      if (user.emailVerified) {
+        return res.json({ message: "Email already verified. You can sign in." });
+      }
+
+      if (user.emailVerificationExpires && new Date() > new Date(user.emailVerificationExpires)) {
+        return res.status(400).json({ message: "Verification link has expired. Please request a new one." });
+      }
+
+      await storage.updateUser(user.id, {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      });
+
+      await logAudit(user.organizationId, user.id, "user.email_verified", "user", user.id, {}, req.ip);
+
+      return res.json({ message: "Email verified successfully. You can now sign in." });
+    } catch (err: any) {
+      console.error("Email verification error:", err);
+      return res.status(500).json({ message: "Verification failed" });
+    }
+  });
+
+  app.post("/api/auth/resend-verification", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.json({ message: "If that email exists, a verification link has been sent." });
+      }
+
+      if (user.emailVerified) {
+        return res.json({ message: "Email is already verified. You can sign in." });
+      }
+
+      const verificationToken = generateVerificationToken();
+      const verificationExpires = getVerificationExpiry();
+
+      await storage.updateUser(user.id, {
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+      });
+
+      await sendVerificationEmail(email, verificationToken, user.fullName);
+
+      return res.json({ message: "If that email exists, a verification link has been sent." });
+    } catch (err: any) {
+      console.error("Resend verification error:", err);
+      return res.status(500).json({ message: "Failed to resend verification email" });
+    }
+  });
+
   app.post("/api/auth/logout", (req: Request, res: Response) => {
     req.session.destroy(() => {
       res.json({ message: "Logged out" });
     });
+  });
+
+  app.delete("/api/auth/account", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const orgId = req.session.organizationId!;
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({ message: "Password is required to delete your account" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        return res.status(401).json({ message: "Incorrect password" });
+      }
+
+      await logAudit(orgId, userId, "user.account_deleted", "user", userId, { username: user.username }, req.ip);
+      await storage.deleteUser(userId);
+
+      req.session.destroy(() => {
+        res.json({ message: "Account deleted successfully" });
+      });
+    } catch (err: any) {
+      console.error("Account deletion error:", err);
+      return res.status(500).json({ message: "Failed to delete account" });
+    }
   });
 
   app.get("/api/auth/me", async (req: Request, res: Response) => {
