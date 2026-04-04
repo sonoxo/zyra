@@ -111,6 +111,20 @@ shared/
 - XSS-safe rendering in `client/src/pages/security-copilot.tsx` (no dangerouslySetInnerHTML)
 - Posture query guard: `q.includes("posture") || (q.includes("score") && !q.includes("risk") && ...)`
 
+## Deployment
+- **Target**: Autoscale (Replit)
+- **Build**: `npm run build` → Vite frontend + esbuild server → `dist/`
+- **Run**: `node dist/index.cjs` (production), `npm run dev` (development)
+- **Health**: `GET /health` → `{ status, uptime, checks: { database }, version }`
+- **Pre-deploy**: All required secrets set, build succeeds, no seed data in routes
+
+## Agent Skills (5)
+- `zyra-architecture` — Module map, conventions, how to add features
+- `zyra-debugging` — Common issues, log investigation, fix patterns
+- `zyra-ui-rules` — Component patterns, styling, test attributes, empty states
+- `zyra-deployment` — Production config, secrets checklist, troubleshooting
+- `zyra-integrations` — Service map (Resend, Stripe), adding new integrations
+
 ## Key Development Notes
 - `apiRequest(method, url, data?)` returns `Promise<Response>` — must call `.json()` to parse
 - CVSS score auto-maps to severity in vulnerability form
