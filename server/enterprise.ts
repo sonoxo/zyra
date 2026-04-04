@@ -17,8 +17,6 @@ function maskApiKey(key: string | null): string | null {
   return key.slice(0, 4) + "****" + key.slice(-4);
 }
 
-const seededOrgs = new Set<string>();
-
 interface SiemEvent {
   id: string;
   timestamp: string;
@@ -121,35 +119,6 @@ const DATA_TYPES = [
   { type: "container_scans", label: "Container Scans", defaultDays: 90 },
   { type: "activity_logs", label: "Activity Logs", defaultDays: 180 },
 ];
-
-async function seedEnterpriseData(orgId: string) {
-  if (seededOrgs.has(orgId)) return;
-  seededOrgs.add(orgId);
-
-  const [existingConfigs, existingPolicies, existingWorkspaces] = await Promise.all([
-    storage.getSiemConfigs(orgId),
-    storage.getRetentionPolicies(orgId),
-    storage.getWorkspaces(orgId),
-  ]);
-
-  if (existingConfigs.length === 0) {
-    await storage.createSiemConfig({ organizationId: orgId, provider: "splunk", endpoint: SIEM_PROVIDERS.splunk.defaultEndpoint, index: SIEM_PROVIDERS.splunk.defaultIndex, enabled: false });
-    await storage.createSiemConfig({ organizationId: orgId, provider: "elastic", endpoint: SIEM_PROVIDERS.elastic.defaultEndpoint, index: SIEM_PROVIDERS.elastic.defaultIndex, enabled: false });
-    await storage.createSiemConfig({ organizationId: orgId, provider: "sentinel", endpoint: SIEM_PROVIDERS.sentinel.defaultEndpoint, index: SIEM_PROVIDERS.sentinel.defaultIndex, enabled: false });
-  }
-
-  if (existingPolicies.length === 0) {
-    for (const dt of DATA_TYPES) {
-      await storage.createRetentionPolicy({ organizationId: orgId, dataType: dt.type, retentionDays: dt.defaultDays, enabled: true });
-    }
-  }
-
-  if (existingWorkspaces.length === 0) {
-    await storage.createWorkspace({ organizationId: orgId, name: "Production", description: "Production environment security monitoring", color: "#ef4444" });
-    await storage.createWorkspace({ organizationId: orgId, name: "Staging", description: "Pre-production security testing", color: "#f59e0b" });
-    await storage.createWorkspace({ organizationId: orgId, name: "Development", description: "Development environment security baseline", color: "#22c55e" });
-  }
-}
 
 export async function registerEnterpriseRoutes(app: Express) {
   // ── SIEM ────────────────────────────────────────────────────

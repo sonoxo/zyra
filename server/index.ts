@@ -6,7 +6,7 @@ import { createServer } from "http";
 
 function validateEnv() {
   const required = ["DATABASE_URL", "JWT_SECRET"];
-  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY"];
+  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM"];
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`FATAL: Missing required environment variables: ${missing.join(", ")}`);
@@ -18,6 +18,14 @@ function validateEnv() {
   }
 }
 validateEnv();
+
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION — process will exit:", err.stack || err);
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED REJECTION:", reason);
+});
 
 const app = express();
 app.set("trust proxy", 1);
@@ -57,8 +65,23 @@ const authLimiter = rateLimit({
   message: { message: "Too many authentication attempts, please try again later" },
 });
 
-app.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok", uptime: process.uptime() });
+app.get("/health", async (_req, res) => {
+  const checks: Record<string, string> = {};
+  try {
+    const { db } = await import("./db");
+    const { sql } = await import("drizzle-orm");
+    await db.execute(sql`SELECT 1`);
+    checks.database = "ok";
+  } catch {
+    checks.database = "down";
+  }
+  const overall = Object.values(checks).every(v => v === "ok") ? "ok" : "degraded";
+  res.status(overall === "ok" ? 200 : 503).json({
+    status: overall,
+    uptime: Math.floor(process.uptime()),
+    checks,
+    version: process.env.npm_package_version || "unknown",
+  });
 });
 
 app.use("/api", apiLimiter);
@@ -140,7 +163,19 @@ app.use((req, res, next) => {
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      const env = process.env.NODE_ENV || "development";
+      const features = [
+        process.env.RESEND_API_KEY ? "email" : null,
+        process.env.STRIPE_SECRET_KEY ? "stripe" : null,
+        process.env.BOOTSTRAP_SECRET ? "bootstrap" : null,
+      ].filter(Boolean);
+      console.log(`\n  ╔═══════════════════════════════════════╗`);
+      console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
+      console.log(`  ╠═══════════════════════════════════════╣`);
+      console.log(`  ║  Port:     ${String(port).padEnd(27)}║`);
+      console.log(`  ║  Env:      ${env.padEnd(27)}║`);
+      console.log(`  ║  Features: ${(features.length ? features.join(", ") : "none").padEnd(27)}║`);
+      console.log(`  ╚═══════════════════════════════════════╝\n`);
     },
   );
 })();

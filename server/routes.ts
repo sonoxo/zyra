@@ -173,7 +173,6 @@ export async function registerRoutes(
         features: ["Full platform access", "All scan tools", "All compliance frameworks", "3-day free trial"],
       });
 
-      await seedComplianceData(org.id);
       await logAudit(org.id, user.id, "user.register", "user", user.id, { username }, req.ip);
 
       await sendVerificationEmail(email, verificationToken, fullName);
@@ -2297,76 +2296,6 @@ function generatePDFContent(report: any): Buffer {
   return Buffer.from(lines.join("\n"), "utf-8");
 }
 
-async function seedComplianceData(orgId: string) {
-  const controlsByFramework: Record<string, Array<{ id: string; name: string }>> = {
-    SOC2: [
-      { id: "CC6.1", name: "Logical and Physical Access Controls" },
-      { id: "CC6.2", name: "System Access Registration and Authorization" },
-      { id: "CC6.3", name: "Role-Based Access and Least Privilege" },
-      { id: "CC7.1", name: "Detection of Configuration Changes" },
-      { id: "CC7.2", name: "Monitoring for Security Incidents" },
-      { id: "CC8.1", name: "Change Management Controls" },
-    ],
-    HIPAA: [
-      { id: "164.312(a)", name: "Access Control" },
-      { id: "164.312(c)", name: "Integrity Controls" },
-      { id: "164.312(d)", name: "Authentication" },
-      { id: "164.312(e)", name: "Transmission Security" },
-      { id: "164.308(a)(1)", name: "Security Management Process" },
-    ],
-    ISO27001: [
-      { id: "A.5.1", name: "Information Security Policies" },
-      { id: "A.6.1", name: "Organization of Information Security" },
-      { id: "A.8.1", name: "Asset Management" },
-      { id: "A.9.1", name: "Access Control Policy" },
-      { id: "A.12.1", name: "Operational Procedures" },
-      { id: "A.14.1", name: "Security Requirements of Information Systems" },
-    ],
-    "PCI-DSS": [
-      { id: "Req 1", name: "Install and Maintain Network Security Controls" },
-      { id: "Req 2", name: "Apply Secure Configurations" },
-      { id: "Req 3", name: "Protect Stored Account Data" },
-      { id: "Req 6", name: "Develop and Maintain Secure Systems" },
-      { id: "Req 10", name: "Log and Monitor All Access" },
-    ],
-    FedRAMP: [
-      { id: "AC-2", name: "Account Management" },
-      { id: "AU-2", name: "Audit Events" },
-      { id: "CA-2", name: "Security Assessments" },
-      { id: "CM-6", name: "Configuration Settings" },
-      { id: "IA-2", name: "Identification and Authentication" },
-      { id: "SC-7", name: "Boundary Protection" },
-    ],
-    GDPR: [
-      { id: "Art 5", name: "Principles of Processing" },
-      { id: "Art 25", name: "Data Protection by Design" },
-      { id: "Art 30", name: "Records of Processing" },
-      { id: "Art 32", name: "Security of Processing" },
-      { id: "Art 33", name: "Breach Notification" },
-    ],
-  };
-
-  const statuses = ["compliant", "partial", "non-compliant"];
-
-  for (const [framework, controls] of Object.entries(controlsByFramework)) {
-    for (const control of controls) {
-      const status = statuses[Math.floor(Math.random() * 3)];
-      const coverage = status === "compliant" ? 80 + Math.floor(Math.random() * 21)
-        : status === "partial" ? 40 + Math.floor(Math.random() * 40)
-        : Math.floor(Math.random() * 40);
-
-      await storage.createComplianceMapping({
-        organizationId: orgId,
-        framework: framework as any,
-        controlId: control.id,
-        controlName: control.name,
-        status,
-        coverage,
-        notes: `Assessed via automated security scanning`,
-      });
-    }
-  }
-}
 
 // ── SOAR Routes ─────────────────────────────────────────────────────────────
 async function registerSoarRoutes(app: Express) {

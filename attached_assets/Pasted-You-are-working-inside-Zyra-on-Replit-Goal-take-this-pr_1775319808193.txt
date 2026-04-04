@@ -1,0 +1,60 @@
+You are working inside Zyra on Replit.
+
+Goal: take this project from a Level 2 build to a Level 5 build path. Do not give me a high-level explanation only. Audit the project, make the changes, and then report exactly what you changed.
+
+Priorities:
+
+1. Stabilize the architecture
+2. Remove fake/demo/mock behavior from production paths
+3. Standardize configuration and deployment
+4. Improve observability and debugging
+5. Create reusable project intelligence so future work is faster and more consistent
+
+Your job:
+
+* Audit the current repo structure, app architecture, startup flow, deployment flow, and environment usage.
+* Update or create `replit.md` so it becomes the source of truth for Zyra. Include:
+
+  * project overview
+  * architecture summary
+  * coding conventions
+  * deployment expectations
+  * package manager and run/build commands
+  * environment variable map
+  * rules for mock data vs production data
+  * rules for UI consistency and branding
+* Inspect and fix `.replit` and `replit.nix` so the project has one clear, reliable run path and a reproducible environment.
+* Verify the app listens correctly for Replit publishing. If needed, fix the server to listen on `0.0.0.0` and use the correct internal/public port behavior.
+* Identify all secrets and config values. Replace hardcoded secrets or placeholders with environment variables and clearly list what belongs in Replit Secrets and what belongs in deployment secrets.
+* Find and remove demo, mock, seeded, or placeholder UI states that appear in production when no real data exists. If a fallback is needed, make it obviously empty-state UX, not fake live data.
+* Audit auth, database access, API routes, error handling, loading states, and deployment startup behavior. Fix broken or risky patterns.
+* Add better logging and debugging visibility where it is missing so production issues are easier to diagnose.
+* Create reusable Agent knowledge in `/.agents/skills` for:
+
+  * zyra-architecture
+  * zyra-deployment
+  * zyra-debugging
+  * zyra-ui-rules
+  * zyra-integrations
+* Do not rebuild the whole stack unless absolutely necessary. Prefer targeted fixes, cleanup, and hardening.
+* Preserve current working features while improving structure and reliability.
+* If there are blockers, solve the highest-impact ones first instead of stopping early.
+
+Deliverables:
+
+1. A summary of what you changed
+2. A list of files created or modified
+3. Any secrets or deployment settings I still need to add manually
+4. Remaining issues ranked by priority
+5. The next 3 highest-value actions to reach a true production-ready Level 4/5 state
+
+Success criteria:
+
+* one reliable startup path
+* no fake live data in production
+* clear env/secrets setup
+* deployment-ready configuration
+* reusable Zyra project instructions for future Agent sessions
+* cleaner, more maintainable codebase
+
+Start by auditing the current project, then make the fixes directly.

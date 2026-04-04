@@ -155,29 +155,3 @@ export async function runThreatCorrelation(orgId: string): Promise<{ correlation
   return { correlations, eventsCreated };
 }
 
-export async function seedSecurityEvents(orgId: string): Promise<void> {
-  const existing = await storage.getSecurityEvents(orgId, 5);
-  if (existing.length > 0) return;
-
-  const seedEvents = [
-    { eventType: "vulnerability_detected", source: "trivy", severity: "critical", title: "CVE-2021-44228 Log4Shell detected in log4j-core:2.14.1", description: "Log4j RCE vulnerability found in SBOM package log4j-core version 2.14.1", assetId: "api-server-prod" },
-    { eventType: "scan_completed", source: "semgrep", severity: "high", title: "Semgrep scan completed: 3 critical findings", description: "Code scan on zyra-app detected SQL injection, hardcoded secret, and path traversal" },
-    { eventType: "threat_detected", source: "threat_hunting", severity: "critical", title: "Lateral movement detected from compromised host", description: "Unusual network connections detected from api-server-01 to internal database nodes", assetId: "api-server-01" },
-    { eventType: "secret_exposed", source: "secrets_scanner", severity: "high", title: "AWS access key exposed in git history", description: "AKIA... key found in commit history of frontend-app repository" },
-    { eventType: "anomaly_detected", source: "dark_web_monitor", severity: "medium", title: "Company email found on dark web forum", description: "admin@company.com credential found in dark web breach dataset" },
-    { eventType: "soar_execution", source: "soar", severity: "info", title: "SOAR: Block Malicious IP executed", description: "Playbook triggered by threat intelligence feed, IP 185.220.101.x blocked across 4 firewall rules" },
-    { eventType: "cve_correlation", source: "threat_correlation_engine", severity: "critical", title: "CVE-2024-0727 correlates with 2 production assets", description: "OpenSSL vulnerability affects api-server-prod and auth-service based on SBOM analysis" },
-    { eventType: "compliance_drift", source: "compliance_engine", severity: "medium", title: "PCI-DSS control drift detected", description: "Requirement 6.3.3 (patch management) score dropped below threshold" },
-    { eventType: "incident_created", source: "incident_response", severity: "critical", title: "P1 Incident: Active data exfiltration attempt", description: "Unusual data transfer volume detected from production database (4.2GB in 10 minutes)" },
-    { eventType: "access_anomaly", source: "identity_monitoring", severity: "high", title: "Privileged access from unexpected location", description: "Admin login from new country (RU) for user john.smith@company.com — 2FA not triggered" },
-  ];
-
-  for (const ev of seedEvents) {
-    await storage.createSecurityEvent({
-      organizationId: orgId,
-      ...ev,
-      metadata: {},
-      isCorrelated: Math.random() > 0.5,
-    });
-  }
-}
