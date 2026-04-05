@@ -22,6 +22,14 @@ description: Zyra third-party integrations map and configuration. Use when conne
 - **Status check**: `GET /api/stripe/status`
 - **Fallback**: Without keys, plan changes apply directly without payment flow
 
+### AI Vision — Hugging Face
+- **Secret**: `HF_TOKEN`
+- **Model**: `google/gemma-3-27b-it` via Hugging Face Router (OpenAI-compatible API)
+- **Module**: `server/intelligence.ts` → `analyzeSecurityImage()`
+- **Endpoint**: `POST /api/copilot/vision` (accepts base64 image + mimeType + optional prompt)
+- **Used for**: Screenshot analysis in ZyraCopilot (phishing emails, security alerts, dashboard anomalies, dark web findings)
+- **Fallback**: Returns "Vision analysis is not available" if HF_TOKEN not set
+
 ## Integration Architecture
 All integrations follow the same pattern:
 1. Secret stored in Replit Secrets (never in code)

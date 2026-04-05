@@ -108,6 +108,7 @@ shared/
 ## ZyraCopilot
 - Real-time AI security analyst in `server/intelligence.ts` → `runSecurityCopilot()`
 - 15+ query patterns: posture scoring, MTTR, prioritized actions, compliance readiness, trend analysis, threat correlation, risk assessment
+- **Vision Analysis**: Upload screenshots (alerts, dashboards, suspicious emails, dark web findings) for AI-powered security analysis via Hugging Face (Gemma 3 27B) — `POST /api/copilot/vision`
 - XSS-safe rendering in `client/src/pages/security-copilot.tsx` (no dangerouslySetInnerHTML)
 - Posture query guard: `q.includes("posture") || (q.includes("score") && !q.includes("risk") && ...)`
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, Send, Trash2, Sparkles, User, Shield, AlertTriangle, Activity, Target } from "lucide-react";
+import { Bot, Send, Trash2, Sparkles, User, Shield, AlertTriangle, Activity, Target, ImagePlus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  hasImage?: boolean;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -76,7 +77,9 @@ export default function SecurityCopilotPage() {
   const [input, setInput] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [pendingImage, setPendingImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -97,8 +100,54 @@ export default function SecurityCopilotPage() {
     onSuccess: () => { setLocalMessages([]); qc.invalidateQueries({ queryKey: ["/api/copilot/history"] }); toast({ title: "Conversation cleared" }); },
   });
 
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Only image files are supported", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image must be under 5MB", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
+      setPendingImage({ base64, mimeType: file.type, name: file.name });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
   async function sendMessage(msg?: string) {
     const text = msg || input.trim();
+
+    if (pendingImage) {
+      if (isSending) return;
+      setIsSending(true);
+      setInput("");
+      const prompt = text || "Analyze this image for security issues";
+      const userMsg: Message = { role: "user", content: `📎 ${pendingImage.name}\n${prompt}`, hasImage: true, timestamp: new Date().toISOString() };
+      setLocalMessages(prev => [...prev, userMsg]);
+      const imgData = pendingImage;
+      setPendingImage(null);
+
+      try {
+        const resp = await apiRequest("POST", "/api/copilot/vision", { image: imgData.base64, mimeType: imgData.mimeType, prompt });
+        const data = await resp.json();
+        setLocalMessages(data.messages || []);
+        qc.invalidateQueries({ queryKey: ["/api/copilot/history"] });
+      } catch {
+        toast({ title: "Vision analysis failed", variant: "destructive" });
+        setLocalMessages(prev => prev.filter(m => m !== userMsg));
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
     if (!text || isSending) return;
     setInput("");
     setIsSending(true);
@@ -216,20 +265,41 @@ export default function SecurityCopilotPage() {
             ))}
           </div>
         )}
-        <div className="flex gap-3">
+        {pendingImage && (
+          <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+            <ImagePlus className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-xs text-foreground truncate flex-1">{pendingImage.name}</span>
+            <button data-testid="remove-pending-image" onClick={() => setPendingImage(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+          <Button
+            data-testid="upload-image-button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending}
+            className="shrink-0"
+            title="Upload image for security analysis"
+          >
+            <ImagePlus className="w-4 h-4" />
+          </Button>
           <Textarea
             data-testid="copilot-input"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-            placeholder="Ask about vulnerabilities, risks, incidents, attack paths… (Enter to send)"
+            placeholder={pendingImage ? "Add context for the image analysis (optional)…" : "Ask about vulnerabilities, risks, incidents, attack paths… (Enter to send)"}
             className="min-h-[44px] max-h-32 resize-none text-sm"
             rows={1}
           />
           <Button
             data-testid="send-message-button"
             onClick={() => sendMessage()}
-            disabled={!input.trim() || isSending}
+            disabled={(!input.trim() && !pendingImage) || isSending}
             className="shrink-0"
             size="icon"
           >
@@ -237,7 +307,7 @@ export default function SecurityCopilotPage() {
           </Button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          ZyraCopilot analyzes your live environment data in real time. Always verify before taking action.
+          ZyraCopilot analyzes your live environment data in real time. Upload screenshots for AI-powered security analysis.
         </p>
       </div>
     </div>

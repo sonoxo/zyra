@@ -106,6 +106,45 @@ export async function runThreatHunt(query: string, orgId: string) {
   return unique.slice(0, 50);
 }
 
+export async function analyzeSecurityImage(imageBase64: string, mimeType: string, userPrompt?: string): Promise<string> {
+  const hfToken = process.env.HF_TOKEN;
+  if (!hfToken) return "Vision analysis is not available — HF_TOKEN is not configured.";
+
+  const prompt = userPrompt?.trim() || "Analyze this image from a cybersecurity perspective. Identify any security alerts, vulnerabilities, misconfigurations, suspicious indicators, or notable findings. Provide actionable recommendations.";
+
+  const dataUrl = `data:${mimeType};base64,${imageBase64}`;
+
+  const resp = await fetch("https://router.huggingface.co/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${hfToken}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemma-3-27b-it",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: `You are ZyraCopilot, an expert cybersecurity AI analyst. ${prompt}` },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      max_tokens: 1024,
+    }),
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error("HF vision API error:", resp.status, errText);
+    return `Vision analysis failed (${resp.status}). Please try again later.`;
+  }
+
+  const data = await resp.json() as any;
+  return data.choices?.[0]?.message?.content || "No analysis was returned from the vision model.";
+}
+
 export async function runSecurityCopilot(question: string, orgId: string): Promise<string> {
   const q = question.toLowerCase();
   const now = new Date();

@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { runScanSimulation } from "./scan-worker";
 import { generateReport } from "./report-generator";
 import { runPentestSimulation, runCloudScanSimulation, refreshThreatIntel } from "./simulations";
-import { fetchCveDatabase, runThreatHunt, runSecurityCopilot } from "./intelligence";
+import { fetchCveDatabase, runThreatHunt, runSecurityCopilot, analyzeSecurityImage } from "./intelligence";
 import { executePlaybook } from "./soar";
 import { getMetrics, getPrometheusMetrics, requestMetricsMiddleware, runThreatCorrelation } from "./metrics";
 import { getGraphData, addGraphNode, addGraphEdge } from "./graph";
@@ -2212,6 +2212,27 @@ export async function registerRoutes(
     await storage.upsertCopilotConversation(req.user!.organizationId, req.user!.userId, messages);
 
     res.json({ response, messages });
+  });
+
+  app.post("/api/copilot/vision", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { image, mimeType, prompt } = req.body;
+      if (!image || !mimeType) return res.status(400).json({ message: "Image and mimeType are required" });
+      if (!mimeType.startsWith("image/")) return res.status(400).json({ message: "Only image files are supported" });
+
+      const analysis = await analyzeSecurityImage(image, mimeType, prompt);
+
+      const existing = await storage.getCopilotConversation(req.user!.organizationId, req.user!.userId);
+      const messages: any[] = existing ? (existing.messages as any[]) : [];
+      messages.push({ role: "user", content: prompt || "[Image uploaded for security analysis]", hasImage: true, timestamp: new Date().toISOString() });
+      messages.push({ role: "assistant", content: analysis, timestamp: new Date().toISOString() });
+      await storage.upsertCopilotConversation(req.user!.organizationId, req.user!.userId, messages);
+
+      res.json({ response: analysis, messages });
+    } catch (err: any) {
+      console.error("Vision analysis error:", err);
+      res.status(500).json({ message: "Vision analysis failed" });
+    }
   });
 
   app.get("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {

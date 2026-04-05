@@ -6,7 +6,7 @@ import { createServer } from "http";
 
 function validateEnv() {
   const required = ["DATABASE_URL", "JWT_SECRET"];
-  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM"];
+  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM", "HF_TOKEN"];
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`FATAL: Missing required environment variables: ${missing.join(", ")}`);
@@ -39,7 +39,7 @@ declare module "http" {
 
 app.use(
   express.json({
-    limit: "1mb",
+    limit: "10mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
@@ -168,6 +168,7 @@ app.use((req, res, next) => {
         process.env.RESEND_API_KEY ? "email" : null,
         process.env.STRIPE_SECRET_KEY ? "stripe" : null,
         process.env.BOOTSTRAP_SECRET ? "bootstrap" : null,
+        process.env.HF_TOKEN ? "vision-ai" : null,
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
