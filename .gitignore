@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+*.log
+.env
+.env.local
+.env.production
+.cache
+.vite
+.turbo
+tmp/
