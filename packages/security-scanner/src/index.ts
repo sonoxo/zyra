@@ -23,9 +23,16 @@ export interface ScanResult {
   scannedAt: string
 }
 
+export interface VulnPath {
+  path: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  title: string
+  cve?: string
+}
+
 export interface ScanOptions {
   timeout?: number
-  checkPaths?: string[]
+  checkPaths?: VulnPath[]
 }
 
 /**
