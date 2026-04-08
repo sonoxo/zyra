@@ -30,7 +30,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@prisma/client": "5.15.0",
+    "@prisma/client": "7.7.0",
     "@sentry/node": "^10.47.0",
     "prisma": "5.15.0",
     "zod": "^4.3.6"
