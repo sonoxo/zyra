@@ -17,7 +17,7 @@
     "bcryptjs": "^3.0.3",
     "fastify": "^5.8.4",
     "jsonwebtoken": "^9.0.2",
-    "stripe": "^14.17.0",
+    "stripe": "^22.0.0",
     "ws": "^8.20.0"
   },
   "devDependencies": {
