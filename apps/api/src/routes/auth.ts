@@ -1,29 +1,22 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import { prisma } from '../lib/prisma.js'
+import { usersStore, orgsStore } from '../lib/fileStore.js'
 import { config } from '@zyra/config'
 
 const JWT_SECRET = process.env.JWT_SECRET || config.auth.secret
 const TOKEN_EXPIRY = '7d'
 
 // Build user payload with org info
-async function buildUserPayload(user: any) {
-  const orgMemberships = await prisma.organizationUser.findMany({
-    where: { userId: user.id },
-    include: { organization: true },
-  })
-
-  const defaultOrg = orgMemberships[0]?.organization
-
+function buildUserPayload(user: any, orgId?: string, orgRole?: string) {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
     isVerified: user.isVerified,
-    orgId: defaultOrg?.id,
-    orgRole: orgMemberships[0]?.role,
+    orgId: orgId || 'default-org',
+    orgRole: orgRole || 'VIEWER',
   }
 }
 
@@ -53,33 +46,38 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      // Check if user exists
-      const existing = await prisma.user.findUnique({ where: { email } })
+      // Check if user exists in file store
+      const existing = usersStore.findMany().find(u => u.email === email)
       if (existing) {
         return reply.status(409).send({ success: false, error: 'Email already registered' })
       }
 
       const hashedPassword = await bcrypt.hash(password, 12)
       
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name: name || email.split('@')[0],
-          role: 'VIEWER',
-          isVerified: false,
-        },
+      // Create user in file store
+      const user = usersStore.create({
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0],
+        role: 'VIEWER',
+        isVerified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
 
-      // Create profile
-      await prisma.profile.create({
-        data: {
-          userId: user.id,
-          displayName: name || email.split('@')[0],
-        },
-      })
+      // Ensure default org exists
+      let org = orgsStore.findMany().find(o => o.slug === 'default')
+      if (!org) {
+        org = orgsStore.create({
+          name: 'Default Organization',
+          slug: 'default',
+          plan: 'FREE',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+      }
 
-      const userPayload = await buildUserPayload(user)
+      const userPayload = buildUserPayload(user, org.id, 'OWNER')
       const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
 
       return reply.status(201).send({
@@ -104,7 +102,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      const user = await prisma.user.findUnique({ where: { email } })
+      // Find user in file store
+      const user = usersStore.findMany().find(u => u.email === email)
       
       if (!user) {
         return reply.status(401).send({ success: false, error: 'Invalid credentials' })
@@ -115,7 +114,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
         return reply.status(401).send({ success: false, error: 'Invalid credentials' })
       }
 
-      const userPayload = await buildUserPayload(user)
+      const org = orgsStore.findMany()[0]
+      const userPayload = buildUserPayload(user, org?.id, 'OWNER')
       const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
 
       return reply.send({
@@ -143,42 +143,27 @@ export default async function authRoutes(fastify: FastifyInstance) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as any
       
-      const user = await prisma.user.findUnique({ 
-        where: { id: decoded.id },
-        include: { profile: true }
-      })
+      const user = usersStore.findMany().find(u => u.id === decoded.id)
       
       if (!user) {
         return reply.status(401).send({ success: false, error: 'User not found' })
       }
 
-      const userPayload = await buildUserPayload(user)
-      const orgMemberships = await prisma.organizationUser.findMany({
-        where: { userId: user.id },
-        include: { organization: true },
-      })
+      const org = orgsStore.findMany()[0]
+      const userPayload = buildUserPayload(user, org?.id, decoded.orgRole)
 
-      return reply.send({ 
-        success: true, 
-        data: { 
-          user: userPayload,
-          organizations: orgMemberships.map((m: any) => ({
-            id: m.organization.id,
-            name: m.organization.name,
-            slug: m.organization.slug,
-            role: m.role,
-          })),
-          profile: user.profile
-        } 
+      return reply.send({
+        success: true,
+        data: userPayload
       })
-    } catch {
+    } catch (error: any) {
       return reply.status(401).send({ success: false, error: 'Invalid token' })
     }
   })
 
   // POST /api/auth/logout
-  fastify.post('/logout', async (req: FastifyRequest, reply: FastifyReply) => {
-    // For now, just return success - JWT is stateless
-    return reply.send({ success: true, message: 'Logged out' })
+  fastify.post('/logout', async (req, reply) => {
+    // For token-based auth, client just discards token
+    return reply.send({ success: true, data: { message: 'Logged out' } })
   })
 }
