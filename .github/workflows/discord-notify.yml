@@ -1,0 +1,38 @@
+name: Discord Notifications
+
+on:
+  pull_request:
+    types: [opened, closed, merged]
+  issues:
+    types: [opened]
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        if: github.event_name == 'pull_request'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,author
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SLACK_USERNAME: GitHub
+          SLACK_ICON_EMOJI: ":github:"
+
+      - name: Notify on Issue
+        if: github.event_name == 'issues'
+        run: |
+          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🆕 New Issue: ${{ github.event.issue.title }}",
+                "url": "${{ github.event.issue.html_url }}",
+                "description": "${{ github.event.issue.body }}",
+                "color": 15105570
+              }]
+            }'
