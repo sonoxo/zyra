@@ -44,9 +44,13 @@ Zyra is an **agentic cybersecurity platform** that:
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │  Pinecone    │  │   Firecrawl  │  │    Exa       │  │    E2B       │   │
-│  │  (Vectors)   │  │  (Web Intel) │  │  (Search)    │  │ (Sandbox)    │   │
+│  │  Pinecone    │  │   Firecrawl  │  │    Exa       │  │   HoundDog   │   │
+│  │  (Vectors)   │  │  (Web Intel) │  │  (Search)    │  │(Privacy Scan)│   │
 │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘   │
+│  ┌──────────────┐  ┌──────────────┐                                      │
+│  │    E2B       │  │   Browser    │                                      │
+│  │  (Sandbox)   │  │    Use       │                                      │
+│  └──────────────┘  └──────────────┘                                      │
 │                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │                      DATA LAYER                                       │  │
@@ -96,6 +100,7 @@ Zyra is an **agentic cybersecurity platform** that:
 
 | Category | Tool | Purpose | Phase |
 |----------|------|---------|-------|
+| **Privacy Scanner** | HoundDog | Detect PII, data leaks, GDPR/HIPAA compliance | **Phase 2** |
 | **Sandbox** | E2B | Safe code execution for malware analysis | Phase 3 |
 | **Browser** | Browser Use | Automate browser investigations | Phase 3 |
 | **Voice** | ElevenLabs | Critical incident voice alerts | Phase 4 |

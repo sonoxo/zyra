@@ -103,11 +103,14 @@ Instead of waiting for alerts, Zyra educates users in real-time:
 - [ ] Email phishing detection
 - [ ] Web dashboard for analysts
 
-### Phase 2: Autonomous Response — Q3 2026
+### Phase 2: Autonomous Response + Privacy — Q3 2026
 - [ ] Auto-remediation workflows
 - [ ] Endpoint isolation
 - [ ] User account lockout
 - [ ] SOAR playbook automation
+- [ ] **HoundDog Privacy Scanner** — PII detection, GDPR/HIPAA compliance
+- [ ] Data leak alerts (Discord/Slack)
+- [ ] Privacy reports generation
 
 ### Phase 3: Proactive Protection — Q4 2026
 - [ ] Desktop companion app (Zyra Guard)
