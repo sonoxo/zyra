@@ -1,0 +1,16 @@
+{
+  "name": "@zyra/security-scanner",
+  "version": "1.0.0",
+  "description": "Lightweight vulnerability scanner for web applications",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "keywords": ["security", "vulnerability", "scanner", "penetration-testing", "infosec"],
+  "author": "Zyra",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}
