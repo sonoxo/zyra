@@ -1,41 +1,17 @@
 # Security Policy
 
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 1.0.x   | ✅ |
+
 ## Reporting Vulnerabilities
 
-Thank you for helping keep Zyra secure! If you find a security vulnerability, please report it responsibly.
+Please report security vulnerabilities to: security@zyra.host
 
-### How to Report
+We aim to respond within 24 hours.
 
-1. **Email**: Zyra.localhost@gmail.com
-2. **GitHub Security Advisories**: Use the "Security" tab to report
-3. **Do NOT** open public issues for security bugs
+## Bug Bounty
 
-### What to Include
-
-- Description of the vulnerability
-- Steps to reproduce
-- Affected version(s)
-- Potential impact assessment
-
-### Response Timeline
-
-- **Acknowledgment**: Within 24 hours
-- **Initial Assessment**: Within 7 days
-- **Fix Timeline**: Based on severity (critical = 24-48h)
-
-### Scope
-
-- Zyra core platform
-- API endpoints
-- Authentication flows
-- Data handling
-
-### Out of Scope
-
-- Social engineering
-- Physical security
-- DoS attacks on public infrastructure
-
----
-
-We appreciate your responsible disclosure! 🛡️
+We offer bug bounty rewards for critical vulnerabilities. Contact security@zyra.host for details.

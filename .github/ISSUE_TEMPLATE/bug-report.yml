@@ -1,0 +1,15 @@
+name: 🐛 Bug Report
+description: Report a bug in Zyra
+labels: bug
+body:
+  - type: textarea
+    attributes:
+      label: "Description"
+      placeholder: "Describe the bug..."
+  - type: input
+    attributes:
+      label: "Steps to Reproduce"
+      placeholder: "1. Go to..."
+  - type: input
+    attributes:
+      label: "Expected Behavior"
