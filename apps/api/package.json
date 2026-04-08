@@ -15,7 +15,7 @@
     "@zyra/config": "file:../packages/config",
     "@zyra/types": "file:../packages/types",
     "bcryptjs": "^3.0.3",
-    "fastify": "^4.26.0",
+    "fastify": "^5.8.4",
     "jsonwebtoken": "^9.0.2",
     "stripe": "^14.17.0",
     "ws": "^8.20.0"
