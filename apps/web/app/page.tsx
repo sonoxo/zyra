@@ -28,7 +28,10 @@ export default function Home() {
           <nav className="flex space-x-8 text-sm">
             <a href="#platform" className="text-slate-400 hover:text-primary transition-colors">Platform</a>
             <a href="#differentiators" className="text-slate-400 hover:text-primary transition-colors">Why Zyra</a>
+            <a href="/scan" className="text-slate-400 hover:text-primary transition-colors">Scanner</a>
             <a href="/dashboard" className="text-slate-400 hover:text-primary transition-colors">Dashboard</a>
+            <a href="/compliance" className="text-slate-400 hover:text-primary transition-colors">Compliance</a>
+            <a href="/pricing" className="text-slate-400 hover:text-primary transition-colors">Pricing</a>
           </nav>
         </div>
       </header>
