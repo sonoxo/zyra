@@ -1,78 +1,79 @@
-# 🛡️ Zyra - AI-Native Cybersecurity Platform
+# 🛡️ Zyra — AI-Native Cybersecurity Platform
 
-Enterprise-grade AI security platform built for scale, automation, and revenue.
+<p align="left">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/Node.js-20%2B-blue?style=for-the-badge" alt="Node" />
+  <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge" alt="TypeScript" />
+</p>
 
----
-
-## 🚀 How to Get Started
-
-### Option 1: Use the Live Platform
-**URL:** https://zyra.host
-
-Simply visit https://zyra.host to start using Zyra immediately.
+> Enterprise-grade AI security platform built for scale, automation, and revenue. Like having a sec‑ops team that never sleeps, never complains, and actually delivers results.
 
 ---
 
-### Option 2: Self-Hosted (Download & Deploy)
+## ✨ Why Zyra?
 
-#### Prerequisites
-- Node.js 20+
-- npm or yarn
-- PostgreSQL (optional for dev, SQLite works)
+| Feature | What It Does |
+|---------|--------------|
+| 🔍 **AI Vulnerability Scanner** | Real security scans — checks HTTPS, headers, exposed files, CVE references |
+| 🧠 **Threat Intelligence** | Detects anomalies before they become headlines |
+| 📊 **Unified Dashboard** | Single pane for all your security data |
+| 💰 **Monetization Ready** | Stripe integration — go from security to revenue |
+| 🔐 **Zero‑Trust Auth** | JWT-based auth with RBAC (Admin/Analyst/Viewer) |
+| 🚀 **Production‑Ready** | Docker, Vercel, Railway — deploy anywhere |
 
-#### Quick Start
+Think of Zyra as your 24/7 security sidekick. It's like having a senior pentester on retainer, but cheaper and it doesn't need coffee.
+
+---
+
+## 🚀 Quick Start
+
+### Option 1: Live Platform
+
+Visit **[zyra.host](https://zyra.host)** — just open, connect assets, and start scanning. No setup required.
+
+### Option 2: Local Dev
 
 ```bash
-# 1. Clone the repository
+# Clone & enter
 git clone https://github.com/sonoxo/zyra.git
 cd zyra
 
-# 2. Install dependencies
+# Install deps
 npm install
 
-# 3. Set up environment variables
+# Copy env template
 cp .env.example .env
-# Edit .env with your settings
 
-# 4. Start development
+# Fire it up
 npm run dev
 ```
 
+Then:
 - **Dashboard:** http://localhost:3000
 - **API:** http://localhost:3001
 
----
-
 ### Option 3: Deploy to Vercel (Frontend)
 
-1. Go to [Vercel](https://vercel.com)
-2. Import `sonoxo/zyra` from GitHub
-3. Add environment variables in Settings → Environment Variables:
-   - `STRIPE_SECRET_KEY`
-   - `NEXT_PUBLIC_FRONTEND_URL`
-4. Deploy
+1. Fork this repo
+2. Import in [Vercel](https://vercel.com)
+3. Add env vars:
+   ```
+   NEXT_PUBLIC_API_URL=https://your-api.vercel.app
+   STRIPE_SECRET_KEY=sk_test_...
+   ```
+4. Deploy 🎉
 
----
+### Option 4: Deploy Full Stack (Railway/Render)
 
-### Option 4: Deploy to Railway/Fly.io (Backend)
+1. Fork → Railway → Add variables:
+   ```
+   DATABASE_URL=postgresql://...
+   JWT_SECRET=<生成 with: openssl rand -base64 32>
+   STRIPE_SECRET_KEY=sk_live_...
+   ```
+2. Deploy
 
-1. Fork the repo to your GitHub
-2. Connect repo to Railway
-3. Add environment variables:
-   - `STRIPE_SECRET_KEY`
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-4. Deploy
-
----
-
-## 🧠 How Zyra Works
-
-1. **Connect Your Assets** — Add websites, APIs, servers, databases
-2. **AI-Powered Scanning** — Automated vulnerability detection
-3. **Threat Intelligence** — Real-time anomaly detection
-4. **Unified Dashboard** — Single pane for all security data
-5. **Monetization Ready** — Stripe integration for subscriptions
+> **Pro tip:** For dev, SQLite works out of the box. No DB required to test features.
 
 ---
 
@@ -81,71 +82,97 @@ npm run dev
 ```
 zyra-monorepo/
 ├── apps/
-│   ├── web/          # Next.js Dashboard
+│   ├── web/          # Next.js 14 Dashboard (App Router)
 │   └── api/          # Fastify API Server
 ├── packages/
-│   ├── types/        # Shared TypeScript types
-│   ├── config/       # Shared configuration
-│   └── agents/       # AI Agents
-└── prisma/           # Database schema
+│   ├── types/        # Shared TypeScript definitions
+│   ├── config/       # Environment & config
+│   ├── security-scanner/  # 🎯 Our open‑source scanner
+│   └── fastify-security/  # 🔒 Security middleware
+└── prisma/           # Database schema (PostgreSQL)
 ```
 
 ---
 
-## 📦 Packages
+## 📦 Open‑Source Packages
 
-| Package | Purpose |
-|---------|---------|
-| `@zyra/types` | Shared TypeScript definitions |
-| `@zyra/config` | Configuration & environment |
-| `@zyra/agents` | AI Agents (Pentest, Threat Detection, IR) |
+We eat our own dog food. These packages are extracted from Zyra and ready for your projects:
 
----
+| Package | Install | What It Does |
+|---------|---------|--------------|
+| `@zyra/security-scanner` | `npm i @zyra/security-scanner` | Lightweight vulnerability scanner |
+| `@zyra/fastify-security` | `npm i @zyra/fastify-security` | Headers, rate‑limit, sanitization |
 
-## 🔐 Features
+```typescript
+import { scan } from '@zyra/security-scanner'
 
-- JWT Authentication (register, login, sessions)
-- Profiles & Follow system
-- Live streaming infrastructure
-- Real-time chat (WebSocket ready)
-- Stripe payments integration
-- RBAC (Admin/Analyst/Viewer/Creator)
-- Docker ready for production
-
----
-
-## 🐳 Docker
-
-```bash
-# Production build
-docker-compose up -d
+const result = await scan('https://your-site.com')
+console.log(result.score, result.riskLevel)
+// → 85, MEDIUM
 ```
 
 ---
 
-## 🤖 API Endpoints
+## 🔌 API Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /api/auth/register` | Create account |
-| `POST /api/auth/login` | Get JWT token |
-| `GET /api/profiles/:id` | Get user profile |
-| `GET /api/streams` | List live streams |
-| `POST /api/stripe/create-checkout-session` | Create payment |
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Get JWT token |
+| GET | `/api/auth/me` | Current user |
+
+### Assets & Scans
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/api/assets` | List / create assets |
+| GET/POST | `/api/scan` | Run vulnerability scans |
+| GET | `/api/public/scan` | Free public scan (no auth) |
+
+### Organizations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/orgs` | List orgs |
+| GET | `/api/incidents` | View security incidents |
+
+> Full API docs coming soon. But hey — it's REST. Read the code or curl it.
 
 ---
 
-## 💳 Stripe Integration
+## 🛠️ Tech Stack
 
-Add in `.env`:
-```
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
-```
+<div align="center">
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 14, TypeScript, Tailwind |
+| API | Fastify, TypeScript |
+| Auth | JWT + bcrypt |
+| Database | PostgreSQL / SQLite (dev) |
+| Payments | Stripe |
+| Deploy | Vercel, Railway, Docker |
+
+</div>
+
+---
+
+## 🤝 Contributing
+
+1. Fork it
+2. Create a feature branch (`git checkout -b cool-feature`)
+3. Commit with conventional commits
+4. Push & PR
+
+All contributions welcome — whether it's a bug fix, new scanner check, or better docs.
 
 ---
 
 ## 📜 License
 
-MIT © 2026 Zyra
+MIT © 2026 [Zyra](https://zyra.host)
+
+---
+
+<p align="center">
+  <sub>Built with 🔥 by developers who care about security</sub>
+</p>
