@@ -1,0 +1,14 @@
+{
+  "name": "@zyra/fastify-security",
+  "version": "1.0.0",
+  "description": "Fastify security middleware - headers, rate limiting, input sanitization",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "type": "module",
+  "scripts": { "build": "tsc --noEmit", "test": "node --test" },
+  "keywords": ["fastify", "security", "headers", "rate-limiting", "csp"],
+  "author": "Zyra",
+  "license": "MIT",
+  "peerDependencies": { "fastify": "^4.0.0" },
+  "engines": { "node": ">=18.0.0" }
+}
