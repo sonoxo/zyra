@@ -32,6 +32,7 @@ export default function Home() {
             <a href="/dashboard" className="text-slate-400 hover:text-primary transition-colors">Dashboard</a>
             <a href="/compliance" className="text-slate-400 hover:text-primary transition-colors">Compliance</a>
             <a href="/pricing" className="text-slate-400 hover:text-primary transition-colors">Pricing</a>
+            <a href="https://github.com/sonoxo/zyra/blob/main/SECURITY-CONTROLS.md" target="_blank" className="text-slate-400 hover:text-primary transition-colors">Trust Center</a>
           </nav>
         </div>
       </header>
