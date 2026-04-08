@@ -1,4 +1,28 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+// Dynamic API base - uses relative path in production (same domain)
+// Fallbacks for local dev; Replit will auto-detect from window.location
+function getApiBase(): string {
+  if (typeof window === 'undefined') return ''
+  
+  const env = process.env.NEXT_PUBLIC_API_URL
+  
+  // If explicitly set, use it
+  if (env) return env
+  
+  // Otherwise use relative path (works when frontend/backend on same origin)
+  const isHttps = window.location.protocol === 'https:'
+  const protocol = isHttps ? 'https:' : 'http:'
+  const host = window.location.host
+  
+  // In local dev, API is on different port
+  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+    return `${protocol}//localhost:3001`
+  }
+  
+  // For production/Replit, use relative path (same origin)
+  return ''
+}
+
+const API_BASE = getApiBase()
 
 interface ApiResponse<T = any> {
   success: boolean

@@ -20,7 +20,13 @@ export default function ScanDemo() {
     setResult(null)
 
     try {
-      const res = await fetch('http://localhost:3001/api/public/scan', {
+      // Dynamic base URL - works locally and on Replit
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 
+        (typeof window !== 'undefined' && window.location.host.includes('localhost') 
+          ? 'http://localhost:3001' 
+          : '')
+      
+      const res = await fetch(`${apiBase}/api/public/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })

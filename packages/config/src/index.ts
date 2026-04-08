@@ -1,3 +1,25 @@
+// Dynamic origin detection for different environments
+function getDefaultOrigins(): string[] {
+  const origins = ['http://localhost:3000', 'http://localhost:3001']
+  
+  // Replit automatically sets REPL_ID and REPL_SLUG
+  if (process.env.REPL_ID) {
+    origins.push('https://*.replit.dev', 'https://*.replit.com')
+  }
+  
+  // Vercel production
+  if (process.env.VERCEL_URL) {
+    origins.push(`https://${process.env.VERCEL_URL}`)
+  }
+  
+  // Allow any Replit preview URL
+  if (process.env.REPL_URL) {
+    origins.push(process.env.REPL_URL)
+  }
+  
+  return origins
+}
+
 export const config = {
   // Database
   database: {
@@ -40,7 +62,7 @@ export const config = {
   
   // Security
   security: {
-    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || (process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : ['http://localhost:3000']),
+    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || getDefaultOrigins(),
     maxRequestSize: '10mb',
   },
   
