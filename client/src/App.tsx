@@ -54,6 +54,7 @@ import AdminPage from "@/pages/admin";
 import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
 import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
+import AcceptInvitePage from "@/pages/accept-invite";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -116,6 +117,7 @@ function Router() {
       <Route path="/auth" component={AuthRoute} />
       <Route path="/verify-email" component={VerifyEmailPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/accept-invite" component={AcceptInvitePage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>

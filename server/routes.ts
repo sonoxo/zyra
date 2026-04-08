@@ -21,7 +21,7 @@ import {
 } from "@shared/schema";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 import { executeTask, processPendingTasks, getTaskExecutionHistory } from "./task-runner";
-import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "./email";
+import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail, sendInviteEmail } from "./email";
 import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken, blacklistToken, isTokenBlacklisted } from "./auth";
 import { z } from "zod";
 export { requireAuth } from "./auth";
@@ -1038,6 +1038,33 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/billing/usage", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const [teamMembers, scans, repos, sub] = await Promise.all([
+        storage.getTeamMembers(orgId).catch(() => []),
+        storage.getScans(orgId).catch(() => []),
+        storage.getRepositories(orgId).catch(() => []),
+        storage.getSubscription(orgId).catch(() => null),
+      ]);
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const scansThisMonth = scans.filter(s => new Date(s.createdAt) >= monthStart).length;
+
+      const maxUsers = sub?.maxUsers ?? 5;
+      const maxScans = sub?.maxScansPerMonth ?? 100;
+      const maxRepos = sub?.maxRepositories ?? 10;
+
+      res.json({
+        users: { current: teamMembers.length, limit: maxUsers },
+        scans: { current: scansThisMonth, limit: maxScans },
+        repositories: { current: repos.length, limit: maxRepos },
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to get usage" });
+    }
+  });
+
   // === ANALYTICS & INSIGHTS ===
   app.get("/api/analytics/overview", requireAuth, async (req: Request, res: Response) => {
     try {
@@ -1816,6 +1843,9 @@ export async function registerRoutes(
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       const invite = await storage.createInviteToken({ organizationId: orgId, email, role, token, invitedById: userId, expiresAt });
 
+      const inviter = await storage.getUser(userId);
+      await sendInviteEmail(email, token, role, inviter?.fullName || null);
+
       await logAudit(orgId, userId, "team.invite_sent", "user", undefined, { email, role }, req.ip);
       await storage.upsertOnboardingStep(orgId, "invite_teammate", true);
 
@@ -1856,6 +1886,52 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Invalid or expired invite" });
     }
     res.json({ email: invite.email, role: invite.role });
+  });
+
+  const acceptInviteSchema = z.object({
+    fullName: z.string().min(2),
+    username: z.string().min(3),
+    password: z.string().min(8),
+  });
+
+  app.post("/api/invite/:token/accept", async (req: Request, res: Response) => {
+    try {
+      const invite = await storage.getInviteByToken(req.params.token);
+      if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
+        return res.status(404).json({ message: "Invalid or expired invite" });
+      }
+      const parsed = acceptInviteSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+      }
+      const { fullName, username, password } = parsed.data;
+
+      const existingEmail = await storage.getUserByEmail(invite.email);
+      if (existingEmail) return res.status(409).json({ message: "A user with this email already exists. Sign in instead." });
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) return res.status(409).json({ message: "Username is already taken" });
+
+      const claimed = await storage.acceptInvite(req.params.token);
+      if (!claimed) return res.status(409).json({ message: "This invite has already been used or expired" });
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createUser({
+        organizationId: invite.organizationId,
+        username,
+        email: invite.email,
+        password: hashedPassword,
+        fullName,
+        role: invite.role || "analyst",
+        emailVerified: true,
+      });
+
+      await logAudit(invite.organizationId, user.id, "team.invite_accepted", "user", user.id, { email: invite.email, role: invite.role }, req.ip);
+
+      res.json({ message: "Account created successfully", user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+    } catch (err: any) {
+      console.error("[invite-accept] Error:", err);
+      res.status(500).json({ message: "Failed to accept invite" });
+    }
   });
 
   // ===== ONBOARDING =====

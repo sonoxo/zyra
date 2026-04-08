@@ -56,6 +56,8 @@ shared/
 - `VITE_STRIPE_PUBLISHABLE_KEY` — Stripe frontend key
 - `BOOTSTRAP_SECRET` — Protects POST /api/bootstrap/admin endpoint
 - `EMAIL_FROM` — Sender address (default: `Zyra <noreply@zyra.host>`)
+- `HF_TOKEN` — Hugging Face token (AI vision features)
+- `REPLIT_DOMAINS` — Auto-set on Replit; used for Stripe/email redirect URLs
 
 ## Auth System
 - JWT access tokens (15m expiry) + refresh tokens (7d expiry) in localStorage (`zyra_access_token`, `zyra_refresh_token`)
@@ -82,9 +84,21 @@ shared/
 - Startup JWT_SECRET warning: loud message if using random fallback
 - Startup banner: shows port, env, enabled features
 
+## Team Invite Flow
+- `POST /api/team/invite` sends invite email via Resend with 7-day expiry token
+- `GET /api/invite/:token` validates token (public, no auth required)
+- `POST /api/invite/:token/accept` atomically claims token, creates user account, joins org
+- Frontend: `/accept-invite?token=xxx` — public page with token validation + account creation form
+- Invite token claim is atomic: UPDATE with `acceptedAt IS NULL AND expiresAt > now` prevents double-use
+
+## Billing Usage
+- `GET /api/billing/usage` returns `{ users: {current, limit}, scans: {current, limit}, repositories: {current, limit} }`
+- Limits sourced from subscription record (maxUsers, maxScansPerMonth, maxRepositories)
+- Scans counted for current calendar month only
+
 ## Input Validation
 - Zod schemas on all critical POST endpoints: incidents, vulnerabilities, risks, assets, SBOM scan, container scan, dark-web scan, attack-surface discover, secrets scan, vendor assess
-- Registration, login, forgot-password, reset-password all use Zod schemas
+- Registration, login, forgot-password, reset-password, invite-accept all use Zod schemas
 - Validation errors return structured `{ message, errors }` response
 
 ## Dashboard Resilience

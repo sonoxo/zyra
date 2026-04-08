@@ -100,6 +100,48 @@ export async function sendPasswordResetEmail(
   });
 }
 
+export async function sendInviteEmail(
+  email: string,
+  token: string,
+  role: string,
+  inviterName: string | null
+): Promise<boolean> {
+  const domain = process.env.FRONTEND_URL
+    || (process.env.REPLIT_DOMAINS?.split(",")[0] ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : "http://localhost:5000");
+  const inviteUrl = `${domain}/accept-invite?token=${token}`;
+  const inviter = inviterName || "A team member";
+
+  return sendEmail({
+    to: email,
+    subject: "You're invited to join Zyra",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: #6366f1; border-radius: 12px; margin-bottom: 16px;">
+            <span style="color: white; font-weight: bold; font-size: 20px;">Z</span>
+          </div>
+          <h1 style="margin: 0; font-size: 24px; color: #111;">You're invited!</h1>
+        </div>
+        <p style="color: #444; font-size: 15px; line-height: 1.6;">
+          ${inviter} has invited you to join their organization on Zyra as a <strong>${role}</strong>.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${inviteUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+            Accept Invitation
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px; line-height: 1.5;">
+          This invitation expires in 7 days. If you weren't expecting this, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+        <p style="color: #aaa; font-size: 12px; text-align: center;">
+          Zyra — AI-Native Cybersecurity Platform
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendVerificationEmail(
   email: string,
   token: string,

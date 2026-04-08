@@ -76,7 +76,7 @@ import {
   siemConfigs, retentionPolicies, workspaces, tasks,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull, gt } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -863,7 +863,14 @@ export class DatabaseStorage implements IStorage {
     return r;
   }
   async acceptInvite(token: string): Promise<InviteToken | undefined> {
-    const [r] = await db.update(inviteTokens).set({ acceptedAt: new Date() }).where(eq(inviteTokens.token, token)).returning();
+    const [r] = await db.update(inviteTokens)
+      .set({ acceptedAt: new Date() })
+      .where(and(
+        eq(inviteTokens.token, token),
+        isNull(inviteTokens.acceptedAt),
+        gt(inviteTokens.expiresAt, new Date())
+      ))
+      .returning();
     return r;
   }
 
