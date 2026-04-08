@@ -1,0 +1,19 @@
+{
+  "name": "@zyra/notifications",
+  "version": "1.0.0",
+  "description": "Zyra notification service - Discord, Slack, Email, Voice",
+  "main": "./src/index.js",
+  "type": "module",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.11.0"
+  }
+}
