@@ -1,0 +1,17 @@
+[
+  {
+    "type": "QUICK",
+    "status": "COMPLETED",
+    "targetUrl": "https://example.com",
+    "score": 100,
+    "riskLevel": "LOW",
+    "summary": "{\"vulnerabilities\":{\"critical\":0,\"high\":0,\"medium\":0,\"low\":0},\"riskLevel\":\"LOW\"}",
+    "orgId": "default-org",
+    "assetId": null,
+    "createdAt": "2026-04-08T14:33:58.803Z",
+    "startedAt": "2026-04-08T14:33:58.803Z",
+    "completedAt": "2026-04-08T14:33:59.043Z",
+    "updatedAt": "2026-04-08T14:33:59.043Z",
+    "id": "9d9bb2fc68e1d0b7"
+  }
+]

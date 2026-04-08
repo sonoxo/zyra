@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
-import { triggerWebhook } from '../lib/webhook.js'
-import { sendToOrg } from '../websocket/index.js'
+import { assetsStore } from '../lib/fileStore.js'
 
 export default async function assetRoutes(fastify: FastifyInstance) {
   await fastify.addHook('onRequest', authMiddleware)
@@ -15,15 +13,8 @@ export default async function assetRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ success: false, error: 'orgId required' })
     }
 
-    try {
-      const assets = await prisma.asset.findMany({
-        where: { orgId },
-        orderBy: { createdAt: 'desc' },
-      })
-      return reply.send({ success: true, data: assets })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
-    }
+    const assets = assetsStore.findMany(a => a.orgId === orgId)
+    return reply.send({ success: true, data: assets })
   })
 
   // POST /api/assets - create asset
@@ -39,59 +30,39 @@ export default async function assetRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ success: false, error: 'Name required' })
     }
 
-    try {
-      const asset = await prisma.asset.create({
-        data: {
-          name,
-          type: type || 'WEBSITE',
-          url: url || null,
-          ip: ip || null,
-          orgId,
-          status: 'ACTIVE',
-        },
-      })
+    const asset = assetsStore.create({
+      name,
+      type: type || 'WEBSITE',
+      url: url || null,
+      orgId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
 
-      // Trigger webhooks
-      await triggerWebhook(orgId, 'asset.created', { id: asset.id, name: asset.name, type: asset.type })
-
-      // Real-time notification
-      sendToOrg(orgId, 'asset.created', { id: asset.id, name: asset.name })
-
-      return reply.status(201).send({ success: true, data: asset })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
-    }
+    return reply.status(201).send({ success: true, data: asset })
   })
 
-  // GET /api/assets/:id - get asset
+  // GET /api/assets/:id
   fastify.get('/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
-
-    try {
-      const asset = await prisma.asset.findUnique({
-        where: { id },
-        include: { threats: true, scans: { take: 5, orderBy: { createdAt: 'desc' } } },
-      })
-
-      if (!asset) {
-        return reply.status(404).send({ success: false, error: 'Asset not found' })
-      }
-
-      return reply.send({ success: true, data: asset })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
+    const asset = assetsStore.findUnique({ id })
+    
+    if (!asset) {
+      return reply.status(404).send({ success: false, error: 'Asset not found' })
     }
+
+    return reply.send({ success: true, data: asset })
   })
 
-  // DELETE /api/assets/:id - delete asset
+  // DELETE /api/assets/:id
   fastify.delete('/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
-
-    try {
-      await prisma.asset.delete({ where: { id } })
-      return reply.send({ success: true })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
+    const deleted = assetsStore.delete({ id })
+    
+    if (!deleted) {
+      return reply.status(404).send({ success: false, error: 'Asset not found' })
     }
+
+    return reply.send({ success: true, data: { deleted: true } })
   })
 }

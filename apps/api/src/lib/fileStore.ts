@@ -1,10 +1,10 @@
-// Simple JSON file-based storage - fallback when DB unavailable
 import fs from 'fs'
 import path from 'path'
-import crypto from 'crypto'
 import { fileURLToPath } from 'url'
+import crypto from 'crypto'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const DATA_DIR = path.resolve(__dirname, '../../data')
 
 // Ensure data directory exists
@@ -12,16 +12,11 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true })
 }
 
-function getFilePath(model: string): string {
-  return path.join(DATA_DIR, `${model}.json`)
-}
-
 function readJson<T>(model: string, defaultValue: T): T {
   try {
-    const filePath = getFilePath(model)
+    const filePath = path.join(DATA_DIR, `${model}.json`)
     if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, 'utf-8')
-      return JSON.parse(data)
+      return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
     }
   } catch (e) {
     console.error(`[Storage] Error reading ${model}:`, e)
@@ -31,7 +26,7 @@ function readJson<T>(model: string, defaultValue: T): T {
 
 function writeJson<T>(model: string, data: T): void {
   try {
-    const filePath = getFilePath(model)
+    const filePath = path.join(DATA_DIR, `${model}.json`)
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
   } catch (e) {
     console.error(`[Storage] Error writing ${model}:`, e)
@@ -52,7 +47,8 @@ class FileStore<T extends { id: string }> {
     writeJson(this.model, this.data)
   }
   
-  findMany(): T[] {
+  findMany(query?: (item: T) => boolean): T[] {
+    if (query) return this.data.filter(query)
     return this.data
   }
   
@@ -70,7 +66,6 @@ class FileStore<T extends { id: string }> {
   update(where: { id: string }, data: Partial<T>): T | undefined {
     const index = this.data.findIndex(item => item.id === where.id)
     if (index === -1) return undefined
-    
     this.data[index] = { ...this.data[index], ...data }
     this.save()
     return this.data[index]
@@ -79,7 +74,6 @@ class FileStore<T extends { id: string }> {
   delete(where: { id: string }): boolean {
     const index = this.data.findIndex(item => item.id === where.id)
     if (index === -1) return false
-    
     this.data.splice(index, 1)
     this.save()
     return true
@@ -110,6 +104,32 @@ export interface OrgData {
   updatedAt: string
 }
 
+export interface AssetData {
+  id: string
+  name: string
+  type: string
+  url: string | null
+  orgId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ScanData {
+  id: string
+  type: string
+  status: string
+  targetUrl: string | null
+  score: number | null
+  riskLevel: string | null
+  summary: string | null
+  orgId: string
+  assetId: string | null
+  createdAt: string
+  startedAt: string | null
+  completedAt: string | null
+  updatedAt: string
+}
+
 // Initialize stores with defaults
 export const usersStore = new FileStore<UserData>('users', [])
 export const orgsStore = new FileStore<OrgData>('orgs', [
@@ -122,10 +142,12 @@ export const orgsStore = new FileStore<OrgData>('orgs', [
     updatedAt: new Date().toISOString()
   }
 ])
+export const assetsStore = new FileStore<AssetData>('assets', [])
+export const scansStore = new FileStore<ScanData>('scans', [])
 
 // DB Status check
 export function isDbAvailable(): boolean {
-  return true // File storage always available
+  return true
 }
 
 export function getDbStatus(): { type: string; status: string } {

@@ -1,0 +1,12 @@
+[
+  {
+    "email": "demo@zyra.dev",
+    "password": "$2a$12$D8QO8cGx5My9dmGOb4ggmOuNGjnZFuMeh0dJ/lTKcPsrZTeykU39q",
+    "name": "Demo User",
+    "role": "VIEWER",
+    "isVerified": true,
+    "createdAt": "2026-04-08T14:24:09.558Z",
+    "updatedAt": "2026-04-08T14:24:09.558Z",
+    "id": "8df69919464d559c"
+  }
+]

@@ -5,7 +5,7 @@ declare class FileStore<T extends {
     private data;
     constructor(model: string, defaultData?: T[]);
     private save;
-    findMany(): T[];
+    findMany(query?: (item: T) => boolean): T[];
     findUnique(where: {
         id: string;
     }): T | undefined;
@@ -38,8 +38,34 @@ export interface OrgData {
     createdAt: string;
     updatedAt: string;
 }
+export interface AssetData {
+    id: string;
+    name: string;
+    type: string;
+    url: string | null;
+    orgId: string;
+    createdAt: string;
+    updatedAt: string;
+}
+export interface ScanData {
+    id: string;
+    type: string;
+    status: string;
+    targetUrl: string | null;
+    score: number | null;
+    riskLevel: string | null;
+    summary: string | null;
+    orgId: string;
+    assetId: string | null;
+    createdAt: string;
+    startedAt: string | null;
+    completedAt: string | null;
+    updatedAt: string;
+}
 export declare const usersStore: FileStore<UserData>;
 export declare const orgsStore: FileStore<OrgData>;
+export declare const assetsStore: FileStore<AssetData>;
+export declare const scansStore: FileStore<ScanData>;
 export declare function isDbAvailable(): boolean;
 export declare function getDbStatus(): {
     type: string;

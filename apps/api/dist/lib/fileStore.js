@@ -1,23 +1,19 @@
-// Simple JSON file-based storage - fallback when DB unavailable
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import crypto from 'crypto';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const DATA_DIR = path.resolve(__dirname, '../../data');
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
-function getFilePath(model) {
-    return path.join(DATA_DIR, `${model}.json`);
-}
 function readJson(model, defaultValue) {
     try {
-        const filePath = getFilePath(model);
+        const filePath = path.join(DATA_DIR, `${model}.json`);
         if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf-8');
-            return JSON.parse(data);
+            return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         }
     }
     catch (e) {
@@ -27,7 +23,7 @@ function readJson(model, defaultValue) {
 }
 function writeJson(model, data) {
     try {
-        const filePath = getFilePath(model);
+        const filePath = path.join(DATA_DIR, `${model}.json`);
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     }
     catch (e) {
@@ -45,7 +41,9 @@ class FileStore {
     save() {
         writeJson(this.model, this.data);
     }
-    findMany() {
+    findMany(query) {
+        if (query)
+            return this.data.filter(query);
         return this.data;
     }
     findUnique(where) {
@@ -89,9 +87,11 @@ export const orgsStore = new FileStore('orgs', [
         updatedAt: new Date().toISOString()
     }
 ]);
+export const assetsStore = new FileStore('assets', []);
+export const scansStore = new FileStore('scans', []);
 // DB Status check
 export function isDbAvailable() {
-    return true; // File storage always available
+    return true;
 }
 export function getDbStatus() {
     return { type: 'file-based', status: 'operational' };
