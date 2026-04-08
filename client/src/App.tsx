@@ -55,6 +55,7 @@ import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
 import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
 import AcceptInvitePage from "@/pages/accept-invite";
+import AuditLogsPage from "@/pages/audit-logs";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -161,6 +162,7 @@ function Router() {
       <Route path="/security-graph">{() => <ProtectedRoute component={SecurityGraphPage} />}</Route>
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
       <Route path="/task-center">{() => <ProtectedRoute component={TaskCenterPage} />}</Route>
+      <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
       <Route path="/admin">{() => <ProtectedRoute component={AdminPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
       <Route path="/enterprise-readiness">{() => <ProtectedRoute component={EnterpriseReadinessPage} />}</Route>
