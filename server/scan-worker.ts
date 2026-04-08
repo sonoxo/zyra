@@ -246,12 +246,10 @@ export async function runScanSimulation(scanId: string, orgId: string, scanType:
     });
 
     const templates = FINDING_TEMPLATES[scanType] || FINDING_TEMPLATES.semgrep;
-    const numFindings = 3 + Math.floor(Math.random() * (templates.length - 2));
-    const selectedTemplates = [...templates].sort(() => Math.random() - 0.5).slice(0, numFindings);
 
     const totalSteps = 5;
     for (let step = 1; step <= totalSteps; step++) {
-      await delay(800 + Math.random() * 1200);
+      await delay(1000);
       await storage.updateScan(scanId, {
         progress: Math.round((step / totalSteps) * 100),
       });
@@ -259,7 +257,7 @@ export async function runScanSimulation(scanId: string, orgId: string, scanType:
 
     let criticalCount = 0, highCount = 0, mediumCount = 0, lowCount = 0, infoCount = 0;
 
-    for (const template of selectedTemplates) {
+    for (const template of templates) {
       await storage.createScanFinding({
         scanId,
         organizationId: orgId,
@@ -270,7 +268,7 @@ export async function runScanSimulation(scanId: string, orgId: string, scanType:
         category: template.category,
         cveId: template.cveId || null,
         filePath: template.filePath || null,
-        lineNumber: template.filePath ? Math.floor(Math.random() * 200) + 1 : null,
+        lineNumber: null,
         remediation: template.remediation,
         impact: template.impact,
         complianceFrameworks: template.frameworks,
@@ -286,9 +284,9 @@ export async function runScanSimulation(scanId: string, orgId: string, scanType:
       }
     }
 
-    const totalFindings = selectedTemplates.length;
+    const totalFindings = templates.length;
     const securityScore = Math.max(0, 100 - (criticalCount * 20) - (highCount * 10) - (mediumCount * 5) - (lowCount * 2));
-    const duration = Math.floor(Math.random() * 180) + 30;
+    const duration = totalSteps;
 
     await storage.updateScan(scanId, {
       status: "completed",

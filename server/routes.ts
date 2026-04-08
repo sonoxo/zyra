@@ -823,13 +823,20 @@ export async function registerRoutes(
     return res.json(allSettings);
   });
 
+  const settingsUpdateSchema = z.object({
+    category: z.string().min(1),
+    key: z.string().min(1),
+    value: z.any(),
+  });
+
   app.put("/api/settings", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const { category, key, value } = req.body;
-      if (!category || !key) {
-        return res.status(400).json({ message: "Category and key are required" });
+      const parsed = settingsUpdateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Category and key are required", errors: parsed.error.flatten().fieldErrors });
       }
+      const { category, key, value } = parsed.data;
       const setting = await storage.upsertSetting({ organizationId: orgId, category, key, value });
       await logAudit(orgId, req.user!.userId, "settings.update", "setting", setting.id, { category, key }, req.ip);
       return res.json(setting);
@@ -1423,8 +1430,19 @@ export async function registerRoutes(
     await storage.createNotification({ organizationId: orgId, title: isCritical ? "Critical Incident Created" : "New Incident Created", message: `Incident "${item.title}" has been created with ${item.severity} severity.`, type: "incident", severity: item.severity, resourceType: "incident", resourceId: item.id });
     res.json(item);
   });
+  const incidentUpdateSchema = z.object({
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    severity: z.enum(["critical", "high", "medium", "low"]).optional(),
+    status: z.enum(["open", "investigating", "contained", "resolved", "closed"]).optional(),
+    assignedTo: z.string().optional(),
+    category: z.string().optional(),
+  }).passthrough();
+
   app.put("/api/incidents/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const item = await storage.updateIncident(req.params.id, req.body);
+    const parsed = incidentUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
+    const item = await storage.updateIncident(req.params.id, parsed.data);
     if (!item) return res.status(404).json({ message: "Not found" });
     await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
     res.json(item);
@@ -1483,9 +1501,21 @@ export async function registerRoutes(
     }
     res.json(item);
   });
+  const vulnUpdateSchema = z.object({
+    title: z.string().min(1).optional(),
+    severity: z.enum(["critical", "high", "medium", "low", "info"]).optional(),
+    status: z.enum(["open", "in_progress", "remediated", "verified", "accepted", "false_positive"]).optional(),
+    assignedTo: z.string().optional(),
+    remediationSteps: z.string().optional(),
+    cveId: z.string().optional(),
+    cvssScore: z.number().min(0).max(10).optional(),
+  }).passthrough();
+
   app.put("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const data = { ...req.body };
-    if (data.status === "verified" && !data.verifiedAt) data.verifiedAt = new Date();
+    const parsed = vulnUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
+    const data = { ...parsed.data };
+    if (data.status === "verified" && !(data as any).verifiedAt) (data as any).verifiedAt = new Date();
     const item = await storage.updateVulnerability(req.params.id, data);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
@@ -1617,9 +1647,21 @@ export async function registerRoutes(
     const item = await storage.createRisk({ ...body, organizationId: req.user!.organizationId, riskScore });
     res.json(item);
   });
+  const riskUpdateSchema = z.object({
+    title: z.string().min(1).optional(),
+    description: z.string().optional(),
+    likelihood: z.number().int().min(1).max(5).optional(),
+    impact: z.number().int().min(1).max(5).optional(),
+    status: z.enum(["identified", "assessed", "mitigated", "accepted", "closed"]).optional(),
+    treatment: z.enum(["mitigate", "accept", "transfer", "avoid"]).optional(),
+    owner: z.string().optional(),
+  }).passthrough();
+
   app.put("/api/risks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const body = req.body;
-    if (body.likelihood && body.impact) body.riskScore = body.likelihood * body.impact;
+    const parsed = riskUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
+    const body = { ...parsed.data };
+    if (body.likelihood && body.impact) (body as any).riskScore = body.likelihood * body.impact;
     const item = await storage.updateRisk(req.params.id, body);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
@@ -1677,9 +1719,9 @@ export async function registerRoutes(
   });
   app.get("/api/posture/current", requireAuth, async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    let current = await storage.getLatestPostureScore(orgId);
+    const current = await storage.getLatestPostureScore(orgId);
     if (!current) {
-      current = await storage.createPostureScore({ organizationId: orgId, date: new Date().toISOString().split("T")[0], overallScore: 72, scanScore: 78, pentestScore: 65, cloudScore: 70, complianceScore: 82, incidentScore: 68, vulnerabilityScore: 71, trend: "stable" });
+      return res.json({ overallScore: 0, scanScore: 0, pentestScore: 0, cloudScore: 0, complianceScore: 0, incidentScore: 0, vulnerabilityScore: 0, trend: "stable", message: "No posture data yet. Run a posture snapshot to generate scores." });
     }
     res.json(current);
   });

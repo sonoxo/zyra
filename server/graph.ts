@@ -62,7 +62,6 @@ export async function ensureGraphSeeded(orgId: string): Promise<void> {
 }
 
 export async function getGraphData(orgId: string) {
-  await ensureGraphSeeded(orgId);
   const nodes = await storage.getGraphNodes(orgId);
   const edges = await storage.getGraphEdges(orgId);
 

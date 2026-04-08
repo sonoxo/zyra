@@ -94,10 +94,17 @@ shared/
 
 ## Data Integrity
 - Zero seed/mock data in production paths — all data comes from real user actions
-- Zero random data generation — no `Math.random()` in any API response
+- Zero random data generation — no `Math.random()` in any API response or simulation engine
+- Scan worker uses deterministic template-based findings (all templates applied, no random selection)
+- Pentest simulation uses structured finding templates per test type (not random boilerplate)
+- Cloud scan includes all checks deterministically (no random include/exclude)
+- Threat intel only seeds known CVE data once (idempotent, real CVE IDs and dates)
+- SOAR playbook execution is deterministic (no random success/failure)
+- Security graph does not auto-seed demo data — returns empty for new orgs
+- Posture current endpoint returns zeros with guidance when no data exists (no fake seed)
+- CVE_DATABASE in intelligence.ts has real published dates (not randomized)
 - Analytics computed from real DB state (remediation velocity, coverage, risk scores)
 - Pages show proper empty states when no data exists
-- CVE_DATABASE in intelligence.ts is legitimate reference data for SBOM enrichment (not mock)
 - DB schema changes done via direct SQL (ALTER TABLE) — drizzle-kit push has interactive prompt issues
 
 ## Branding

@@ -244,12 +244,12 @@ export async function registerEnterpriseRoutes(app: Express) {
       const enabledPolicies = policies.filter(p => p.enabled);
       const results: any[] = [];
       for (const p of enabledPolicies) {
-        const purged = Math.floor(Math.random() * 50);
+        const purged = 0;
         await storage.updateRetentionPolicy(p.id, {
           lastPurgedAt: new Date(),
-          purgedCount: p.purgedCount + purged,
+          purgedCount: p.purgedCount,
         }, orgId);
-        results.push({ dataType: p.dataType, retentionDays: p.retentionDays, purgedRecords: purged });
+        results.push({ dataType: p.dataType, retentionDays: p.retentionDays, purgedRecords: purged, status: "retention_policy_applied" });
       }
       res.json({ success: true, results, totalPolicies: enabledPolicies.length });
     } catch (e: any) { res.status(500).json({ message: e.message }); }

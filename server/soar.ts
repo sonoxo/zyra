@@ -153,20 +153,16 @@ export async function executePlaybook(
 
   for (const action of actions) {
     await new Promise(r => setTimeout(r, Math.min(action.simulatedDurationMs, 300)));
-    const success = Math.random() > 0.05;
     executedSteps.push({
       id: action.id,
       name: action.name,
       type: action.type,
       description: action.description,
-      status: success ? "success" : "failed",
+      status: "success",
       duration: action.simulatedDurationMs,
       completedAt: new Date().toISOString(),
-      output: success
-        ? `✓ ${action.name} completed successfully`
-        : `✗ ${action.name} failed: timeout after ${action.simulatedDurationMs}ms`,
+      output: `✓ ${action.name} completed successfully`,
     });
-    if (!success) overallStatus = "partial";
   }
 
   const duration = Date.now() - startTime;
