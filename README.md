@@ -48,9 +48,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Then:
-- **Dashboard:** http://localhost:3000
-- **API:** http://localhost:3001
+Then you'll see two servers:
+- **Frontend (Dashboard):** http://localhost:3000
+- **API (Backend):** http://localhost:3001
 
 ### Option 3: Deploy to Vercel (Frontend)
 
