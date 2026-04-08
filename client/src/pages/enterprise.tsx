@@ -54,21 +54,16 @@ const defaultSsoConfig: SsoConfig = {
   domains: "",
 };
 
-const deploymentRegions = [
-  { id: "us-east-1", name: "US East", location: "Virginia", latency: "12ms" },
-  { id: "us-west-2", name: "US West", location: "Oregon", latency: "45ms" },
-  { id: "eu-west-1", name: "EU West", location: "Ireland", latency: "89ms" },
-  { id: "eu-central-1", name: "EU Central", location: "Frankfurt", latency: "95ms" },
-  { id: "ap-southeast-1", name: "AP Southeast", location: "Singapore", latency: "142ms" },
-  { id: "ap-northeast-1", name: "AP Northeast", location: "Tokyo", latency: "158ms" },
-];
+interface DeploymentRegion {
+  id: string;
+  name: string;
+  status: string;
+}
 
 const defaultRegionConfig: RegionConfig = {
   primaryRegion: "us-east-1",
   failoverEnabled: false,
-  regions: Object.fromEntries(
-    deploymentRegions.map((r) => [r.id, { enabled: r.id === "us-east-1" }])
-  ),
+  regions: {},
 };
 
 const defaultRateLimitConfig: RateLimitConfig = {
@@ -247,7 +242,7 @@ function SsoTab({ isLoading: _parentLoading }: { settings?: Setting[]; isLoading
 function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; isLoading: boolean }) {
   const { toast } = useToast();
 
-  interface RegionInfo { id: string; name: string; latency: string; status: string; }
+  interface RegionInfo { id: string; name: string; status: string; }
   const { data: regionsData, isLoading } = useQuery<RegionInfo[]>({
     queryKey: ["/api/deployment/regions"],
   });
@@ -337,9 +332,9 @@ function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; i
                 <SelectValue placeholder="Select primary region" />
               </SelectTrigger>
               <SelectContent>
-                {deploymentRegions.map((r) => (
+                {(regionsData || []).map((r) => (
                   <SelectItem key={r.id} value={r.id}>
-                    {r.name} ({r.location})
+                    {r.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -347,7 +342,7 @@ function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; i
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-            {deploymentRegions.map((region) => {
+            {(regionsData || []).map((region) => {
               const status = getRegionStatus(region.id);
               const enabled = config.regions[region.id]?.enabled ?? false;
               return (
@@ -358,7 +353,6 @@ function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; i
                         <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0">
                           <div className="text-sm font-medium truncate">{region.name}</div>
-                          <div className="text-xs text-muted-foreground">{region.location}</div>
                         </div>
                       </div>
                       <Badge
@@ -375,11 +369,7 @@ function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; i
                         {status === "active" ? "Active" : status === "standby" ? "Standby" : "Disabled"}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Activity className="w-3 h-3" />
-                        <span data-testid={`text-latency-${region.id}`}>{region.latency}</span>
-                      </div>
+                    <div className="flex items-center justify-end gap-2">
                       <Switch
                         data-testid={`switch-region-${region.id}`}
                         checked={enabled}

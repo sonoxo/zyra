@@ -2,49 +2,53 @@
 
 Last updated: April 2026
 
-## Priority 1 — Production Blockers
+## Resolved (This Sprint)
 
-### Hardcoded API Responses
-Some endpoints return static/simulated data instead of real computed values:
-- `GET /api/analytics/overview` — returns hardcoded strings (`"4.2 days"` remediation velocity, `"92%"` attack surface coverage)
-- `GET /api/deployment/regions` — static list with fake latency values
-- `POST /api/sbom/scan` — simulates scan with hardcoded package list instead of real SBOM analysis
-- `POST /api/monitoring/trigger` — stub that returns success without doing anything
-- **Fix**: Replace with real computations from database or remove until real integrations exist
+### ~~Hardcoded API Responses~~ — FIXED
+- `GET /api/analytics/overview` — now computes remediation velocity, coverage, and risk from real DB data
+- `GET /api/deployment/regions` — now config-driven from settings, no fake latency values
+- `POST /api/sbom/scan` — now requires real package input via Zod-validated schema
+- `POST /api/attack-surface/discover` — now requires domain input, no hardcoded fake assets
+- `POST /api/posture/snapshot` — now computed from real scan/incident/vulnerability data
+- `POST /api/security-awareness/campaigns/:id/launch` — now marks as launched without faking results
+- `POST /api/dark-web/scan` — now requires domain input, returns existing alerts
+- `POST /api/containers/scan` — now validates input, creates real scan record without random data
+- `POST /api/monitoring/trigger` — now creates audit log entry
+- `POST /api/secrets/scan` — now requires validated `findings` array, no more fake secret types or Math.random()
+- `POST /api/vendors/:id/assess` — now requires `riskScore` and `complianceStatus` input, no more random values
 
-### Input Validation Gaps
-- `POST /api/incidents` and `POST /api/vulnerabilities` accept `req.body` directly without Zod schema validation
-- `POST /api/auth/resend-verification` doesn't validate email format
-- **Fix**: Add Zod parsing with insert schemas from `@shared/schema.ts`
+### ~~Input Validation Gaps~~ — FIXED
+- `POST /api/incidents` — Zod schema validates title, description, severity
+- `POST /api/vulnerabilities` — Zod schema validates title, severity, CVE, CVSS
+- `POST /api/risks` — Zod schema validates title, likelihood, impact
+- `POST /api/assets` — Zod schema validates name, type, criticality
+- `POST /api/containers/scan` — Zod schema validates imageName, imageTag, scanType
 
-### Dashboard Error Resilience
-- `GET /api/dashboard/stats` makes ~15 parallel DB calls in a single handler; if any one fails, the entire dashboard returns 500
-- **Fix**: Wrap individual queries in try/catch with fallback defaults
+### ~~Dashboard Error Resilience~~ — FIXED
+- All 15+ parallel DB queries in `GET /api/dashboard/stats` now wrapped in `.catch(() => [])` fallbacks
 
-## Priority 2 — Security Improvements
+### ~~Stateless JWT Logout~~ — FIXED
+- In-memory token blacklist with TTL auto-cleanup
+- `POST /api/auth/logout` blacklists both access AND refresh tokens
+- `POST /api/auth/refresh` checks blacklist before issuing new tokens
+- `requireAuth` checks blacklist before validating token
 
-### Stateless JWT Logout
-- `POST /api/auth/logout` returns success but doesn't invalidate the JWT (token remains valid until expiry)
-- **Fix**: Implement a token blacklist (Redis or DB table) for revoked tokens, or switch to shorter-lived tokens with refresh rotation
+### ~~Missing Security Headers~~ — FIXED
+- Helmet middleware with CSP (production), HSTS, X-Content-Type-Options, X-Frame-Options, etc.
+- `/metrics` endpoint now requires authentication
 
-### Missing Security Headers
-- No Content Security Policy (CSP) headers
-- No CSRF token implementation
-- **Fix**: Add `helmet` middleware with CSP config; evaluate CSRF needs for API-only auth
-
-### Bootstrap Admin Empty Catch
-- `POST /api/bootstrap/admin` has `catch {}` blocks that silently swallow database errors
-- **Fix**: Log errors in catch blocks, return meaningful error responses
+### ~~JWT_SECRET Warning~~ — FIXED
+- Startup warns loudly if JWT_SECRET is using random fallback
 
 ## Priority 3 — Performance & DX
 
 ### Frontend Bundle Size
-- Single JS chunk is 1.5MB (after minification)
+- Single JS chunk is ~1.5MB (after minification)
 - **Fix**: Code-split with lazy `React.lazy()` + `Suspense` for route-level splitting
 
 ### TypeScript Strict Errors
 - `npx tsc --noEmit` reports ~104 type errors (pre-existing, non-blocking at runtime)
-- **Fix**: Incrementally resolve; mostly schema/field mismatches in `caasm.ts`, `metrics.ts`, `enterprise.ts`
+- **Fix**: Incrementally resolve; mostly schema/field mismatches
 
 ### Database Schema Drift
 - Schema changes done via direct SQL instead of Drizzle migrations
@@ -62,3 +66,8 @@ Some endpoints return static/simulated data instead of real computed values:
 - Alert rules UI exists in DevSecOps page (Slack, webhooks)
 - Backend stores configs but doesn't send real notifications
 - **Status**: Needs webhook delivery system with retry logic
+
+### Remaining Validation Gaps (Low Priority)
+- Several PUT/PATCH routes still accept `req.body` directly
+- These are update operations on existing records (lower risk than creates)
+- **Status**: Can be addressed incrementally

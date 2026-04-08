@@ -1,0 +1,114 @@
+Make Zyra.Host fully functional and production-ready as a working SaaS platform.
+
+Do not only improve UI. Focus on end-to-end functionality, reliability, and deploy readiness.
+
+Work in this order:
+
+1. Core app audit
+- Inspect the full app and identify every broken, placeholder, mock, or incomplete flow.
+- Check frontend, backend, database, auth, API routes, environment variables, payments, file uploads, dashboards, and settings.
+- Create a clear checklist of what is currently:
+  - working
+  - partially working
+  - mocked
+  - broken
+  - missing
+
+2. End-to-end functionality
+Make sure these flows are truly functional from start to finish:
+- landing page loads correctly
+- signup
+- login/logout
+- protected dashboard access
+- organization/workspace creation
+- user profile/settings
+- team member invite flow
+- role-based access control
+- core Zyra modules load real data
+- create/read/update/delete works for all major records
+- notifications or alerts work if present
+- billing flow works or is clearly disabled behind a feature flag
+- API routes return real data and correct errors
+- empty states are handled cleanly
+- loading/error/success states exist everywhere needed
+
+3. Database and schema
+- Verify the database is correctly connected in production.
+- Remove dependence on mock or seeded demo data unless explicitly marked as demo-only.
+- Ensure migrations are valid and repeatable.
+- Check that all tables/models used by the app actually match the code.
+- Fix any schema drift.
+- Add a startup check that clearly reports database connection status.
+
+4. Auth and security
+- Verify authentication works in the deployed environment, not just locally.
+- Ensure protected routes and APIs require auth.
+- Ensure roles/permissions are enforced server-side, not only in the UI.
+- Verify secrets are only read from environment variables.
+- Remove exposed credentials, unsafe defaults, and debug behavior.
+- Add basic rate limiting and request validation to sensitive API routes.
+- Add audit logging for critical actions where appropriate.
+
+5. Environment and deployment
+- Audit all required environment variables.
+- Update .env.example so it is complete and accurate.
+- Make the app boot cleanly on Replit with a single reliable run command.
+- Ensure frontend and backend both start correctly.
+- Ensure health checks exist:
+  - basic app health
+  - database health
+  - critical dependency health
+- Confirm the production domain Zyra.Host can point to a stable deployment target.
+
+6. Error handling and observability
+- Add centralized error handling.
+- Make backend errors useful in logs but safe for users.
+- Add request logging for key actions.
+- Add a production-safe health endpoint.
+- Add monitoring hooks or placeholders for Sentry/logging if not already present.
+
+7. Billing and SaaS readiness
+- If Stripe is included, verify:
+  - checkout/session creation works
+  - customer records are linked correctly
+  - webhook handling is secure
+  - billing state is reflected in the app
+- If billing is not ready, gate it behind a disabled feature flag and remove misleading UI.
+- Make sure the app has a clear SaaS plan structure in code/config if subscriptions are intended.
+
+8. Product cleanup
+- Zyra is a cybersecurity SaaS.
+- Remove or isolate any leftover features, schemas, text, or routes that belong to older/non-Zyra product ideas.
+- Keep branding, feature naming, and docs consistent with Zyra.
+
+9. Production QA
+Run full validation and test the real user journeys:
+- new user signup
+- returning user login
+- create org/workspace
+- invite team member
+- use main modules
+- logout/login again
+- verify persisted data
+- verify protected routes
+- verify error handling
+- verify mobile responsiveness on key screens
+
+10. Deliverables
+When done, provide:
+- a list of everything fixed
+- a list of anything still blocked
+- exact files changed
+- exact env vars required
+- exact run/deploy steps for Replit
+- a “go-live readiness” summary with:
+  - ready now
+  - needs follow-up
+  - high-risk items
+
+Rules:
+- Do not just describe problems. Fix them.
+- Do not leave mock functionality presented as real.
+- Do not add random new features unless required to complete broken core SaaS flows.
+- Prioritize reliability over cosmetic changes.
+- Keep Zyra market-ready, clean, and enterprise-grade.

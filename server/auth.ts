@@ -3,8 +3,35 @@ import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
+if (!process.env.JWT_SECRET) {
+  console.warn("WARNING: JWT_SECRET not set — using random value. Tokens will NOT survive restarts. Set JWT_SECRET in production.");
+}
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
+
+const tokenBlacklist = new Map<string, number>();
+
+const BLACKLIST_CLEANUP_INTERVAL = 60 * 60 * 1000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, exp] of tokenBlacklist) {
+    if (exp < now) tokenBlacklist.delete(token);
+  }
+}, BLACKLIST_CLEANUP_INTERVAL);
+
+export function blacklistToken(token: string): void {
+  try {
+    const decoded = jwt.decode(token) as any;
+    const exp = decoded?.exp ? decoded.exp * 1000 : Date.now() + 15 * 60 * 1000;
+    tokenBlacklist.set(token, exp);
+  } catch {
+    tokenBlacklist.set(token, Date.now() + 15 * 60 * 1000);
+  }
+}
+
+export function isTokenBlacklisted(token: string): boolean {
+  return tokenBlacklist.has(token);
+}
 
 export interface JwtPayload {
   userId: string;
@@ -47,6 +74,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   const token = authHeader.slice(7);
+
+  if (isTokenBlacklisted(token)) {
+    return res.status(401).json({ message: "Token has been revoked" });
+  }
+
   const payload = verifyToken(token);
   if (!payload) {
     return res.status(401).json({ message: "Invalid or expired token" });

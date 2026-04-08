@@ -22,7 +22,7 @@ import {
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 import { executeTask, processPendingTasks, getTaskExecutionHistory } from "./task-runner";
 import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail } from "./email";
-import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken } from "./auth";
+import { requireAuth, requireRole, generateAccessToken, generateRefreshToken, verifyToken, blacklistToken, isTokenBlacklisted } from "./auth";
 import { z } from "zod";
 export { requireAuth } from "./auth";
 
@@ -374,7 +374,15 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/logout", (_req: Request, res: Response) => {
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      blacklistToken(authHeader.slice(7));
+    }
+    const { refreshToken } = req.body || {};
+    if (refreshToken) {
+      blacklistToken(refreshToken);
+    }
     res.json({ message: "Logged out" });
   });
 
@@ -383,6 +391,9 @@ export async function registerRoutes(
       const { refreshToken } = req.body;
       if (!refreshToken) {
         return res.status(400).json({ message: "Refresh token is required" });
+      }
+      if (isTokenBlacklisted(refreshToken)) {
+        return res.status(401).json({ message: "Refresh token has been revoked" });
       }
       const payload = verifyToken(refreshToken, "refresh");
       if (!payload) {
@@ -454,9 +465,11 @@ export async function registerRoutes(
   app.get("/api/dashboard/stats", requireAuth, async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const allScans = await storage.getScans(orgId);
-      const allFindings = await storage.getFindingsByOrg(orgId);
-      const mappings = await storage.getComplianceMappings(orgId);
+      const [allScans, allFindings, mappings] = await Promise.all([
+        storage.getScans(orgId).catch(() => []),
+        storage.getFindingsByOrg(orgId).catch(() => []),
+        storage.getComplianceMappings(orgId).catch(() => []),
+      ]);
 
       const activeScans = allScans.filter((s) => s.status === "running").length;
       const resolvedFindings = allFindings.filter((f) => f.isResolved).length;
@@ -517,18 +530,20 @@ export async function registerRoutes(
         .filter((f) => f.severity === "critical" && !f.isResolved)
         .slice(0, 5);
 
-      // T002: Enhanced dashboard stats
-      const pentestSessions = await storage.getPentestSessions(orgId);
-      const cloudTargets = await storage.getCloudScanTargets(orgId);
-      const cloudResults = await storage.getCloudScanResults(orgId);
-      const threatIntel = await storage.getThreatIntelItems(orgId);
-      const monitors = await storage.getMonitoringConfigs(orgId);
+      const [pentestSessions, cloudTargets, cloudResults, threatIntel, monitors] = await Promise.all([
+        storage.getPentestSessions(orgId).catch(() => []),
+        storage.getCloudScanTargets(orgId).catch(() => []),
+        storage.getCloudScanResults(orgId).catch(() => []),
+        storage.getThreatIntelItems(orgId).catch(() => []),
+        storage.getMonitoringConfigs(orgId).catch(() => []),
+      ]);
 
+      const pentestFindingsArrays = await Promise.all(
+        pentestSessions.map(s => storage.getPentestFindings(s.id).catch(() => []))
+      );
       const pentestStats = {
         sessions: pentestSessions.length,
-        criticalFindings: (await Promise.all(pentestSessions.map(s => storage.getPentestFindings(s.id))))
-          .flat()
-          .filter(f => f.severity === "critical").length
+        criticalFindings: pentestFindingsArrays.flat().filter(f => f.severity === "critical").length,
       };
 
       const cloudStats = {
@@ -544,10 +559,10 @@ export async function registerRoutes(
       const monitoringActive = monitors.some(m => m.isEnabled);
 
       const [allIncidents, allVulnerabilities, allRisks, latestPosture] = await Promise.all([
-        storage.getIncidents(orgId),
-        storage.getVulnerabilities(orgId),
-        storage.getRisks(orgId),
-        storage.getLatestPostureScore(orgId),
+        storage.getIncidents(orgId).catch(() => []),
+        storage.getVulnerabilities(orgId).catch(() => []),
+        storage.getRisks(orgId).catch(() => []),
+        storage.getLatestPostureScore(orgId).catch(() => null),
       ]);
 
       const incidentsStats = {
@@ -568,9 +583,9 @@ export async function registerRoutes(
       };
 
       const [teamMembers, recentAuditLogs, subscription] = await Promise.all([
-        storage.getOrganizationUsers(orgId),
-        storage.getAuditLogs(orgId),
-        storage.getSubscription(orgId),
+        storage.getOrganizationUsers(orgId).catch(() => []),
+        storage.getAuditLogs(orgId).catch(() => []),
+        storage.getSubscription(orgId).catch(() => null),
       ]);
 
       const recentActivity = recentAuditLogs.slice(0, 10).map(l => ({
@@ -1022,15 +1037,36 @@ export async function registerRoutes(
       const orgId = req.user!.organizationId;
       const findings = await storage.getFindingsByOrg(orgId);
       const open = findings.filter((f) => !f.isResolved);
+      const resolved = findings.filter((f) => f.isResolved);
+
+      let avgRemediationDays: number | null = null;
+      if (resolved.length > 0) {
+        const totalMs = resolved.reduce((sum, f) => {
+          const created = new Date(f.createdAt).getTime();
+          const updated = f.updatedAt ? new Date(f.updatedAt).getTime() : Date.now();
+          return sum + (updated - created);
+        }, 0);
+        avgRemediationDays = Math.round((totalMs / resolved.length) / (1000 * 60 * 60 * 24) * 10) / 10;
+      }
+
+      const allScans = await storage.getScans(orgId);
+      const repos = await storage.getRepositories(orgId);
+      const scannedRepoCount = new Set(allScans.map(s => s.repositoryId).filter(Boolean)).size;
+      const totalRepoCount = Math.max(repos.length, 1);
+      const coveragePct = Math.round((scannedRepoCount / totalRepoCount) * 100);
+
+      const cloudResults = await storage.getCloudScanResults(orgId);
+      const infraFindings = cloudResults.filter(r => r.status === "open").length;
+      const appFindings = open.length;
 
       return res.json({
-        remediationVelocity: "4.2 days",
-        vulnerabilityDensity: (findings.length / 10).toFixed(1),
+        remediationVelocity: avgRemediationDays !== null ? `${avgRemediationDays} days` : "N/A",
+        vulnerabilityDensity: totalRepoCount > 0 ? (findings.length / totalRepoCount).toFixed(1) : "0",
         riskScore: Math.max(0, 100 - (open.filter(f => f.severity === 'critical').length * 15 + open.filter(f => f.severity === 'high').length * 5)),
-        attackSurfaceCoverage: "92%",
+        attackSurfaceCoverage: `${coveragePct}%`,
         breakdown: {
-          infrastructure: Math.round(open.length * 0.3),
-          application: Math.round(open.length * 0.7),
+          infrastructure: infraFindings,
+          application: appFindings,
         },
       });
     } catch (err: any) {
@@ -1039,20 +1075,24 @@ export async function registerRoutes(
     }
   });
 
-  // === MULTI-REGION DEPLOYMENT ===
+  const AVAILABLE_REGIONS = [
+    { id: "us-east-1", name: "US East (Virginia)" },
+    { id: "us-west-2", name: "US West (Oregon)" },
+    { id: "eu-west-1", name: "EU West (Ireland)" },
+    { id: "eu-central-1", name: "EU Central (Frankfurt)" },
+    { id: "ap-southeast-1", name: "AP Southeast (Singapore)" },
+    { id: "ap-northeast-1", name: "AP Northeast (Tokyo)" },
+  ];
+
   app.get("/api/deployment/regions", requireAuth, async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
     const config = await storage.getSetting(orgId, "deployment", "regions");
     const savedConfig = (config?.value as any) || {};
 
-    const regions = [
-      { id: "us-east-1", name: "US East (Virginia)", latency: "12ms", status: savedConfig["us-east-1"] || "active" },
-      { id: "us-west-2", name: "US West (Oregon)", latency: "45ms", status: savedConfig["us-west-2"] || "standby" },
-      { id: "eu-west-1", name: "EU West (Ireland)", latency: "89ms", status: savedConfig["eu-west-1"] || "standby" },
-      { id: "eu-central-1", name: "EU Central (Frankfurt)", latency: "95ms", status: savedConfig["eu-central-1"] || "disabled" },
-      { id: "ap-southeast-1", name: "AP Southeast (Singapore)", latency: "180ms", status: savedConfig["ap-southeast-1"] || "disabled" },
-      { id: "ap-northeast-1", name: "AP Northeast (Tokyo)", latency: "165ms", status: savedConfig["ap-northeast-1"] || "disabled" },
-    ];
+    const regions = AVAILABLE_REGIONS.map(r => ({
+      ...r,
+      status: savedConfig[r.id] || "disabled",
+    }));
     return res.json(regions);
   });
 
@@ -1264,8 +1304,9 @@ export async function registerRoutes(
   });
 
   app.post("/api/monitoring/trigger", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    // Manually trigger a scan - simulation
-    res.json({ message: "Monitoring scan triggered" });
+    const orgId = req.user!.organizationId;
+    await logAudit(orgId, req.user!.userId, "monitoring.scan_triggered", "monitoring", undefined, { triggeredBy: "manual" }, req.ip);
+    res.json({ message: "Monitoring scan triggered", triggeredAt: new Date().toISOString() });
   });
 
   app.get("/api/monitoring/history", requireAuth, async (req: Request, res: Response) => {
@@ -1360,9 +1401,23 @@ export async function registerRoutes(
     const items = await storage.getIncidents(req.user!.organizationId);
     res.json(items);
   });
+  const incidentSchema = z.object({
+    title: z.string().min(1, "Title is required").max(500),
+    description: z.string().optional().default(""),
+    severity: z.enum(["critical", "high", "medium", "low"]),
+    status: z.string().optional().default("open"),
+    assignee: z.string().optional(),
+    source: z.string().optional(),
+    type: z.string().optional(),
+  });
+
   app.post("/api/incidents", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const item = await storage.createIncident({ ...req.body, organizationId: orgId });
+    const parsed = incidentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
+    }
+    const item = await storage.createIncident({ ...parsed.data, organizationId: orgId });
     await storage.createAuditLog({ organizationId: orgId, userId: req.user!.userId, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
     const isCritical = item.severity === "critical";
     await storage.createNotification({ organizationId: orgId, title: isCritical ? "Critical Incident Created" : "New Incident Created", message: `Incident "${item.title}" has been created with ${item.severity} severity.`, type: "incident", severity: item.severity, resourceType: "incident", resourceId: item.id });
@@ -1404,9 +1459,25 @@ export async function registerRoutes(
     const items = await storage.getVulnerabilities(req.user!.organizationId);
     res.json(items);
   });
+  const vulnerabilitySchema = z.object({
+    title: z.string().min(1, "Title is required").max(500),
+    description: z.string().optional().default(""),
+    severity: z.enum(["critical", "high", "medium", "low", "info"]),
+    status: z.string().optional().default("open"),
+    cve: z.string().optional(),
+    cvss: z.number().min(0).max(10).optional(),
+    affectedAsset: z.string().optional(),
+    assignee: z.string().optional(),
+    source: z.string().optional(),
+  });
+
   app.post("/api/vulnerabilities", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const item = await storage.createVulnerability({ ...req.body, organizationId: orgId });
+    const parsed = vulnerabilitySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
+    }
+    const item = await storage.createVulnerability({ ...parsed.data, organizationId: orgId });
     if (item.severity === "critical" || item.severity === "high") {
       await storage.createNotification({ organizationId: orgId, title: `${item.severity === "critical" ? "Critical" : "High"} Vulnerability Discovered`, message: `${item.title}${item.cve ? ` (${item.cve})` : ""} — CVSS ${item.cvss ?? "N/A"}`, type: "vulnerability", severity: item.severity, resourceType: "vulnerability", resourceId: item.id });
     }
@@ -1440,29 +1511,32 @@ export async function registerRoutes(
     const items = await storage.getSbomItems(req.user!.organizationId);
     res.json(items);
   });
+  const sbomScanSchema = z.object({
+    packages: z.array(z.object({
+      name: z.string().min(1),
+      version: z.string().min(1),
+      ecosystem: z.string().min(1),
+      cves: z.array(z.string()).optional().default([]),
+      patchedVersion: z.string().nullable().optional().default(null),
+      riskScore: z.number().min(0).max(100).optional().default(0),
+      transitive: z.boolean().optional().default(false),
+    })).min(1),
+  });
+
   app.post("/api/sbom/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const ecosystems = ["npm", "pip", "maven", "gem", "go", "nuget"];
-    const packages = [
-      { name: "lodash", ver: "4.17.20", eco: "npm", cves: ["CVE-2020-8203"], patched: "4.17.21", risk: 75 },
-      { name: "log4j-core", ver: "2.14.1", eco: "maven", cves: ["CVE-2021-44228"], patched: "2.17.0", risk: 100 },
-      { name: "axios", ver: "0.21.1", eco: "npm", cves: ["CVE-2021-3749"], patched: "0.21.2", risk: 60 },
-      { name: "pillow", ver: "8.1.0", eco: "pip", cves: ["CVE-2021-27921"], patched: "8.2.0", risk: 70 },
-      { name: "react", ver: "17.0.1", eco: "npm", cves: [], patched: null, risk: 5 },
-      { name: "express", ver: "4.18.2", eco: "npm", cves: [], patched: null, risk: 5 },
-      { name: "django", ver: "3.2.0", eco: "pip", cves: ["CVE-2021-35042"], patched: "3.2.5", risk: 65 },
-      { name: "spring-core", ver: "5.3.5", eco: "maven", cves: ["CVE-2022-22965"], patched: "5.3.18", risk: 95 },
-      { name: "rubygems", ver: "3.0.3", eco: "gem", cves: [], patched: null, risk: 10 },
-      { name: "werkzeug", ver: "1.0.0", eco: "pip", cves: ["CVE-2020-28724"], patched: "1.0.1", risk: 55 },
-    ];
-    for (const p of packages) {
-      const existing = (await storage.getSbomItems(orgId)).find(s => s.packageName === p.name);
+    const parsed = sbomScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request body", errors: parsed.error.flatten().fieldErrors });
+    }
+    for (const p of parsed.data.packages) {
+      const existing = (await storage.getSbomItems(orgId)).find(s => s.packageName === p.name && s.packageVersion === p.version);
       if (!existing) {
-        await storage.createSbomItem({ organizationId: orgId, packageName: p.name, packageVersion: p.ver, ecosystem: p.eco, isVulnerable: p.cves.length > 0, knownCves: p.cves, patchedVersion: p.patched, riskScore: p.risk, transitive: Math.random() > 0.5 });
+        await storage.createSbomItem({ organizationId: orgId, packageName: p.name, packageVersion: p.version, ecosystem: p.ecosystem, isVulnerable: p.cves.length > 0, knownCves: p.cves, patchedVersion: p.patchedVersion, riskScore: p.riskScore, transitive: p.transitive });
       }
     }
     const items = await storage.getSbomItems(orgId);
-    res.json({ scanned: items.length, vulnerable: items.filter(i => i.isVulnerable).length, items });
+    res.json({ scanned: parsed.data.packages.length, vulnerable: items.filter(i => i.isVulnerable).length, items });
   });
   app.put("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const item = await storage.updateSbomItem(req.params.id, req.body);
@@ -1479,25 +1553,31 @@ export async function registerRoutes(
     const items = await storage.getSecretsFindings(req.user!.organizationId);
     res.json(items);
   });
+  const secretsScanSchema = z.object({
+    findings: z.array(z.object({
+      secretType: z.string().min(1),
+      maskedValue: z.string().min(1),
+      filePath: z.string().min(1),
+      lineNumber: z.number().int().positive().optional(),
+      commitHash: z.string().optional(),
+      severity: z.enum(["critical", "high", "medium", "low"]),
+    })).min(1),
+  });
+
   app.post("/api/secrets/scan", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const secretTypes = [
-      { type: "aws_access_key", masked: "AKIA****EXAMPLE", path: "src/config/aws.js", line: 12, severity: "critical" as const },
-      { type: "github_token", masked: "ghp_****example", path: ".env.backup", line: 3, severity: "critical" as const },
-      { type: "gcp_api_key", masked: "AIza****example", path: "backend/auth.py", line: 45, severity: "critical" as const },
-      { type: "stripe_key", masked: "sk_live_****example", path: "src/payment.ts", line: 8, severity: "critical" as const },
-      { type: "private_key", masked: "-----BEGIN RSA PRIVATE KEY-----****", path: "certs/server.key", line: 1, severity: "high" as const },
-      { type: "database_url", masked: "postgresql://user:****@host/db", path: "config/database.yml", line: 22, severity: "high" as const },
-    ];
-    const existing = await storage.getSecretsFindings(orgId);
-    const newFindings = secretTypes.slice(0, 2 + Math.floor(Math.random() * 3));
-    for (const s of newFindings) {
-      if (!existing.find(e => e.secretType === s.type && e.filePath === s.path)) {
-        await storage.createSecretsFinding({ organizationId: orgId, secretType: s.type, maskedValue: s.masked, filePath: s.path, lineNumber: s.line, commitHash: `abc${Math.random().toString(36).substr(2, 7)}`, status: "open", severity: s.severity });
+    const parsed = secretsScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request — provide findings array", errors: parsed.error.flatten().fieldErrors });
+    }
+    for (const s of parsed.data.findings) {
+      const existing = (await storage.getSecretsFindings(orgId)).find(e => e.secretType === s.secretType && e.filePath === s.filePath);
+      if (!existing) {
+        await storage.createSecretsFinding({ organizationId: orgId, secretType: s.secretType, maskedValue: s.maskedValue, filePath: s.filePath, lineNumber: s.lineNumber, commitHash: s.commitHash, status: "open", severity: s.severity });
       }
     }
     const all = await storage.getSecretsFindings(orgId);
-    res.json({ scanned: 847, found: all.length, open: all.filter(s => s.status === "open").length, items: all });
+    res.json({ scanned: parsed.data.findings.length, found: all.length, open: all.filter(s => s.status === "open").length, items: all });
   });
   app.put("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const data = { ...req.body };
@@ -1516,9 +1596,24 @@ export async function registerRoutes(
     const items = await storage.getRisks(req.user!.organizationId);
     res.json(items);
   });
+  const riskSchema = z.object({
+    title: z.string().min(1, "Title is required").max(500),
+    description: z.string().optional().default(""),
+    category: z.string().optional(),
+    likelihood: z.number().min(1).max(5).default(3),
+    impact: z.number().min(1).max(5).default(3),
+    treatment: z.string().optional(),
+    status: z.string().optional().default("open"),
+    owner: z.string().optional(),
+  });
+
   app.post("/api/risks", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const body = req.body;
-    const riskScore = (body.likelihood || 3) * (body.impact || 3);
+    const parsed = riskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
+    }
+    const body = parsed.data;
+    const riskScore = body.likelihood * body.impact;
     const item = await storage.createRisk({ ...body, organizationId: req.user!.organizationId, riskScore });
     res.json(item);
   });
@@ -1549,26 +1644,20 @@ export async function registerRoutes(
     const item = await storage.createAttackSurfaceAsset({ ...req.body, organizationId: req.user!.organizationId });
     res.json(item);
   });
+  const discoverSchema = z.object({
+    domain: z.string().min(1, "domain is required"),
+  });
+
   app.post("/api/attack-surface/discover", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const assets = [
-      { assetType: "subdomain", host: "api.example.com", port: 443, service: "HTTPS", riskLevel: "medium", technologies: ["nginx", "TLS 1.3"], openPorts: [443, 80], vulnerabilityCount: 2, tlsCertIssuer: "Let's Encrypt" },
-      { assetType: "subdomain", host: "admin.example.com", port: 443, service: "HTTPS", riskLevel: "high", technologies: ["Apache", "PHP 7.4"], openPorts: [443, 80, 8080], vulnerabilityCount: 5 },
-      { assetType: "subdomain", host: "staging.example.com", port: 8080, service: "HTTP", riskLevel: "critical", technologies: ["Node.js", "Express"], openPorts: [8080, 22, 3306], vulnerabilityCount: 8 },
-      { assetType: "ip", host: "203.0.113.10", port: 22, service: "SSH", riskLevel: "high", technologies: ["OpenSSH 7.4"], openPorts: [22, 80], vulnerabilityCount: 3 },
-      { assetType: "certificate", host: "example.com", service: "TLS", riskLevel: "low", technologies: ["RSA 2048"], openPorts: [443], vulnerabilityCount: 0, tlsCertIssuer: "DigiCert", tlsCertExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
-      { assetType: "api_endpoint", host: "api.example.com/v1/users", service: "REST API", riskLevel: "medium", technologies: ["JSON", "JWT"], openPorts: [443], vulnerabilityCount: 1 },
-    ];
-    const existing = await storage.getAttackSurfaceAssets(orgId);
-    let newCount = 0;
-    for (const a of assets) {
-      if (!existing.find(e => e.host === a.host && e.service === a.service)) {
-        await storage.createAttackSurfaceAsset({ organizationId: orgId, ...a } as any);
-        newCount++;
-      }
+    const parsed = discoverSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
     }
+    const { domain } = parsed.data;
+    await logAudit(orgId, req.user!.userId, "attack_surface.discovery_started", "attack_surface", undefined, { domain }, req.ip);
     const all = await storage.getAttackSurfaceAssets(orgId);
-    res.json({ discovered: newCount, total: all.length, assets: all });
+    res.json({ domain, status: "discovery_queued", existingAssets: all.length, assets: all });
   });
   app.put("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const item = await storage.updateAttackSurfaceAsset(req.params.id, req.body);
@@ -1595,23 +1684,51 @@ export async function registerRoutes(
     res.json(current);
   });
   app.post("/api/posture/snapshot", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const orgId = req.user!.organizationId;
-    const latest = await storage.getLatestPostureScore(orgId);
-    const baseScore = latest?.overallScore || 72;
-    const delta = Math.floor(Math.random() * 11) - 5;
-    const newScore = Math.min(100, Math.max(0, baseScore + delta));
-    const trend = delta > 0 ? "up" : delta < 0 ? "down" : "stable";
-    const snapshot = await storage.createPostureScore({
-      organizationId: orgId, date: new Date().toISOString().split("T")[0],
-      overallScore: newScore, scanScore: Math.min(100, Math.max(0, (latest?.scanScore || 78) + Math.floor(Math.random() * 7) - 3)),
-      pentestScore: Math.min(100, Math.max(0, (latest?.pentestScore || 65) + Math.floor(Math.random() * 7) - 3)),
-      cloudScore: Math.min(100, Math.max(0, (latest?.cloudScore || 70) + Math.floor(Math.random() * 7) - 3)),
-      complianceScore: Math.min(100, Math.max(0, (latest?.complianceScore || 82) + Math.floor(Math.random() * 7) - 3)),
-      incidentScore: Math.min(100, Math.max(0, (latest?.incidentScore || 68) + Math.floor(Math.random() * 7) - 3)),
-      vulnerabilityScore: Math.min(100, Math.max(0, (latest?.vulnerabilityScore || 71) + Math.floor(Math.random() * 7) - 3)),
-      trend,
-    });
-    res.json(snapshot);
+    try {
+      const orgId = req.user!.organizationId;
+      const latest = await storage.getLatestPostureScore(orgId);
+
+      const [scans, findings, pentests, cloudResults, incidents, vulns, mappings] = await Promise.all([
+        storage.getScans(orgId),
+        storage.getFindingsByOrg(orgId),
+        storage.getPentestSessions(orgId),
+        storage.getCloudScanResults(orgId),
+        storage.getIncidents(orgId),
+        storage.getVulnerabilities(orgId),
+        storage.getComplianceMappings(orgId),
+      ]);
+
+      const completedScans = scans.filter(s => s.status === "completed");
+      const scanScore = completedScans.length > 0
+        ? Math.round(completedScans.reduce((a, s) => a + (s.securityScore || 0), 0) / completedScans.length)
+        : 0;
+
+      const openFindings = findings.filter(f => !f.isResolved);
+      const pentestScore = Math.max(0, 100 - (pentests.length > 0 ? Math.round(openFindings.length / Math.max(pentests.length, 1)) : 50));
+
+      const openCloud = cloudResults.filter(r => r.status === "open");
+      const cloudScore = cloudResults.length > 0 ? Math.round(((cloudResults.length - openCloud.length) / cloudResults.length) * 100) : 0;
+
+      const complianceScore = mappings.length > 0 ? Math.round(mappings.reduce((a, m) => a + m.coverage, 0) / mappings.length) : 0;
+
+      const openIncidents = incidents.filter(i => i.status !== "closed");
+      const incidentScore = incidents.length > 0 ? Math.round(((incidents.length - openIncidents.length) / incidents.length) * 100) : 100;
+
+      const openVulns = vulns.filter(v => v.status === "open");
+      const vulnerabilityScore = vulns.length > 0 ? Math.round(((vulns.length - openVulns.length) / vulns.length) * 100) : 100;
+
+      const overallScore = Math.round((scanScore + pentestScore + cloudScore + complianceScore + incidentScore + vulnerabilityScore) / 6);
+      const trend = latest ? (overallScore > latest.overallScore ? "up" : overallScore < latest.overallScore ? "down" : "stable") : "stable";
+
+      const snapshot = await storage.createPostureScore({
+        organizationId: orgId, date: new Date().toISOString().split("T")[0],
+        overallScore, scanScore, pentestScore, cloudScore, complianceScore, incidentScore, vulnerabilityScore, trend,
+      });
+      res.json(snapshot);
+    } catch (err: any) {
+      console.error("Posture snapshot error:", err);
+      res.status(500).json({ message: "Failed to create posture snapshot" });
+    }
   });
 
   // ===== NOTIFICATIONS =====
@@ -1807,15 +1924,15 @@ export async function registerRoutes(
     const existing = await storage.getPhishingCampaigns(orgId);
     const campaign = existing.find(c => c.id === req.params.id);
     if (!campaign) return res.status(404).json({ message: "Not found" });
-    const targetCount = campaign.targetCount || Math.floor(Math.random() * 50) + 10;
-    const clickedCount = Math.floor(targetCount * (Math.random() * 0.4 + 0.05));
-    const reportedCount = Math.floor(targetCount * (Math.random() * 0.2 + 0.05));
-    const ignoredCount = targetCount - clickedCount - reportedCount;
-    const humanRiskScore = Math.round((clickedCount / targetCount) * 100);
+    if (campaign.status === "active" || campaign.status === "completed") {
+      return res.status(400).json({ message: `Campaign is already ${campaign.status}` });
+    }
     const updated = await storage.updatePhishingCampaign(req.params.id, {
-      status: "completed", targetCount, clickedCount, reportedCount, ignoredCount: Math.max(0, ignoredCount),
-      humanRiskScore, launchedAt: new Date(), completedAt: new Date(),
+      status: "active",
+      targetCount: campaign.targetCount || 0,
+      launchedAt: new Date(),
     });
+    await logAudit(orgId, req.user!.userId, "campaign.launched", "phishing_campaign", req.params.id, { name: campaign.name }, req.ip);
     res.json(updated);
   });
 
@@ -1855,13 +1972,23 @@ export async function registerRoutes(
     res.json(v);
   });
 
+  const vendorAssessSchema = z.object({
+    riskScore: z.number().min(0).max(100),
+    complianceStatus: z.enum(["compliant", "non-compliant", "partial"]),
+  });
+
   app.post("/api/vendors/:id/assess", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const riskScore = Math.floor(Math.random() * 100);
+    const parsed = vendorAssessSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Provide riskScore (0-100) and complianceStatus", errors: parsed.error.flatten().fieldErrors });
+    }
+    const { riskScore, complianceStatus } = parsed.data;
     const riskRating = riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low";
     const v = await storage.updateVendor(req.params.id, {
-      riskScore, riskRating, complianceStatus: Math.random() > 0.3 ? "compliant" : "non-compliant",
+      riskScore, riskRating, complianceStatus,
       lastAssessedAt: new Date(), status: "assessed",
     });
+    if (!v) return res.status(404).json({ message: "Vendor not found" });
     res.json(v);
   });
 
@@ -1885,26 +2012,21 @@ export async function registerRoutes(
     res.json(alerts);
   });
 
+  const darkWebScanSchema = z.object({
+    domain: z.string().min(1, "domain is required"),
+  });
+
   app.post("/api/dark-web/scan", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const domain = req.body.domain || "company.com";
-    const alertTypes = ["credential", "api_key", "email", "pii", "source_code"];
-    const sources = ["PasteBin", "RaidForums", "BreachDB", "TelegramChannel", "DarkNetForum"];
-    const newAlerts = [];
-    const count = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < count; i++) {
-      const alertType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
-      const severity = alertType === "credential" || alertType === "api_key" ? "critical" : "high";
-      const alert = await storage.createDarkWebAlert({
-        organizationId: orgId, domain, alertType, severity,
-        source: sources[Math.floor(Math.random() * sources.length)],
-        maskedValue: alertType === "credential" ? `${domain.split(".")[0]}_user:p***word` : alertType === "api_key" ? "sk-****...****" : `user@${domain}`,
-        description: `${alertType === "credential" ? "Employee credentials" : alertType === "api_key" ? "API key" : "Email addresses"} found in ${sources[Math.floor(Math.random() * sources.length)]} breach database`,
-        status: "new",
-      });
-      newAlerts.push(alert);
+    const parsed = darkWebScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
     }
-    res.json({ scanned: domain, alertsFound: newAlerts.length, alerts: newAlerts });
+    const { domain } = parsed.data;
+    await logAudit(orgId, req.user!.userId, "dark_web.scan_initiated", "dark_web", undefined, { domain }, req.ip);
+    const existingAlerts = await storage.getDarkWebAlerts(orgId);
+    const domainAlerts = existingAlerts.filter(a => a.domain === domain);
+    res.json({ scanned: domain, status: "scan_queued", existingAlerts: domainAlerts.length, alerts: domainAlerts });
   });
 
   app.put("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
@@ -2006,35 +2128,21 @@ export async function registerRoutes(
     res.json(scans);
   });
 
+  const containerScanSchema = z.object({
+    imageName: z.string().min(1, "imageName is required"),
+    imageTag: z.string().default("latest"),
+    scanType: z.enum(["image", "kubernetes"]).default("image"),
+  });
+
   app.post("/api/containers/scan", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
-    const { imageName, imageTag = "latest", scanType = "image" } = req.body;
-    if (!imageName) return res.status(400).json({ message: "imageName is required" });
-    const scan = await storage.createContainerScan({ organizationId: orgId, imageName, imageTag, scanType, status: "running" });
-    setTimeout(async () => {
-      const criticalCount = Math.floor(Math.random() * 5);
-      const highCount = Math.floor(Math.random() * 10);
-      const mediumCount = Math.floor(Math.random() * 15);
-      const lowCount = Math.floor(Math.random() * 20);
-      const privilegedContainers = scanType === "kubernetes" ? Math.floor(Math.random() * 3) : 0;
-      const weakRbac = scanType === "kubernetes" && Math.random() > 0.5;
-      const openDashboards = scanType === "kubernetes" && Math.random() > 0.7;
-      const untrustedImages = Math.floor(Math.random() * 3);
-      await storage.updateContainerScan(scan.id, {
-        status: "completed", criticalCount, highCount, mediumCount, lowCount,
-        privilegedContainers, weakRbac, openDashboards, untrustedImages, completedAt: new Date(),
-      });
-      const findings = [
-        { title: "CVE-2023-44487 HTTP/2 Rapid Reset Attack", severity: "critical", findingType: "vulnerability", cveId: "CVE-2023-44487", packageName: "golang.org/x/net", description: "HTTP/2 protocol allows DoS attack via rapid stream resets" },
-        { title: "Outdated OpenSSL version", severity: "high", findingType: "vulnerability", cveId: "CVE-2023-0464", packageName: "openssl", description: "Certificate verification vulnerability in OpenSSL 3.0.x" },
-        { title: "Container running as root", severity: "high", findingType: "misconfiguration", description: "Container process is running as UID 0 (root), violating least privilege" },
-        { title: "Sensitive environment variables exposed", severity: "medium", findingType: "secret", description: "DATABASE_PASSWORD and API_KEY found in container environment" },
-        { title: "Missing resource limits", severity: "medium", findingType: "misconfiguration", description: "No CPU or memory limits set, container could consume all node resources" },
-      ];
-      for (let i = 0; i < Math.min(criticalCount + highCount + mediumCount, findings.length); i++) {
-        await storage.createContainerFinding({ ...findings[i], scanId: scan.id, organizationId: orgId, fixedVersion: "latest", remediation: "Update the affected package and rebuild the image", status: "open" });
-      }
-    }, 3000);
+    const parsed = containerScanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
+    }
+    const { imageName, imageTag, scanType } = parsed.data;
+    const scan = await storage.createContainerScan({ organizationId: orgId, imageName, imageTag, scanType, status: "pending" });
+    await logAudit(orgId, req.user!.userId, "container.scan_created", "container_scan", scan.id, { imageName, imageTag, scanType }, req.ip);
     res.json(scan);
   });
 
@@ -2093,8 +2201,25 @@ export async function registerRoutes(
     res.json(asset);
   });
 
+  const assetSchema = z.object({
+    name: z.string().min(1, "Name is required").max(255),
+    type: z.string().min(1),
+    hostname: z.string().optional(),
+    ipAddress: z.string().optional(),
+    os: z.string().optional(),
+    status: z.string().optional().default("active"),
+    criticality: z.string().optional().default("medium"),
+    owner: z.string().optional(),
+    location: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  });
+
   app.post("/api/assets", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const asset = await storage.createAsset({ ...req.body, organizationId: req.user!.organizationId });
+    const parsed = assetSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
+    }
+    const asset = await storage.createAsset({ ...parsed.data, organizationId: req.user!.organizationId });
     res.json(asset);
   });
 
@@ -2436,7 +2561,7 @@ async function registerGraphRoutes(app: Express) {
 
 // ── Metrics Routes ────────────────────────────────────────────────────────────
 async function registerMetricsRoutes(app: Express) {
-  app.get("/metrics", (req: Request, res: Response) => {
+  app.get("/metrics", requireAuth, (req: Request, res: Response) => {
     res.set("Content-Type", "text/plain; version=0.0.4");
     res.send(getPrometheusMetrics());
   });

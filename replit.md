@@ -59,7 +59,9 @@ shared/
 
 ## Auth System
 - JWT access tokens (15m expiry) + refresh tokens (7d expiry) in localStorage (`zyra_access_token`, `zyra_refresh_token`)
-- `requireAuth` middleware validates Bearer token, populates `req.user` (JwtPayload: userId, organizationId, role)
+- `requireAuth` middleware validates Bearer token, checks blacklist, populates `req.user` (JwtPayload: userId, organizationId, role)
+- Token blacklist: in-memory Map with TTL cleanup — logout blacklists both access AND refresh tokens
+- Refresh endpoint checks blacklist before issuing new tokens
 - `requireRole(...roles)` for RBAC enforcement (owner > admin > analyst > viewer)
 - Frontend `queryClient.ts` auto-attaches Bearer header, handles 401 with token refresh
 - Login accepts username OR email (auto-detected via `@`)
@@ -69,16 +71,31 @@ shared/
 - Master admin: username=Zyra, email=zyra@zyra.host, role=owner, org=Xunia
 
 ## Server Hardening
+- `helmet` middleware: HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, CSP (production w/ Stripe domains), Referrer-Policy
 - `app.set("trust proxy", 1)` — Required for Replit's proxy infrastructure (rate limiter)
 - `uncaughtException` handler: logs + exits
 - `unhandledRejection` handler: logs (no exit)
 - Health endpoint `GET /health` — checks DB connectivity, returns status/uptime/checks/version
+- `/metrics` endpoint requires authentication
 - Express error handler: 500s logged with stack, message sanitized in response
 - Startup env validation: required vars fatal, optional vars warn
+- Startup JWT_SECRET warning: loud message if using random fallback
 - Startup banner: shows port, env, enabled features
+
+## Input Validation
+- Zod schemas on all critical POST endpoints: incidents, vulnerabilities, risks, assets, SBOM scan, container scan, dark-web scan, attack-surface discover, secrets scan, vendor assess
+- Registration, login, forgot-password, reset-password all use Zod schemas
+- Validation errors return structured `{ message, errors }` response
+
+## Dashboard Resilience
+- All 15+ parallel DB queries in `/api/dashboard/stats` use `.catch(() => [])` fallbacks
+- Nested pentest findings queries also wrapped with `.catch(() => [])`
+- Individual query failures don't crash the entire dashboard
 
 ## Data Integrity
 - Zero seed/mock data in production paths — all data comes from real user actions
+- Zero random data generation — no `Math.random()` in any API response
+- Analytics computed from real DB state (remediation velocity, coverage, risk scores)
 - Pages show proper empty states when no data exists
 - CVE_DATABASE in intelligence.ts is legitimate reference data for SBOM enrichment (not mock)
 - DB schema changes done via direct SQL (ALTER TABLE) — drizzle-kit push has interactive prompt issues
