@@ -12,18 +12,25 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Discord Notification
+      - name: Send PR Notification
         if: github.event_name == 'pull_request'
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,author
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          SLACK_USERNAME: GitHub
-          SLACK_ICON_EMOJI: ":github:"
+        run: |
+          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "📝 New PR: ${{ github.event.pull_request.title }}",
+                "description": "${{ github.event.pull_request.body }}",
+                "url": "${{ github.event.pull_request.html_url }}",
+                "color": 5763714,
+                "fields": [
+                  {"name": "Author", "value": "${{ github.event.pull_request.user.login }}", "inline": true},
+                  {"name": "Action", "value": "${{ github.event.action }}", "inline": true}
+                ]
+              }]
+            }'
 
-      - name: Notify on Issue
+      - name: Send Issue Notification
         if: github.event_name == 'issues'
         run: |
           curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
@@ -31,8 +38,25 @@ jobs:
             -d '{
               "embeds": [{
                 "title": "🆕 New Issue: ${{ github.event.issue.title }}",
-                "url": "${{ github.event.issue.html_url }}",
                 "description": "${{ github.event.issue.body }}",
+                "url": "${{ github.event.issue.html_url }}",
                 "color": 15105570
+              }]
+            }'
+
+      - name: Send Push Notification
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST ${{ secrets.DISCORD_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🚀 Deployed to Main",
+                "description": "New commit: ${{ github.event.head_commit.message }}",
+                "url": "${{ github.event.repository.html_url }}/actions",
+                "color": 3066993,
+                "fields": [
+                  {"name": "Commits", "value": "${{ github.event.commits[0].message }}", "inline": false}
+                ]
               }]
             }'
