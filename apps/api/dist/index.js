@@ -61,6 +61,7 @@ requestIdMiddleware(server);
 server.addHook('preHandler', rateLimit());
 // Health check (simple)
 server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
+server.get('/api/health', async () => ({ success: true, status: 'ok', timestamp: new Date().toISOString() }));
 // Detailed health route
 await server.register(healthRoutes, { prefix: '/api/health' });
 await server.register(publicRoutes, { prefix: '/api/public' });
