@@ -1,8 +1,8 @@
 import { prisma } from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 import crypto from 'crypto';
 export default async function apiKeyRoutes(fastify) {
-    await fastify.addHook('onRequest', async (req, reply) => {
-    });
+    await fastify.addHook('onRequest', authMiddleware);
     // GET /api/keys - list user's API keys
     fastify.get('/', async (req, reply) => {
         try {

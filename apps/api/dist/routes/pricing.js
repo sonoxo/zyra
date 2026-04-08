@@ -1,179 +1,111 @@
-import Stripe from 'stripe';
-import { config } from '@zyra/config';
-import { prisma } from '../lib/prisma.js';
-const stripe = new Stripe(config.stripe.secretKey || 'sk_test_placeholder', {
-    apiVersion: '2023-10-16',
-});
-// Plan definitions
-export const PLANS = {
-    FREE: {
-        id: 'free',
-        name: 'Free',
-        price: 0,
-        priceId: null,
-        features: {
-            scans: 10,
-            assets: 5,
-            users: 1,
-            prioritySupport: false,
-        },
-    },
-    PRO: {
-        id: 'pro',
-        name: 'Pro',
-        price: 49,
-        priceId: process.env.STRIPE_PRO_PRICE_ID || 'price_pro_placeholder',
-        features: {
-            scans: 100,
-            assets: 50,
-            users: 10,
-            prioritySupport: true,
-        },
-    },
-    ENTERPRISE: {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 199,
-        priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || 'price_enterprise_placeholder',
-        features: {
-            scans: -1, // unlimited
-            assets: -1,
-            users: -1,
-            prioritySupport: true,
-        },
-    },
-};
+import { authMiddleware } from '../middleware/auth.js';
+import { getPlanPrice, getPlanLimits } from '../lib/billing.js';
 export default async function pricingRoutes(fastify) {
-    await fastify.addHook('onRequest', async (req, reply) => {
-    });
-    // GET /api/pricing/plans - list available plans
+    await fastify.addHook('onRequest', authMiddleware);
+    // GET /api/pricing/plans - get all available plans
     fastify.get('/plans', async (req, reply) => {
+        const plans = [
+            {
+                id: 'free',
+                name: 'Free',
+                price: 0,
+                interval: 'month',
+                features: [
+                    { name: 'basic_scan', included: true },
+                    { name: 'limited_reports', included: true },
+                    { name: 'scans_per_month', limit: 5 },
+                    { name: 'assets', limit: 10 },
+                    { name: 'team_members', limit: 3 }
+                ]
+            },
+            {
+                id: 'pro',
+                name: 'Pro',
+                price: getPlanPrice('PRO'),
+                interval: 'month',
+                features: [
+                    { name: 'basic_scan', included: true },
+                    { name: 'advanced_scan', included: true },
+                    { name: 'unlimited_scans', included: true },
+                    { name: 'priority_support', included: true },
+                    { name: 'webhooks', included: true },
+                    { name: 'scans_per_month', limit: -1 },
+                    { name: 'assets', limit: 50 },
+                    { name: 'team_members', limit: 10 }
+                ]
+            },
+            {
+                id: 'enterprise',
+                name: 'Enterprise',
+                price: getPlanPrice('ENTERPRISE'),
+                interval: 'month',
+                features: [
+                    { name: 'all_pro_features', included: true },
+                    { name: 'custom_integrations', included: true },
+                    { name: 'sla', included: true },
+                    { name: 'dedicated_support', included: true },
+                    { name: 'scans_per_month', limit: -1 },
+                    { name: 'assets', limit: -1 },
+                    { name: 'team_members', limit: -1 }
+                ]
+            }
+        ];
+        return reply.send({ success: true, data: plans });
+    });
+    // GET /api/pricing/limits - get current org limits
+    fastify.get('/limits', async (req, reply) => {
+        const orgId = req.user?.orgId;
+        if (!orgId) {
+            return reply.status(400).send({ success: false, error: 'No organization selected' });
+        }
+        // In production, fetch org from DB and return its plan limits
+        const limits = getPlanLimits('FREE'); // Default to free
         return reply.send({
             success: true,
-            data: Object.values(PLANS).map(plan => ({
-                id: plan.id,
-                name: plan.name,
-                price: plan.price,
-                features: plan.features,
-            })),
+            data: {
+                plan: 'FREE',
+                ...limits
+            }
         });
     });
-    // GET /api/pricing/my-plan - get current user's plan
-    fastify.get('/my-plan', async (req, reply) => {
+    // POST /api/pricing/upgrade - upgrade plan (stub)
+    fastify.post('/upgrade', async (req, reply) => {
+        const { plan } = req.body;
         const orgId = req.user?.orgId;
         if (!orgId) {
             return reply.status(400).send({ success: false, error: 'No organization selected' });
         }
-        try {
-            const org = await prisma.organization.findUnique({
-                where: { id: orgId },
-            });
-            const currentPlan = PLANS[org?.plan] || PLANS.FREE;
-            return reply.send({
-                success: true,
-                data: {
-                    plan: currentPlan.id,
-                    name: currentPlan.name,
-                    price: currentPlan.price,
-                    features: currentPlan.features,
-                },
-            });
-        }
-        catch (error) {
-            return reply.status(500).send({ success: false, error: error.message });
-        }
-    });
-    // POST /api/pricing/checkout - create Stripe checkout session
-    fastify.post('/checkout', async (req, reply) => {
-        const { planId } = req.body;
-        const orgId = req.user?.orgId;
-        if (!orgId) {
-            return reply.status(400).send({ success: false, error: 'No organization selected' });
-        }
-        const plan = PLANS[planId];
-        if (!plan || !plan.priceId) {
+        if (!plan || !['PRO', 'ENTERPRISE'].includes(plan)) {
             return reply.status(400).send({ success: false, error: 'Invalid plan' });
         }
-        try {
-            const org = await prisma.organization.findUnique({ where: { id: orgId } });
-            let customerId = org?.stripeCustomerId;
-            // Create Stripe customer if needed
-            if (!customerId && config.stripe.secretKey) {
-                const customer = await stripe.customers.create({
-                    email: req.user?.email,
-                    metadata: { orgId },
-                });
-                customerId = customer.id;
-                await prisma.organization.update({
-                    where: { id: orgId },
-                    data: { stripeCustomerId: customerId },
-                });
+        // Stub: In production, create Stripe checkout session
+        return reply.send({
+            success: true,
+            data: {
+                message: `Upgrade to ${plan} requires payment setup`,
+                stripeCheckoutUrl: process.env.STRIPE_SECRET_KEY
+                    ? '/api/payments/checkout'
+                    : null,
+                note: 'Stripe integration requires valid API keys'
             }
-            // Create checkout session
-            const session = await stripe.checkout.sessions.create({
-                customer: customerId || undefined,
-                payment_method_types: ['card'],
-                line_items: [
-                    {
-                        price: plan.priceId,
-                        quantity: 1,
-                    },
-                ],
-                mode: 'subscription',
-                success_url: `${config.auth.url}/dashboard?upgrade=success`,
-                cancel_url: `${config.auth.url}/dashboard?upgrade=cancelled`,
-                metadata: { orgId, planId },
-            });
-            return reply.send({
-                success: true,
-                data: { sessionId: session.id, url: session.url },
-            });
-        }
-        catch (error) {
-            fastify.log.error(error);
-            return reply.status(500).send({ success: false, error: 'Failed to create checkout session' });
-        }
+        });
     });
-    // POST /api/pricing/webhook - handle Stripe webhooks
-    fastify.post('/webhook', async (req, reply) => {
-        const sig = req.headers['stripe-signature'];
-        if (!config.stripe.webhookSecret) {
-            return reply.status(400).send({ success: false, error: 'Webhook not configured' });
+    // GET /api/pricing/checkout-session/:priceId - create Stripe checkout (stub)
+    fastify.get('/checkout-session/:priceId', async (req, reply) => {
+        const { priceId } = req.params;
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return reply.status(503).send({
+                success: false,
+                error: 'Stripe not configured. Please set STRIPE_SECRET_KEY.'
+            });
         }
-        try {
-            const event = stripe.webhooks.constructEvent(req.body, sig, config.stripe.webhookSecret);
-            switch (event.type) {
-                case 'checkout.session.completed': {
-                    const session = event.data.object;
-                    const { orgId, planId } = session.metadata;
-                    if (orgId && planId) {
-                        await prisma.organization.update({
-                            where: { id: orgId },
-                            data: { plan: planId.toUpperCase() },
-                        });
-                    }
-                    break;
-                }
-                case 'customer.subscription.deleted': {
-                    // Downgrade to free
-                    const subscription = event.data.object;
-                    const org = await prisma.organization.findFirst({
-                        where: { stripeCustomerId: subscription.customer },
-                    });
-                    if (org) {
-                        await prisma.organization.update({
-                            where: { id: org.id },
-                            data: { plan: 'FREE' },
-                        });
-                    }
-                    break;
-                }
+        // Stub: In production, create actual Stripe checkout session
+        return reply.send({
+            success: true,
+            data: {
+                url: `https://checkout.stripe.com/pay/${priceId}`,
+                note: 'This is a placeholder - implement actual Stripe checkout'
             }
-            return reply.send({ success: true });
-        }
-        catch (error) {
-            fastify.log.error(error);
-            return reply.status(400).send({ success: false, error: 'Webhook error' });
-        }
+        });
     });
 }

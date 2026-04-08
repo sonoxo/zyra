@@ -1,6 +1,89 @@
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma.js'
-import crypto from 'crypto'
+import { storeScan, getScan, generateScanId } from '../lib/scanStore.js'
+
+interface ScanResult {
+  id: string
+  targetUrl: string
+  type: string
+  status: string
+  score: number
+  riskLevel: string
+  summary: string
+  findings: Array<{ severity: string; title: string; description: string; cve?: string }>
+  completedAt: string
+}
+
+// Real vulnerability scanning logic
+async function performSecurityScan(targetUrl: string): Promise<{
+  score: number;
+  riskLevel: string;
+  vulnerabilities: { critical: number; high: number; medium: number; low: number };
+  findings: Array<{ severity: string; title: string; description: string; cve?: string }>;
+}> {
+  const findings: Array<{ severity: string; title: string; description: string; cve?: string }> = [];
+  let vulnerabilities = { critical: 0, high: 0, medium: 0, low: 0 };
+
+  try {
+    const urlObj = new URL(targetUrl);
+
+    // Check 1: SSL/TLS and security headers
+    try {
+      const response = await fetch(targetUrl, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+      const securityHeaders = ['strict-transport-security', 'content-security-policy', 'x-frame-options', 'x-content-type-options'];
+      const missingHeaders: string[] = [];
+      
+      for (const header of securityHeaders) {
+        if (!response.headers.get(header)) {
+          missingHeaders.push(header);
+        }
+      }
+
+      if (missingHeaders.length > 0) {
+        findings.push({ severity: 'medium', title: 'Missing Security Headers', description: `Missing: ${missingHeaders.join(', ')}` });
+        vulnerabilities.medium += missingHeaders.length;
+      }
+
+      if (urlObj.protocol === 'http:') {
+        findings.push({ severity: 'critical', title: 'No HTTPS', description: 'Site not using HTTPS', cve: 'CWE-319' });
+        vulnerabilities.critical++;
+      }
+    } catch {}
+
+    // Check 2: Common vulnerable paths
+    const vulnerablePaths = [
+      { path: '/.git/config', severity: 'high', title: 'Exposed Git Config' },
+      { path: '/.env', severity: 'critical', title: 'Environment File Exposure' },
+      { path: '/wp-config.php', severity: 'critical', title: 'WordPress Config' },
+      { path: '/phpinfo.php', severity: 'high', title: 'PHP Info' },
+    ];
+
+    for (const vuln of vulnerablePaths) {
+      try {
+        const res = await fetch(targetUrl.replace(/\/$/, '') + vuln.path, { signal: AbortSignal.timeout(3000) });
+        if (res.status === 200) {
+          findings.push({ severity: vuln.severity, title: vuln.title, description: `Found at ${vuln.path}` });
+          if (vuln.severity === 'critical') vulnerabilities.critical++;
+          else if (vuln.severity === 'high') vulnerabilities.high++;
+          else vulnerabilities.medium++;
+        }
+      } catch {}
+    }
+  } catch (error: any) {
+    findings.push({ severity: 'medium', title: 'Scan Error', description: error.message });
+    vulnerabilities.medium++;
+  }
+
+  const baseScore = 100;
+  const deductions = (vulnerabilities.critical * 25) + (vulnerabilities.high * 15) + (vulnerabilities.medium * 5) + (vulnerabilities.low * 2);
+  const score = Math.max(0, baseScore - deductions);
+  
+  let riskLevel = 'LOW';
+  if (vulnerabilities.critical > 0 || vulnerabilities.high >= 3) riskLevel = 'CRITICAL';
+  else if (vulnerabilities.high > 0 || vulnerabilities.medium >= 3) riskLevel = 'HIGH';
+  else if (vulnerabilities.medium > 0) riskLevel = 'MEDIUM';
+
+  return { score, riskLevel, vulnerabilities, findings };
+}
 
 // Public scan routes for free tier / marketing
 export default async function publicRoutes(fastify: FastifyInstance) {
@@ -20,65 +103,42 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      // Create a demo org for public scans if none exists
-      let org = await prisma.organization.findFirst({ where: { slug: 'public-scans' } })
-      if (!org) {
-        org = await prisma.organization.create({
-          data: {
-            name: 'Public Scans',
-            slug: 'public-scans',
-            plan: 'FREE',
-          },
-        })
+      // Run scan directly
+      const scanId = generateScanId()
+      const result = await performSecurityScan(url)
+
+      // Store scan result in memory
+      const scanResult: ScanResult = {
+        id: scanId,
+        targetUrl: url,
+        type,
+        status: 'COMPLETED',
+        score: result.score,
+        riskLevel: result.riskLevel,
+        summary: JSON.stringify({
+          vulnerabilities: result.vulnerabilities,
+          riskLevel: result.riskLevel,
+          asset: url,
+          scannedAt: new Date().toISOString()
+        }),
+        findings: result.findings,
+        completedAt: new Date().toISOString()
       }
+      storeScan(scanResult)
 
-      // Create asset
-      const asset = await prisma.asset.create({
-        data: {
-          name: url,
-          type: 'WEBSITE',
-          url,
-          orgId: org.id,
-        },
-      })
-
-      // Create scan
-      const scan = await prisma.scan.create({
-        data: {
-          type,
-          status: 'RUNNING',
-          orgId: org.id,
-          assetId: asset.id,
-          startedAt: new Date(),
-        },
-      })
-
-      // Simulate scan completion
-      setTimeout(async () => {
-        const score = Math.floor(Math.random() * 30) + 70
-        const vulnerabilities = Math.floor(Math.random() * 5)
-        
-        await prisma.scan.update({
-          where: { id: scan.id },
-          data: {
-            status: 'COMPLETED',
-            score,
-            completedAt: new Date(),
-          },
-        })
-      }, 3000)
-
-      // Generate shareable report token
-      const reportToken = crypto.randomBytes(16).toString('hex')
-      
-      return reply.status(201).send({
+      return reply.send({
         success: true,
         data: {
-          scanId: scan.id,
-          reportToken,
-          reportUrl: `/api/public/report/${reportToken}`,
-          status: 'RUNNING',
-        },
+          id: scanId,
+          targetUrl: url,
+          type,
+          status: 'COMPLETED',
+          score: result.score,
+          riskLevel: result.riskLevel,
+          summary: scanResult.summary,
+          findings: result.findings,
+          completedAt: scanResult.completedAt
+        }
       })
     } catch (error: any) {
       return reply.status(500).send({ success: false, error: error.message })
@@ -89,54 +149,26 @@ export default async function publicRoutes(fastify: FastifyInstance) {
   fastify.get('/report/:token', async (req, reply) => {
     const { token } = req.params as { token: string }
     
-    // Token is used as scan ID for simplicity in this demo
-    // In production, use a separate ReportToken table
-    const scanId = token
-    
-    try {
-      const scan = await prisma.scan.findUnique({
-        where: { id: scanId },
-        include: { asset: true },
+    // Try to get from in-memory store
+    const scan = getScan(token)
+    if (!scan) {
+      return reply.status(404).send({ 
+        success: false, 
+        error: 'Scan not found. It may have expired.' 
       })
-
-      if (!scan) {
-        return reply.status(404).send({ success: false, error: 'Report not found' })
-      }
-
-      // Determine risk level based on score
-      let riskLevel = 'LOW'
-      if (scan.score && scan.score < 50) riskLevel = 'CRITICAL'
-      else if (scan.score && scan.score < 70) riskLevel = 'HIGH'
-      else if (scan.score && scan.score < 85) riskLevel = 'MEDIUM'
-
-      // Generate summary
-      const summary = {
-        score: scan.score || 'N/A',
-        riskLevel,
-        status: scan.status,
-        scannedAt: scan.completedAt || scan.createdAt,
-        asset: scan.asset?.name,
-        type: scan.type,
-        // Mock vulnerability counts
-        vulnerabilities: scan.status === 'COMPLETED' ? {
-          critical: Math.floor(Math.random() * 2),
-          high: Math.floor(Math.random() * 3),
-          medium: Math.floor(Math.random() * 5),
-          low: Math.floor(Math.random() * 8),
-        } : null,
-      }
-
-      return reply.send({
-        success: true,
-        data: {
-          reportId: scan.id,
-          summary,
-          watermarked: true,
-          scannedBy: 'Zyra - AI Security Scanner',
-        },
-      })
-    } catch (error: any) {
-      return reply.status(500).send({ success: false, error: error.message })
     }
+
+    return reply.send({
+      success: true,
+      data: {
+        id: scan.id,
+        targetUrl: scan.targetUrl,
+        score: scan.score,
+        riskLevel: scan.riskLevel,
+        summary: scan.summary,
+        findings: scan.findings,
+        completedAt: scan.completedAt
+      }
+    })
   })
 }

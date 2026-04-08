@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 export default async function webhookRoutes(fastify) {
-    await fastify.addHook('onRequest', async (req, reply) => {
-    });
+    await fastify.addHook('onRequest', authMiddleware);
     // GET /api/webhooks - list webhooks
     fastify.get('/', async (req, reply) => {
         const orgId = req.user?.orgId;

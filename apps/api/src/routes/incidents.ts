@@ -5,9 +5,7 @@ import { triggerWebhook } from '../lib/webhook.js'
 import { sendToOrg } from '../websocket/index.js'
 
 export default async function incidentRoutes(fastify: FastifyInstance) {
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/incidents - list incidents
   fastify.get('/', async (req, reply) => {

@@ -1,9 +1,9 @@
 import { prisma } from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { triggerWebhook } from '../lib/webhook.js';
 import { sendToOrg } from '../websocket/index.js';
 export default async function incidentRoutes(fastify) {
-    await fastify.addHook('onRequest', async (req, reply) => {
-    });
+    await fastify.addHook('onRequest', authMiddleware);
     // GET /api/incidents - list incidents
     fastify.get('/', async (req, reply) => {
         const orgId = req.query?.orgId || req.user?.orgId;

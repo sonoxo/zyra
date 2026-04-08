@@ -7,6 +7,7 @@ import './env.js' // Validate env vars on startup
 import { errorMiddleware } from './middleware/error.js'
 import { requestIdMiddleware } from './middleware/requestId.js'
 import { rateLimit } from './middleware/rateLimit.js'
+import { securityHeaders, rateLimitMiddleware } from './middleware/security.js'
 
 // Sentry error monitoring (optional)
 import * as Sentry from '@sentry/node'
@@ -53,8 +54,14 @@ await server.register(cors, {
   credentials: true,
 })
 
+// Security headers
+securityHeaders(server)
+
+// Rate limiting (custom in-memory)
+rateLimitMiddleware(server)
+
 // Error handler
-await server.register(errorMiddleware)
+errorMiddleware(server)
 
 await server.register(websocket)
 

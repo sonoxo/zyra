@@ -1,47 +1,53 @@
 // Prisma client - using dynamic import to avoid type errors when Prisma not generated
 let prismaInstance = null;
+let prismaPromise = null;
 async function getPrismaClient() {
     if (prismaInstance)
         return prismaInstance;
-    try {
-        const { PrismaClient } = await import('@prisma/client');
-        prismaInstance = new PrismaClient({
-            log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-        });
-        return prismaInstance;
+    if (!prismaPromise) {
+        prismaPromise = (async () => {
+            try {
+                // Try to load from node_modules directly
+                const path = await import('path');
+                const { fileURLToPath } = await import('url');
+                const dir = path.dirname(fileURLToPath(import.meta.url));
+                const prismaPath = path.resolve(dir, '../../node_modules/.prisma/client/index.js');
+                const prisma = await import(prismaPath).catch(() => null);
+                if (prisma && prisma.PrismaClient) {
+                    prismaInstance = new prisma.PrismaClient({
+                        log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+                    });
+                    return prismaInstance;
+                }
+                throw new Error('Prisma client not found');
+            }
+            catch (error) {
+                console.warn('[Prisma] Client not available');
+                return null;
+            }
+        })();
     }
-    catch (error) {
-        console.warn('[Prisma] Client not available - running without DB');
-        // Return a mock for development without DB
-        return {
-            user: { findUnique: () => null, findMany: () => [], create: () => null, update: () => null, delete: () => null, count: () => 0 },
-            organization: { findUnique: () => null, findMany: () => [], create: () => null, update: () => null, delete: () => null, count: () => 0 },
-            scan: { findUnique: () => null, findMany: () => [], create: () => null, update: () => null, count: () => 0, groupBy: () => [] },
-            asset: { findUnique: () => null, findMany: () => [], create: () => null, update: () => null, delete: () => null },
-            job: { findUnique: () => null, findMany: () => [], create: () => null, update: () => null, delete: () => null },
-            threat: { findMany: () => [], create: () => null },
-            incident: { findMany: () => [], create: () => null },
-            activity: { findMany: () => [], create: () => null, groupBy: () => [] },
-            webhook: { findMany: () => [], create: () => null, delete: () => null },
-            auditLog: { findMany: () => [], create: () => null },
-            organizationUser: { findFirst: () => null, findMany: () => [], create: () => null, update: () => null, delete: () => null },
-            $connect: async () => { },
-            $disconnect: async () => { },
-        };
-    }
+    return prismaPromise;
 }
-// Export a proxy that lazily initializes
+// Export a proxy that lazily initializes and awaits properly
 export const prisma = new Proxy({}, {
     get(_target, prop) {
-        return async (...args) => {
-            const client = await getPrismaClient();
-            return client[prop](...args);
-        };
-    },
-    apply(_target, _thisArg, args) {
-        return async (...args) => {
-            const client = await getPrismaClient();
-            return client(...args);
-        };
+        return new Proxy(function () { }, {
+            get(_t, method) {
+                return async (...args) => {
+                    const client = await getPrismaClient();
+                    if (!client)
+                        throw new Error('Prisma client not available');
+                    const model = client[prop];
+                    if (!model)
+                        return null;
+                    const modelMethod = model[method];
+                    if (typeof modelMethod === 'function') {
+                        return await modelMethod.apply(model, args);
+                    }
+                    return modelMethod;
+                };
+            }
+        });
     }
 });

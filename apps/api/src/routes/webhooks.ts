@@ -4,9 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 export default async function webhookRoutes(fastify: FastifyInstance) {
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/webhooks - list webhooks
   fastify.get('/', async (req, reply) => {

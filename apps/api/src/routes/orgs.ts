@@ -14,9 +14,7 @@ interface OrgMemberBody {
 
 export default async function orgRoutes(fastify: FastifyInstance) {
   // All org routes require auth
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/orgs - list user's organizations
   fastify.get('/', async (req, reply) => {

@@ -3,9 +3,7 @@ import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 export default async function notificationRoutes(fastify: FastifyInstance) {
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/notifications - list user's notifications
   fastify.get('/', async (req, reply) => {

@@ -3,9 +3,7 @@ import { prisma } from '../lib/prisma.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 export default async function profileRoutes(fastify: FastifyInstance) {
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/profiles/me - get current user's profile
   fastify.get('/me', async (req, reply) => {

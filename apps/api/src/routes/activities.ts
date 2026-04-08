@@ -27,9 +27,7 @@ export async function logActivity(prisma: any, data: ActivityData) {
 }
 
 export default async function activityRoutes(fastify: FastifyInstance) {
-  await fastify.addHook('onRequest', async (req, reply) => {
-    
-  })
+  await fastify.addHook('onRequest', authMiddleware)
 
   // GET /api/activities - list activities for org
   fastify.get('/', async (req, reply) => {

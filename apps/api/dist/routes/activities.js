@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import { authMiddleware } from '../middleware/auth.js';
 export async function logActivity(prisma, data) {
     return prisma.activity.create({
         data: {
@@ -13,8 +14,7 @@ export async function logActivity(prisma, data) {
     });
 }
 export default async function activityRoutes(fastify) {
-    await fastify.addHook('onRequest', async (req, reply) => {
-    });
+    await fastify.addHook('onRequest', authMiddleware);
     // GET /api/activities - list activities for org
     fastify.get('/', async (req, reply) => {
         const orgId = req.query?.orgId || req.user?.orgId;
