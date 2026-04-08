@@ -247,19 +247,48 @@ WS     /api/v1/ws                  # Real-time updates for dashboard
 
 ---
 
-## Tech Stack Summary
+## Tech Stack Summary (Full Stack)
 
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | Next.js 14, Tailwind, Radix UI |
-| **Backend** | Node.js, Fastify, TypeScript |
-| **AI** | Claude API (Anthropic) |
-| **Database** | PostgreSQL (Supabase) |
-| **Queue** | Redis (Upstash) |
-| **Storage** | S3/R2 (evidence) |
-| **Vector DB** | Pinecone |
-| **Infra** | AWS, Cloudflare |
-| **CI/CD** | GitHub Actions |
+### Core Infrastructure
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **Frontend** | Next.js 14, Tailwind, Radix UI | Existing |
+| **Backend** | Node.js, Fastify, TypeScript | Existing |
+| **Database** | PostgreSQL (Supabase) | Free tier available |
+| **ORM** | Prisma | Existing |
+| **Queue** | Redis (BullMQ + Upstash) | Async agent processing |
+
+### AI & Agents
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **LLM** | Claude API (Anthropic) | Streaming SSE |
+| **Vector DB** | Pinecone | IOC embeddings, behavior |
+| **Memory** | Mem0 | Learn from incidents |
+| **Observability** | Portkey | AI tracing |
+| **RAG** | Ragie | Threat intel KB |
+
+### Integrations
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **Data Sources** | Nango | M365, Defender, Okta, AWS |
+| **Discord** | AgentMail / Webhook | SOC notifications |
+| **Slack** | Webhook | Enterprise alerts |
+| **Email** | Resend | Reports |
+| **Threat Intel** | Firecrawl + Exa | Auto-gather CVEs |
+
+### Advanced (Phase 3+)
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **Sandbox** | E2B | Malware analysis |
+| **Browser** | Browser Use | Automation |
+| **Voice** | ElevenLabs + Vapi | Alerts |
+
+### Infra & DevOps
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **Hosting** | Vercel + AWS | Production |
+| **CI/CD** | GitHub Actions | Existing |
+| **Secrets** | Replit Secrets / AWS SM | Existing |
 
 ---
 
