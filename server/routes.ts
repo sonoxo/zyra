@@ -56,6 +56,114 @@ async function logAudit(orgId: string, userId: string, action: string, resourceT
   }
 }
 
+const severityEnum = z.enum(["critical", "high", "medium", "low", "info"]);
+const statusOpenResolved = z.enum(["open", "resolved", "dismissed", "in_progress"]);
+
+const threatIntelUpdateSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  severity: severityEnum.optional(),
+  status: z.enum(["active", "resolved", "monitoring"]).optional(),
+  description: z.string().max(5000).optional(),
+}).strict();
+
+const alertRuleUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  condition: z.string().max(1000).optional(),
+  severity: severityEnum.optional(),
+  enabled: z.boolean().optional(),
+  channels: z.array(z.string()).optional(),
+}).strict();
+
+const pipelineUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  provider: z.enum(["github", "gitlab", "bitbucket", "azure"]).optional(),
+  status: z.enum(["active", "inactive", "error"]).optional(),
+  config: z.record(z.unknown()).optional(),
+}).strict();
+
+const sbomUpdateSchema = z.object({
+  status: statusOpenResolved.optional(),
+  isVulnerable: z.boolean().optional(),
+  resolvedAt: z.string().datetime().optional(),
+}).strict();
+
+const secretsUpdateSchema = z.object({
+  status: z.enum(["open", "resolved", "dismissed"]).optional(),
+  resolvedAt: z.string().datetime().nullable().optional(),
+}).strict();
+
+const attackSurfaceUpdateSchema = z.object({
+  status: z.enum(["active", "inactive", "monitored", "decommissioned"]).optional(),
+  riskLevel: z.enum(["critical", "high", "medium", "low"]).optional(),
+}).strict();
+
+const trainingUpdateSchema = z.object({
+  courseName: z.string().min(1).max(200).optional(),
+  completed: z.boolean().optional(),
+  score: z.number().min(0).max(100).optional(),
+  completedAt: z.string().datetime().nullable().optional(),
+}).strict();
+
+const campaignUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  status: z.enum(["draft", "active", "completed", "paused"]).optional(),
+  targetCount: z.number().int().min(0).optional(),
+  humanRiskScore: z.number().min(0).max(100).optional(),
+}).strict();
+
+const vendorUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  category: z.string().max(100).optional(),
+  riskRating: z.enum(["critical", "high", "medium", "low"]).optional(),
+  complianceStatus: z.enum(["compliant", "non-compliant", "partial"]).optional(),
+  status: z.enum(["active", "inactive", "under_review"]).optional(),
+}).strict();
+
+const darkWebAlertUpdateSchema = z.object({
+  status: z.enum(["new", "investigating", "resolved", "dismissed"]).optional(),
+  severity: severityEnum.optional(),
+}).strict();
+
+const roadmapTaskUpdateSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  status: z.enum(["open", "in_progress", "completed", "cancelled"]).optional(),
+  priority: z.enum(["critical", "high", "medium", "low"]).optional(),
+  completedAt: z.string().datetime().nullable().optional(),
+}).strict();
+
+const bountyReportUpdateSchema = z.object({
+  status: z.enum(["new", "triaged", "accepted", "resolved", "rejected"]).optional(),
+  severity: severityEnum.optional(),
+  reward: z.number().min(0).optional(),
+  resolvedAt: z.string().datetime().nullable().optional(),
+}).strict();
+
+const assetUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  type: z.string().max(100).optional(),
+  status: z.enum(["active", "inactive", "decommissioned"]).optional(),
+  criticality: z.enum(["critical", "high", "medium", "low"]).optional(),
+  owner: z.string().max(200).optional(),
+}).strict();
+
+const attackPathUpdateSchema = z.object({
+  status: z.enum(["active", "mitigated", "accepted"]).optional(),
+  riskScore: z.number().min(0).max(100).optional(),
+}).strict();
+
+const taskUpdateSchema = z.object({
+  status: z.enum(["pending", "running", "completed", "failed"]).optional(),
+  title: z.string().min(1).max(500).optional(),
+  priority: z.enum(["critical", "high", "medium", "low"]).optional(),
+}).strict();
+
+const deploymentConfigSchema = z.object({
+  regions: z.array(z.string()).optional(),
+  primaryRegion: z.string().max(50).optional(),
+  failoverEnabled: z.boolean().optional(),
+  rateLimit: z.number().int().min(1).max(100000).optional(),
+}).strict();
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -1132,8 +1240,10 @@ export async function registerRoutes(
 
   app.put("/api/deployment/config", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     try {
+      const parsed = deploymentConfigSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
       const orgId = req.user!.organizationId;
-      const { regions, primaryRegion, failoverEnabled, rateLimit } = req.body;
+      const { regions, primaryRegion, failoverEnabled, rateLimit } = parsed.data;
 
       if (regions) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "regions", value: regions });
       if (primaryRegion) await storage.upsertSetting({ organizationId: orgId, category: "deployment", key: "primaryRegion", value: primaryRegion });
@@ -1293,8 +1403,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/threat-intel/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    const updated = await storage.updateThreatIntelItem(id, req.body);
+    const parsed = threatIntelUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const updated = await storage.updateThreatIntelItem(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ message: "Item not found" });
     res.json(updated);
   });
@@ -1369,8 +1480,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/alerts/rules/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    const updated = await storage.updateAlertRule(id, req.body);
+    const parsed = alertRuleUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const updated = await storage.updateAlertRule(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ message: "Rule not found" });
     res.json(updated);
   });
@@ -1410,8 +1522,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/pipelines/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    const updated = await storage.updatePipelineConfig(id, req.body);
+    const parsed = pipelineUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const updated = await storage.updatePipelineConfig(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ message: "Pipeline not found" });
     res.json(updated);
   });
@@ -1596,7 +1709,9 @@ export async function registerRoutes(
     res.json({ scanned: parsed.data.packages.length, vulnerable: items.filter(i => i.isVulnerable).length, items });
   });
   app.put("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const item = await storage.updateSbomItem(req.params.id, req.body);
+    const parsed = sbomUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const item = await storage.updateSbomItem(req.params.id, parsed.data);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
   });
@@ -1637,7 +1752,9 @@ export async function registerRoutes(
     res.json({ scanned: parsed.data.findings.length, found: all.length, open: all.filter(s => s.status === "open").length, items: all });
   });
   app.put("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const data = { ...req.body };
+    const parsed = secretsUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const data: any = { ...parsed.data };
     if (data.status === "resolved" && !data.resolvedAt) data.resolvedAt = new Date();
     const item = await storage.updateSecretsFinding(req.params.id, data);
     if (!item) return res.status(404).json({ message: "Not found" });
@@ -1729,7 +1846,9 @@ export async function registerRoutes(
     res.json({ domain, status: "discovery_queued", existingAssets: all.length, assets: all });
   });
   app.put("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const item = await storage.updateAttackSurfaceAsset(req.params.id, req.body);
+    const parsed = attackSurfaceUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const item = await storage.updateAttackSurfaceAsset(req.params.id, parsed.data);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
   });
@@ -2010,7 +2129,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/security-awareness/training/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const r = await storage.updateTrainingRecord(req.params.id, req.body);
+    const parsed = trainingUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const r = await storage.updateTrainingRecord(req.params.id, parsed.data);
     if (!r) return res.status(404).json({ message: "Not found" });
     res.json(r);
   });
@@ -2032,7 +2153,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/security-awareness/campaigns/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const c = await storage.updatePhishingCampaign(req.params.id, req.body);
+    const parsed = campaignUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const c = await storage.updatePhishingCampaign(req.params.id, parsed.data);
     if (!c) return res.status(404).json({ message: "Not found" });
     res.json(c);
   });
@@ -2085,7 +2208,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/vendors/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const v = await storage.updateVendor(req.params.id, req.body);
+    const parsed = vendorUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const v = await storage.updateVendor(req.params.id, parsed.data);
     if (!v) return res.status(404).json({ message: "Not found" });
     res.json(v);
   });
@@ -2148,7 +2273,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const a = await storage.updateDarkWebAlert(req.params.id, req.body);
+    const parsed = darkWebAlertUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const a = await storage.updateDarkWebAlert(req.params.id, parsed.data);
     if (!a) return res.status(404).json({ message: "Not found" });
     res.json(a);
   });
@@ -2181,7 +2308,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/roadmap/tasks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const data = { ...req.body };
+    const parsed = roadmapTaskUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const data: any = { ...parsed.data };
     if (data.status === "completed" && !data.completedAt) data.completedAt = new Date();
     const t = await storage.updateRemediationTask(req.params.id, data);
     if (!t) return res.status(404).json({ message: "Not found" });
@@ -2215,7 +2344,9 @@ export async function registerRoutes(
   });
 
   app.put("/api/bounty/reports/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const data = { ...req.body };
+    const parsed = bountyReportUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const data: any = { ...parsed.data };
     if (data.status === "resolved" && !data.resolvedAt) data.resolvedAt = new Date();
     const r = await storage.updateBountyReport(req.params.id, data);
     if (!r) return res.status(404).json({ message: "Not found" });
@@ -2342,7 +2473,9 @@ export async function registerRoutes(
   });
 
   app.patch("/api/assets/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
-    const updated = await storage.updateAsset(req.params.id, req.body);
+    const parsed = assetUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const updated = await storage.updateAsset(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ message: "Asset not found" });
     res.json(updated);
   });
@@ -2401,9 +2534,11 @@ export async function registerRoutes(
   });
 
   app.patch("/api/attack-paths/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
+    const parsed = attackPathUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
     const existing = await storage.getAttackPath(req.params.id, req.user!.organizationId);
     if (!existing) return res.status(404).json({ message: "Not found" });
-    const updated = await storage.updateAttackPath(req.params.id, req.body);
+    const updated = await storage.updateAttackPath(req.params.id, parsed.data);
     if (!updated) return res.status(404).json({ message: "Not found" });
     res.json(updated);
   });
@@ -2785,9 +2920,11 @@ async function registerMetricsRoutes(app: Express) {
 
   app.patch("/api/tasks/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
+      const parsed = taskUpdateSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
       const existing = await storage.getTask(req.params.id, req.user!.organizationId);
       if (!existing) return res.status(404).json({ message: "Task not found" });
-      const updates: any = { ...req.body };
+      const updates: any = { ...parsed.data };
       if (updates.status === "running" && existing.status === "pending") updates.startedAt = new Date();
       if ((updates.status === "completed" || updates.status === "failed") && existing.status !== "completed" && existing.status !== "failed") updates.completedAt = new Date();
       const task = await storage.updateTask(req.params.id, updates);

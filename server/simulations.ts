@@ -21,8 +21,6 @@ export async function runPentestSimulation(sessionId: string, orgId: string, tes
   };
 
   for (const type of testTypes) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
     const templates = findingTemplates[type];
     if (templates) {
       for (let i = 0; i < templates.length; i++) {
@@ -61,8 +59,6 @@ export async function runPentestSimulation(sessionId: string, orgId: string, tes
 }
 
 export async function runCloudScanSimulation(targetId: string, orgId: string, provider: string) {
-  await new Promise(resolve => setTimeout(resolve, 3000));
-
   const findings = [
     { checkName: "Public S3 Bucket", category: "Storage", severity: "high", resourceType: "Bucket", description: "Bucket is publicly accessible", recommendation: "Remove public access" },
     { checkName: "Unencrypted EBS Volume", category: "Storage", severity: "medium", resourceType: "Volume", description: "EBS volume is not encrypted", recommendation: "Enable encryption" },

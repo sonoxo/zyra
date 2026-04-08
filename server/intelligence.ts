@@ -1,39 +1,33 @@
 import { storage } from "./storage";
 
-const CVE_DATABASE = [
-  { cveId: "CVE-2021-44228", title: "Log4Shell - Apache Log4j RCE", severity: "critical", cvssScore: 10.0, affectedPackages: ["log4j-core", "log4j-api"], affectedVersions: ["2.0-beta9 to 2.14.1"], patchedVersions: ["2.15.0+"], description: "Apache Log4j2 JNDI features do not protect against attacker-controlled LDAP and other endpoints, enabling RCE.", source: "nvd", publishedAt: "2021-12-10T00:00:00Z" },
-  { cveId: "CVE-2022-22965", title: "Spring4Shell - Spring Framework RCE", severity: "critical", cvssScore: 9.8, affectedPackages: ["spring-webmvc", "spring-webflux"], affectedVersions: ["5.3.0-5.3.17", "5.2.0-5.2.19"], patchedVersions: ["5.3.18+", "5.2.20+"], description: "Spring MVC or Spring WebFlux application running on JDK 9+ may be vulnerable to remote code execution.", source: "nvd", publishedAt: "2022-03-31T00:00:00Z" },
-  { cveId: "CVE-2023-44487", title: "HTTP/2 Rapid Reset Attack", severity: "high", cvssScore: 7.5, affectedPackages: ["nodejs", "nginx", "apache2"], affectedVersions: ["multiple"], patchedVersions: ["patched versions vary"], description: "Exploitation of the HTTP/2 protocol allows a denial-of-service attack via rapid request cancellation.", source: "nvd", publishedAt: "2023-10-10T00:00:00Z" },
-  { cveId: "CVE-2024-3094", title: "XZ Utils Backdoor", severity: "critical", cvssScore: 10.0, affectedPackages: ["xz-utils", "liblzma"], affectedVersions: ["5.6.0", "5.6.1"], patchedVersions: ["5.4.6+"], description: "Malicious code introduced in xz Utils versions 5.6.0 and 5.6.1 could allow unauthorized access.", source: "nvd", publishedAt: "2024-03-29T00:00:00Z" },
-  { cveId: "CVE-2023-38545", title: "curl SOCKS5 Heap Buffer Overflow", severity: "critical", cvssScore: 9.8, affectedPackages: ["curl", "libcurl"], affectedVersions: ["7.69.0-8.3.0"], patchedVersions: ["8.4.0+"], description: "Heap-based buffer overflow in the SOCKS5 proxy handshake could allow heap corruption.", source: "nvd", publishedAt: "2023-10-11T00:00:00Z" },
-  { cveId: "CVE-2022-3786", title: "OpenSSL X.509 Email Address Buffer Overflow", severity: "high", cvssScore: 7.5, affectedPackages: ["openssl"], affectedVersions: ["3.0.0-3.0.6"], patchedVersions: ["3.0.7+"], description: "X.509 certificate verification, particularly of wildcard names, contains a buffer overrun.", source: "nvd", publishedAt: "2022-11-01T00:00:00Z" },
-  { cveId: "CVE-2023-0286", title: "OpenSSL X.509 GeneralName Type Confusion", severity: "high", cvssScore: 7.4, affectedPackages: ["openssl"], affectedVersions: ["1.0.2-3.0.7"], patchedVersions: ["1.0.2zg+", "1.1.1t+", "3.0.8+"], description: "Type confusion vulnerability allows attackers to read memory contents or denial-of-service.", source: "nvd", publishedAt: "2023-02-07T00:00:00Z" },
-  { cveId: "CVE-2021-3156", title: "Sudo Heap-Based Buffer Overflow (Baron Samedit)", severity: "high", cvssScore: 7.8, affectedPackages: ["sudo"], affectedVersions: ["1.8.2-1.8.31p2", "1.9.0-1.9.5p1"], patchedVersions: ["1.9.5p2+"], description: "Buffer overflow in Sudo's argument parsing allows privilege escalation to root.", source: "nvd", publishedAt: "2021-01-26T00:00:00Z" },
-  { cveId: "CVE-2022-1292", title: "OpenSSL c_rehash Shell Command Injection", severity: "critical", cvssScore: 9.8, affectedPackages: ["openssl"], affectedVersions: ["1.0.2-3.0.2"], patchedVersions: ["1.0.2ze+", "1.1.1o+", "3.0.3+"], description: "The c_rehash script does not properly sanitize shell meta characters, allowing code injection.", source: "nvd", publishedAt: "2022-05-03T00:00:00Z" },
-  { cveId: "CVE-2023-46604", title: "Apache ActiveMQ RCE", severity: "critical", cvssScore: 10.0, affectedPackages: ["activemq"], affectedVersions: ["5.15.15", "5.16.6", "5.17.4", "5.18.2"], patchedVersions: ["5.15.16+", "5.16.7+", "5.17.6+", "5.18.3+"], description: "Remote code execution vulnerability in Apache ActiveMQ's OpenWire protocol implementation.", source: "nvd", publishedAt: "2023-10-27T00:00:00Z" },
-  { cveId: "CVE-2023-35708", title: "MOVEit Transfer SQL Injection", severity: "critical", cvssScore: 9.8, affectedPackages: ["moveit-transfer"], affectedVersions: ["< 2023.0.2"], patchedVersions: ["2023.0.2+"], description: "SQL injection vulnerability allows unauthenticated attackers to gain elevated access.", source: "nvd" },
-  { cveId: "CVE-2024-21413", title: "Microsoft Outlook RCE", severity: "critical", cvssScore: 9.8, affectedPackages: ["microsoft-outlook"], affectedVersions: ["multiple"], patchedVersions: ["February 2024 Patch"], description: "Remote code execution vulnerability allowing attackers to bypass Outlook protected view.", source: "nvd" },
-  { cveId: "CVE-2023-4863", title: "WebP Heap Buffer Overflow", severity: "critical", cvssScore: 8.8, affectedPackages: ["libwebp", "chromium", "electron"], affectedVersions: ["< 1.3.2"], patchedVersions: ["1.3.2+"], description: "Heap buffer overflow in WebP in Google Chrome allowed a remote attacker to perform an OOB memory write.", source: "nvd" },
-  { cveId: "CVE-2024-6387", title: "OpenSSH regreSSHion RCE", severity: "critical", cvssScore: 8.1, affectedPackages: ["openssh"], affectedVersions: ["8.5p1-9.7p1"], patchedVersions: ["9.8p1+"], description: "Signal handler race condition in OpenSSH server (sshd) allows unauthenticated RCE as root.", source: "nvd" },
-  { cveId: "CVE-2022-0847", title: "Dirty Pipe Linux Kernel Privilege Escalation", severity: "high", cvssScore: 7.8, affectedPackages: ["linux-kernel"], affectedVersions: ["5.8-5.16.10"], patchedVersions: ["5.16.11+", "5.15.25+", "5.10.102+"], description: "Privilege escalation vulnerability in the Linux kernel's pipe subsystem.", source: "nvd" },
-];
-
 export async function fetchCveDatabase(orgId: string) {
-  const sbomItems = await storage.getSbomItems(orgId);
-  const containerFindings = await storage.getContainerScans(orgId);
+  const [threatIntelItems, sbomItems] = await Promise.all([
+    storage.getThreatIntelItems(orgId),
+    storage.getSbomItems(orgId),
+  ]);
   const vulnPackages = new Set(sbomItems.filter(i => i.isVulnerable).map(i => i.packageName.toLowerCase()));
 
-  return CVE_DATABASE.map(cve => ({
-    ...cve,
-    publishedAt: cve.publishedAt || new Date().toISOString(),
-    affectedInEnvironment: cve.affectedPackages.some(pkg =>
-      vulnPackages.has(pkg.toLowerCase()) ||
-      sbomItems.some(s => s.packageName.toLowerCase().includes(pkg.toLowerCase()))
-    ),
-    relatedSbomCount: sbomItems.filter(s =>
-      cve.affectedPackages.some(pkg => s.packageName.toLowerCase().includes(pkg.toLowerCase()))
-    ).length,
-  }));
+  return threatIntelItems
+    .filter(item => item.cveId)
+    .map(item => ({
+      cveId: item.cveId,
+      title: item.title,
+      severity: item.severity,
+      cvssScore: item.cvssScore,
+      affectedPackages: item.affectedPackages || [],
+      affectedVersions: item.affectedVersions || [],
+      patchedVersions: item.patchedVersions || [],
+      description: item.description,
+      source: item.source,
+      publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString() : null,
+      affectedInEnvironment: (item.affectedPackages || []).some((pkg: string) =>
+        vulnPackages.has(pkg.toLowerCase()) ||
+        sbomItems.some(s => s.packageName.toLowerCase().includes(pkg.toLowerCase()))
+      ),
+      relatedSbomCount: sbomItems.filter(s =>
+        (item.affectedPackages || []).some((pkg: string) => s.packageName.toLowerCase().includes(pkg.toLowerCase()))
+      ).length,
+    }));
 }
 
 export async function runThreatHunt(query: string, orgId: string) {
@@ -53,13 +47,14 @@ export async function runThreatHunt(query: string, orgId: string) {
   const typeFilter = typeMatch?.split(":")[1];
 
   if (cveId) {
-    const cve = CVE_DATABASE.find(c => c.cveId.toLowerCase().includes(cveId.toLowerCase()));
+    const threatIntelItems = await storage.getThreatIntelItems(orgId);
+    const cve = threatIntelItems.find(c => c.cveId?.toLowerCase().includes(cveId.toLowerCase()));
     if (cve) {
       results.push({ type: "cve", source: "CVE Database", title: cve.title, id: cve.cveId, severity: cve.severity, detail: cve.description });
     }
     const sbomItems = await storage.getSbomItems(orgId);
     const matchedSbom = sbomItems.filter(s =>
-      cve ? cve.affectedPackages.some(p => s.packageName.toLowerCase().includes(p)) : false
+      cve ? (cve.affectedPackages as string[] || []).some(p => s.packageName.toLowerCase().includes(p)) : false
     );
     matchedSbom.forEach(s => results.push({ type: "sbom", source: "SBOM", title: `${s.packageName}@${s.packageVersion}`, id: s.id, severity: s.isVulnerable ? "high" : "info", detail: `Package found in SBOM${s.isVulnerable ? " (vulnerable)" : ""}` }));
   }

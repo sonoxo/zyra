@@ -152,7 +152,6 @@ export async function executePlaybook(
   let overallStatus = "success";
 
   for (const action of actions) {
-    await new Promise(r => setTimeout(r, Math.min(action.simulatedDurationMs, 300)));
     executedSteps.push({
       id: action.id,
       name: action.name,

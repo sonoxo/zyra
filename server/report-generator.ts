@@ -2,8 +2,6 @@ import { storage } from "./storage";
 
 export async function generateReport(reportId: string, orgId: string, frameworks: string[]) {
   try {
-    await delay(2000);
-
     const allFindings = await storage.getFindingsByOrg(orgId);
     const mappings = await storage.getComplianceMappings(orgId);
 
@@ -155,6 +153,3 @@ function generateRecommendations(findings: any[], compliance: any[]): any[] {
   return recs;
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

@@ -68,7 +68,7 @@ shared/
 - Frontend `queryClient.ts` auto-attaches Bearer header, handles 401 with token refresh
 - Login accepts username OR email (auto-detected via `@`)
 - Password reset: forgot-password → email (1hr token) → reset-password → new password
-- Rate limiting: 200 req/15min general API, 20 req/15min auth endpoints
+- Rate limiting: 200 req/15min general API, 20 req/15min auth endpoints, 15 req/15min invite endpoints
 - Bootstrap: `POST /api/bootstrap/admin` creates owner-role user (protected by BOOTSTRAP_SECRET)
 - Master admin: username=Zyra, email=zyra@zyra.host, role=owner, org=Xunia
 
@@ -97,8 +97,9 @@ shared/
 - Scans counted for current calendar month only
 
 ## Input Validation
-- Zod schemas on all critical POST endpoints: incidents, vulnerabilities, risks, assets, SBOM scan, container scan, dark-web scan, attack-surface discover, secrets scan, vendor assess
-- Registration, login, forgot-password, reset-password, invite-accept all use Zod schemas
+- All PUT/PATCH routes use Zod `.strict()` schemas — unknown fields are rejected
+- Validated entities: incidents, vulnerabilities, risks, assets, SBOM, secrets, attack-surface, threat-intel, alert rules, pipelines, training, campaigns, vendors, dark-web alerts, roadmap tasks, bounty reports, attack-paths, tasks, deployment config, settings
+- All POST endpoints also validated: registration, login, forgot-password, reset-password, invite-accept, container scan, secrets scan, vendor assess
 - Validation errors return structured `{ message, errors }` response
 
 ## Dashboard Resilience
@@ -112,11 +113,12 @@ shared/
 - Scan worker uses deterministic template-based findings (all templates applied, no random selection)
 - Pentest simulation uses structured finding templates per test type (not random boilerplate)
 - Cloud scan includes all checks deterministically (no random include/exclude)
-- Threat intel only seeds known CVE data once (idempotent, real CVE IDs and dates)
-- SOAR playbook execution is deterministic (no random success/failure)
+- Threat intel seeds known CVE data once on refresh (idempotent, real CVE IDs and dates)
+- SOAR playbook execution is deterministic (no random success/failure, no fake delays)
 - Security graph does not auto-seed demo data — returns empty for new orgs
 - Posture current endpoint returns zeros with guidance when no data exists (no fake seed)
-- CVE_DATABASE in intelligence.ts has real published dates (not randomized)
+- CVE database (`/api/cve/database`) queries threat intel items from DB — no static hardcoded CVE list
+- Zero artificial delays — report generation, pentest simulation, cloud scan, SOAR execution all run without fake sleep()
 - Analytics computed from real DB state (remediation velocity, coverage, risk scores)
 - Pages show proper empty states when no data exists
 - DB schema changes done via direct SQL (ALTER TABLE) — drizzle-kit push has interactive prompt issues

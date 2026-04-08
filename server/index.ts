@@ -81,6 +81,14 @@ const authLimiter = rateLimit({
   message: { message: "Too many authentication attempts, please try again later" },
 });
 
+const inviteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many invite attempts, please try again later" },
+});
+
 app.get("/health", async (_req, res) => {
   const checks: Record<string, string> = {};
   try {
@@ -106,6 +114,7 @@ app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/resend-verification", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 app.use("/api/auth/reset-password", authLimiter);
+app.use("/api/invite", inviteLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
