@@ -180,6 +180,13 @@ shared/
 - Seeded events span 6 days with realistic timestamps via direct db.insert with createdAt
 - Idempotent: sentinel check prevents duplicate seeding
 
+## Demo Data Seeder
+- Module: `server/seed-demo.ts` → `seedDemoData(orgId, userId)`
+- Endpoint: `POST /api/seed/demo` (requires auth + owner role)
+- Seeds 25+ tables atomically: repositories, scans, scan findings, pentest sessions+findings, cloud targets+results, threat intel, incidents, vulnerabilities, SBOM, secrets, risks, attack surface, posture scores, dark web alerts, vendors, training records, phishing campaigns, bounty reports, container scans, asset inventory, attack paths, security events, SOAR playbooks+executions, graph nodes+edges, pipeline configs, alert rules, remediation tasks, tasks
+- Idempotency: checks if `repositories` count > 0 for the org; returns `["already_seeded"]` if so
+- Tasks table: column `status` (Drizzle) maps to `task_status` (DB); enum values: pending, running, completed, failed, cancelled; uses `type` (not `category`)
+
 ## Key Development Notes
 - `apiRequest(method, url, data?)` returns `Promise<Response>` — must call `.json()` to parse
 - CVSS score auto-maps to severity in vulnerability form

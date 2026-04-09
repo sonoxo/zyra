@@ -8,6 +8,7 @@ import { generateReport } from "./report-generator";
 import { runPentestSimulation, runCloudScanSimulation, refreshThreatIntel } from "./simulations";
 import { fetchCveDatabase, runThreatHunt, runSecurityCopilot, analyzeSecurityImage } from "./intelligence";
 import { executePlaybook } from "./soar";
+import { seedDemoData } from "./seed-demo";
 import { getMetrics, getPrometheusMetrics, requestMetricsMiddleware, runThreatCorrelation } from "./metrics";
 import { getGraphData, addGraphNode, addGraphEdge } from "./graph";
 import {
@@ -222,6 +223,17 @@ export async function registerRoutes(
     } catch (err: any) {
       console.error("[bootstrap] Error:", err);
       res.status(500).json({ message: "Bootstrap failed" });
+    }
+  });
+
+  app.post("/api/seed/demo", requireAuth, requireRole("owner"), async (req: Request, res: Response) => {
+    try {
+      const result = await seedDemoData(req.user!.organizationId, req.user!.userId);
+      await logAudit(req.user!.organizationId, req.user!.userId, "system.demo_seeded", "system", undefined, result, req.ip);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("Seed error:", err);
+      return res.status(500).json({ message: err.message || "Seeding failed" });
     }
   });
 
