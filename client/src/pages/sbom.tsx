@@ -38,10 +38,13 @@ export default function SbomPage() {
   const { data: items = [], isLoading } = useQuery<SbomItem[]>({ queryKey: ["/api/sbom"] });
 
   const scanMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/sbom/scan"),
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/sbom/scan");
+      return res.json();
+    },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/sbom"] });
-      toast({ title: "SBOM Scan Complete", description: `Scanned ${data.scanned} packages, found ${data.vulnerable} vulnerable.` });
+      toast({ title: "SBOM Scan Complete", description: `Scanned ${data.scanned} packages, found ${data.vulnerable} vulnerable${data.newPackages > 0 ? ` (${data.newPackages} new)` : ""}.` });
     },
     onError: () => toast({ title: "Scan failed", variant: "destructive" }),
   });
