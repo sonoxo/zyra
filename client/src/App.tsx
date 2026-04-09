@@ -57,6 +57,8 @@ import ResetPasswordPage from "@/pages/reset-password";
 import AcceptInvitePage from "@/pages/accept-invite";
 import AuditLogsPage from "@/pages/audit-logs";
 import ThreatSimulationPage from "@/pages/threat-simulation";
+import ThreatDetailPage from "@/pages/threat-detail";
+import IncidentDetailPage from "@/pages/incident-detail";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
@@ -131,6 +133,7 @@ function Router() {
       <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
       <Route path="/pentest">{() => <ProtectedRoute component={PentestPage} />}</Route>
       <Route path="/cloud-security">{() => <ProtectedRoute component={CloudSecurityPage} />}</Route>
+      <Route path="/threat-intel/:id">{() => <ProtectedRoute component={ThreatDetailPage} />}</Route>
       <Route path="/threat-intel">{() => <ProtectedRoute component={ThreatIntelPage} />}</Route>
       <Route path="/devsecops">{() => <ProtectedRoute component={DevSecOpsPage} />}</Route>
       <Route path="/integrations">{() => <ProtectedRoute component={Integrations} />}</Route>
@@ -138,6 +141,7 @@ function Router() {
       <Route path="/billing">{() => <ProtectedRoute component={Billing} />}</Route>
       <Route path="/api-keys">{() => <ProtectedRoute component={ApiKeysPage} />}</Route>
       <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
+      <Route path="/incidents/:id">{() => <ProtectedRoute component={IncidentDetailPage} />}</Route>
       <Route path="/incidents">{() => <ProtectedRoute component={IncidentsPage} />}</Route>
       <Route path="/vulnerabilities">{() => <ProtectedRoute component={VulnerabilitiesPage} />}</Route>
       <Route path="/sbom">{() => <ProtectedRoute component={SbomPage} />}</Route>

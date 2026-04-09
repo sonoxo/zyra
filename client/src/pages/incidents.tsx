@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -44,6 +45,7 @@ const workflowSteps = ["triage", "assign", "contain", "remediate", "close"];
 
 export default function IncidentsPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -193,7 +195,7 @@ export default function IncidentsPage() {
             const StatusIcon = status.icon;
             const stepIdx = workflowSteps.indexOf(incident.status);
             return (
-              <Card key={incident.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => setSelectedIncident(incident)} data-testid={`card-incident-${incident.id}`}>
+              <Card key={incident.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/incidents/${incident.id}`)} data-testid={`card-incident-${incident.id}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

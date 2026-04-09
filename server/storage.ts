@@ -151,8 +151,9 @@ export interface IStorage {
   createCloudScanResult(r: InsertCloudScanResult): Promise<CloudScanResult>;
 
   getThreatIntelItems(orgId: string): Promise<ThreatIntelItem[]>;
+  getThreatIntelItem(id: string, orgId: string): Promise<ThreatIntelItem | undefined>;
   createThreatIntelItem(i: InsertThreatIntelItem): Promise<ThreatIntelItem>;
-  updateThreatIntelItem(id: string, data: Partial<ThreatIntelItem>): Promise<ThreatIntelItem | undefined>;
+  updateThreatIntelItem(id: string, data: Partial<ThreatIntelItem>, orgId?: string): Promise<ThreatIntelItem | undefined>;
 
   getMonitoringConfigs(orgId: string): Promise<MonitoringConfig[]>;
   upsertMonitoringConfig(c: InsertMonitoringConfig): Promise<MonitoringConfig>;
@@ -171,7 +172,7 @@ export interface IStorage {
   getIncidents(orgId: string): Promise<Incident[]>;
   getIncident(id: string, orgId: string): Promise<Incident | undefined>;
   createIncident(i: InsertIncident): Promise<Incident>;
-  updateIncident(id: string, data: Partial<Incident>): Promise<Incident | undefined>;
+  updateIncident(id: string, data: Partial<Incident>, orgId?: string): Promise<Incident | undefined>;
   deleteIncident(id: string, orgId: string): Promise<void>;
 
   getVulnerabilities(orgId: string): Promise<Vulnerability[]>;
@@ -652,12 +653,17 @@ export class DatabaseStorage implements IStorage {
   async getThreatIntelItems(orgId: string): Promise<ThreatIntelItem[]> {
     return db.select().from(threatIntelItems).where(eq(threatIntelItems.organizationId, orgId)).orderBy(desc(threatIntelItems.createdAt));
   }
+  async getThreatIntelItem(id: string, orgId: string): Promise<ThreatIntelItem | undefined> {
+    const [item] = await db.select().from(threatIntelItems).where(and(eq(threatIntelItems.id, id), eq(threatIntelItems.organizationId, orgId))).limit(1);
+    return item;
+  }
   async createThreatIntelItem(i: InsertThreatIntelItem): Promise<ThreatIntelItem> {
     const [created] = await db.insert(threatIntelItems).values(i).returning();
     return created;
   }
-  async updateThreatIntelItem(id: string, data: Partial<ThreatIntelItem>): Promise<ThreatIntelItem | undefined> {
-    const [updated] = await db.update(threatIntelItems).set(data).where(eq(threatIntelItems.id, id)).returning();
+  async updateThreatIntelItem(id: string, data: Partial<ThreatIntelItem>, orgId?: string): Promise<ThreatIntelItem | undefined> {
+    const condition = orgId ? and(eq(threatIntelItems.id, id), eq(threatIntelItems.organizationId, orgId)) : eq(threatIntelItems.id, id);
+    const [updated] = await db.update(threatIntelItems).set(data).where(condition).returning();
     return updated;
   }
 
@@ -720,8 +726,9 @@ export class DatabaseStorage implements IStorage {
     const [r] = await db.insert(incidents).values(i).returning();
     return r;
   }
-  async updateIncident(id: string, data: Partial<Incident>): Promise<Incident | undefined> {
-    const [r] = await db.update(incidents).set(data).where(eq(incidents.id, id)).returning();
+  async updateIncident(id: string, data: Partial<Incident>, orgId?: string): Promise<Incident | undefined> {
+    const condition = orgId ? and(eq(incidents.id, id), eq(incidents.organizationId, orgId)) : eq(incidents.id, id);
+    const [r] = await db.update(incidents).set(data).where(condition).returning();
     return r;
   }
   async deleteIncident(id: string, orgId: string): Promise<void> {

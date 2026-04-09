@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { 
   Shield, 
   RefreshCw, 
@@ -50,6 +51,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ThreatIntelPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -252,7 +254,7 @@ export default function ThreatIntelPage() {
                       <TableRow 
                         key={threat.id} 
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => toggleRow(threat.id)}
+                        onClick={() => navigate(`/threat-intel/${threat.id}`)}
                         data-testid={`row-threat-${threat.id}`}
                       >
                         <TableCell className="font-mono font-medium">{threat.cveId}</TableCell>

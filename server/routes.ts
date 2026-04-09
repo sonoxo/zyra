@@ -65,7 +65,7 @@ const statusOpenResolved = z.enum(["open", "resolved", "dismissed", "in_progress
 const threatIntelUpdateSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   severity: severityEnum.optional(),
-  status: z.enum(["active", "resolved", "monitoring"]).optional(),
+  status: z.enum(["active", "acknowledged", "resolved", "monitoring"]).optional(),
   description: z.string().max(5000).optional(),
 }).strict();
 
@@ -1461,14 +1461,6 @@ export async function registerRoutes(
     res.json({ message: "Threat intelligence refreshed" });
   });
 
-  app.put("/api/threat-intel/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const parsed = threatIntelUpdateSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
-    const updated = await storage.updateThreatIntelItem(req.params.id, parsed.data);
-    if (!updated) return res.status(404).json({ message: "Item not found" });
-    res.json(updated);
-  });
-
   app.get("/api/threat-intel/stats", requireAuth, async (req: Request, res: Response) => {
     const items = await storage.getThreatIntelItems(req.user!.organizationId);
     const severityStats: Record<string, number> = {};
@@ -1480,6 +1472,20 @@ export async function registerRoutes(
     });
 
     res.json({ severity: severityStats, source: sourceStats });
+  });
+
+  app.get("/api/threat-intel/:id", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.getThreatIntelItem(req.params.id, req.user!.organizationId);
+    if (!item) return res.status(404).json({ message: "Threat intel item not found" });
+    res.json(item);
+  });
+
+  app.put("/api/threat-intel/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
+    const parsed = threatIntelUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const updated = await storage.updateThreatIntelItem(req.params.id, parsed.data, req.user!.organizationId);
+    if (!updated) return res.status(404).json({ message: "Item not found" });
+    res.json(updated);
   });
 
   // === MONITORING ROUTES ===
@@ -1607,11 +1613,28 @@ export async function registerRoutes(
     const items = await storage.getIncidents(req.user!.organizationId);
     res.json(items);
   });
+  app.get("/api/incidents/stats", requireAuth, async (req: Request, res: Response) => {
+    const items = await storage.getIncidents(req.user!.organizationId);
+    const byStatus = { triage: 0, assign: 0, contain: 0, remediate: 0, close: 0 };
+    const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    items.forEach(i => {
+      if (i.status in byStatus) (byStatus as any)[i.status]++;
+      if (i.severity in bySeverity) (bySeverity as any)[i.severity]++;
+    });
+    const resolved = items.filter(i => i.status === "close" && i.resolvedAt);
+    const avgMttr = resolved.length ? Math.round(resolved.reduce((s, i) => s + (i.mttr || 0), 0) / resolved.length) : 0;
+    res.json({ total: items.length, byStatus, bySeverity, avgMttr, active: items.filter(i => i.status !== "close").length });
+  });
+  app.get("/api/incidents/:id", requireAuth, async (req: Request, res: Response) => {
+    const item = await storage.getIncident(req.params.id, req.user!.organizationId);
+    if (!item) return res.status(404).json({ message: "Incident not found" });
+    res.json(item);
+  });
   const incidentSchema = z.object({
     title: z.string().min(1, "Title is required").max(500),
     description: z.string().optional().default(""),
     severity: z.enum(["critical", "high", "medium", "low"]),
-    status: z.string().optional().default("open"),
+    status: z.string().optional().default("triage"),
     assignee: z.string().optional(),
     source: z.string().optional(),
     type: z.string().optional(),
@@ -1633,7 +1656,7 @@ export async function registerRoutes(
     title: z.string().min(1).optional(),
     description: z.string().optional(),
     severity: z.enum(["critical", "high", "medium", "low"]).optional(),
-    status: z.enum(["open", "investigating", "contained", "resolved", "closed"]).optional(),
+    status: z.enum(["triage", "assign", "contain", "remediate", "close", "open", "investigating", "contained", "resolved", "closed"]).optional(),
     assignedTo: z.string().optional(),
     category: z.string().optional(),
   }).passthrough();
@@ -1641,7 +1664,7 @@ export async function registerRoutes(
   app.put("/api/incidents/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const parsed = incidentUpdateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
-    const item = await storage.updateIncident(req.params.id, parsed.data);
+    const item = await storage.updateIncident(req.params.id, parsed.data, req.user!.organizationId);
     if (!item) return res.status(404).json({ message: "Not found" });
     await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
     res.json(item);
@@ -1657,18 +1680,6 @@ export async function registerRoutes(
     const timeline = [...(incident.timeline as any[] || []), entry];
     const updated = await storage.updateIncident(req.params.id, { timeline });
     res.json(updated);
-  });
-  app.get("/api/incidents/stats", requireAuth, async (req: Request, res: Response) => {
-    const items = await storage.getIncidents(req.user!.organizationId);
-    const byStatus = { triage: 0, assign: 0, contain: 0, remediate: 0, close: 0 };
-    const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-    items.forEach(i => {
-      if (i.status in byStatus) (byStatus as any)[i.status]++;
-      if (i.severity in bySeverity) (bySeverity as any)[i.severity]++;
-    });
-    const resolved = items.filter(i => i.status === "close" && i.resolvedAt);
-    const avgMttr = resolved.length ? Math.round(resolved.reduce((s, i) => s + (i.mttr || 0), 0) / resolved.length) : 0;
-    res.json({ total: items.length, byStatus, bySeverity, avgMttr, active: items.filter(i => i.status !== "close").length });
   });
 
   // ===== VULNERABILITY LIFECYCLE =====
