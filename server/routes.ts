@@ -18,7 +18,9 @@ import {
   insertThreatIntelItemSchema,
   insertMonitoringConfigSchema,
   insertTaskSchema,
+  auditLogs,
 } from "@shared/schema";
+import { db } from "./db";
 import { registerStripeRoutes, isStripeConfigured, isPaidPlan } from "./stripe";
 import { executeTask, processPendingTasks, getTaskExecutionHistory } from "./task-runner";
 import { generateVerificationToken, getVerificationExpiry, sendVerificationEmail, sendPasswordResetEmail, sendInviteEmail } from "./email";
@@ -958,7 +960,8 @@ export async function registerRoutes(
     const userId = req.user!.userId;
     let logs = await storage.getAuditLogs(orgId);
 
-    if (logs.length === 0) {
+    const hasSeeded = logs.some(l => l.action === "auth.system_initialized");
+    if (logs.length < 5 && !hasSeeded) {
       const now = Date.now();
       const seedEvents = [
         { action: "auth.system_initialized", resourceType: "system", details: { event: "Platform security engine initialized" }, offset: 86400000 * 6 },
@@ -984,18 +987,18 @@ export async function registerRoutes(
       ];
 
       const ips = ["10.0.1.1", "192.168.1.50", "172.16.0.12", "10.10.0.5", "203.0.113.42"];
-      for (const evt of seedEvents) {
-        try {
-          await storage.createAuditLog({
-            organizationId: orgId,
-            userId,
-            action: evt.action,
-            resourceType: evt.resourceType,
-            details: evt.details,
-            ipAddress: ips[Math.floor(Math.random() * ips.length)],
-          });
-        } catch {}
-      }
+      const rows = seedEvents.map(evt => ({
+        organizationId: orgId,
+        userId,
+        action: evt.action,
+        resourceType: evt.resourceType,
+        details: evt.details,
+        ipAddress: ips[Math.floor(Math.random() * ips.length)],
+        createdAt: new Date(now - evt.offset),
+      }));
+      try {
+        await db.insert(auditLogs).values(rows);
+      } catch {}
       logs = await storage.getAuditLogs(orgId);
     }
 

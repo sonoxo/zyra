@@ -134,7 +134,7 @@ shared/
 - **Security**: Scans, AI Pentesting, Cloud Security, Container Security, Threat Intel, Attack Surface, Secrets Scanning, Dark Web Monitor
 - **Operations**: Incident Response, Vulnerabilities, Risk Register, Supply Chain / SBOM, Security Roadmap, Bug Bounty, SOAR Automation
 - **Governance**: Compliance, DevSecOps, Reports, Security Awareness, Vendor Risk
-- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management, Threat Hunting, ZyraCopilot, Security Data Lake, Security Graph
+- **Intelligence**: CAASM, Asset Inventory, CVE Intelligence, Exposure Management, Threat Hunting, ZyraCopilot, Security Data Lake, Security Graph, Threat Simulation
 - **Assets**: Repositories, Documents, Integrations
 - **Platform**: Task Center, Admin Panel, Team, Audit Logs, Platform Metrics, Enterprise Readiness, Enterprise / SSO, Billing, API Keys, Settings
 
@@ -165,6 +165,20 @@ shared/
 - `zyra-ui-rules` — Component patterns, styling, test attributes, empty states
 - `zyra-deployment` — Production config, secrets checklist, troubleshooting
 - `zyra-integrations` — Service map (Resend, Stripe), adding new integrations
+
+## Threat Simulation
+- Page: `client/src/pages/threat-simulation.tsx` at `/threat-simulation`
+- Canvas-based real-time network topology with animated attack flows, particle effects, and node pulses
+- Auto-generating threat events (intrusion, malware, DDoS, phishing, exfiltration, brute force, exploit, recon)
+- Live stats: attacks, blocked, detected, mitigated, events/sec, critical count, defense rate
+- Attack origin breakdown by country, protocol distribution, severity distribution, target systems
+- Pause/resume control for the simulation engine
+- All client-side — no backend endpoint needed (pure visualization)
+
+## Audit Log Seeding
+- GET /api/audit-logs seeds 20 historical events if org has < 5 logs and no sentinel `auth.system_initialized`
+- Seeded events span 6 days with realistic timestamps via direct db.insert with createdAt
+- Idempotent: sentinel check prevents duplicate seeding
 
 ## Key Development Notes
 - `apiRequest(method, url, data?)` returns `Promise<Response>` — must call `.json()` to parse
