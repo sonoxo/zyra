@@ -11,7 +11,7 @@ import {
   Users, ClipboardList, Rocket, Check, X, ListTodo,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck, Shield
+  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck, Shield, Radio
 } from "lucide-react";
 import zyraLogo from "@assets/ChatGPT_Image_Mar_30,_2026,_05_28_39_PM_1775166956477.png";
 import { useTheme } from "./ThemeProvider";
@@ -92,6 +92,7 @@ const navGroups = [
       { href: "/security-copilot", label: "ZyraCopilot", icon: Bot },
       { href: "/security-events", label: "Security Data Lake", icon: Database },
       { href: "/security-graph", label: "Security Graph", icon: Share2 },
+      { href: "/threat-simulation", label: "Threat Simulation", icon: Radio },
     ],
   },
   {

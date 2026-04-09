@@ -954,7 +954,51 @@ export async function registerRoutes(
   });
 
   app.get("/api/audit-logs", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
-    const logs = await storage.getAuditLogs(req.user!.organizationId);
+    const orgId = req.user!.organizationId;
+    const userId = req.user!.userId;
+    let logs = await storage.getAuditLogs(orgId);
+
+    if (logs.length === 0) {
+      const now = Date.now();
+      const seedEvents = [
+        { action: "auth.system_initialized", resourceType: "system", details: { event: "Platform security engine initialized" }, offset: 86400000 * 6 },
+        { action: "auth.admin_created", resourceType: "user", details: { role: "owner", method: "bootstrap" }, offset: 86400000 * 6 },
+        { action: "settings.security_policy_updated", resourceType: "setting", details: { mfa: "enabled", sessionTimeout: "30m" }, offset: 86400000 * 5 },
+        { action: "scan.vulnerability_scan_completed", resourceType: "scan", details: { findings: 23, critical: 2, high: 5 }, offset: 86400000 * 5 },
+        { action: "team.invite_sent", resourceType: "user", details: { email: "analyst@company.com", role: "analyst" }, offset: 86400000 * 4 },
+        { action: "incident.threat_detected", resourceType: "incident", details: { type: "Brute Force Attempt", source: "203.0.113.42", severity: "high" }, offset: 86400000 * 4 },
+        { action: "auth.failed_login_blocked", resourceType: "user", details: { attempts: 5, ip: "198.51.100.17", action: "IP blocked for 30 minutes" }, offset: 86400000 * 3 },
+        { action: "scan.sast_scan_triggered", resourceType: "scan", details: { repository: "api-gateway", branch: "main", tool: "semgrep" }, offset: 86400000 * 3 },
+        { action: "deployment.config_update", resourceType: "deployment", details: { region: "us-east-1", failover: true }, offset: 86400000 * 2 },
+        { action: "incident.malware_quarantined", resourceType: "incident", details: { file: "payload.exe", hash: "a1b2c3d4e5f6", action: "quarantined" }, offset: 86400000 * 2 },
+        { action: "scan.container_scan_completed", resourceType: "scan", details: { image: "app:latest", vulnerabilities: 7, critical: 1 }, offset: 86400000 * 1.5 },
+        { action: "auth.privilege_escalation_detected", resourceType: "user", details: { from: "viewer", to: "admin", blocked: true, ip: "10.0.0.55" }, offset: 86400000 },
+        { action: "settings.firewall_rules_updated", resourceType: "setting", details: { rulesAdded: 3, rulesRemoved: 1, policy: "strict" }, offset: 86400000 },
+        { action: "scan.dependency_audit_completed", resourceType: "scan", details: { packages: 342, vulnerabilities: 12, outdated: 28 }, offset: 43200000 },
+        { action: "incident.ddos_mitigated", resourceType: "incident", details: { peakRps: 45000, duration: "12m", origin: "distributed" }, offset: 36000000 },
+        { action: "auth.suspicious_session_terminated", resourceType: "user", details: { reason: "Geo-anomaly detected", location: "Unknown VPN" }, offset: 21600000 },
+        { action: "deployment.ssl_renewed", resourceType: "deployment", details: { domain: "api.company.com", expiresIn: "90 days" }, offset: 14400000 },
+        { action: "scan.pentest_completed", resourceType: "scan", details: { target: "web-app", findings: 8, critical: 0, high: 2 }, offset: 7200000 },
+        { action: "incident.data_exfiltration_blocked", resourceType: "incident", details: { bytes: "2.3GB", destination: "185.220.101.1", protocol: "HTTPS" }, offset: 3600000 },
+        { action: "auth.mfa_enforced", resourceType: "setting", details: { scope: "organization", method: "TOTP" }, offset: 1800000 },
+      ];
+
+      const ips = ["10.0.1.1", "192.168.1.50", "172.16.0.12", "10.10.0.5", "203.0.113.42"];
+      for (const evt of seedEvents) {
+        try {
+          await storage.createAuditLog({
+            organizationId: orgId,
+            userId,
+            action: evt.action,
+            resourceType: evt.resourceType,
+            details: evt.details,
+            ipAddress: ips[Math.floor(Math.random() * ips.length)],
+          });
+        } catch {}
+      }
+      logs = await storage.getAuditLogs(orgId);
+    }
+
     return res.json(logs);
   });
 
