@@ -102,6 +102,8 @@ Instead of waiting for alerts, Zyra educates users in real-time:
 - [ ] Basic investigation agent
 - [ ] Email phishing detection
 - [ ] Web dashboard for analysts
+- [ ] **Compliance Ready** — SOC 2 Type II, HIPAA, GDPR, PCI DSS certified
+- [ ] Automated compliance evidence collection
 
 ### Phase 2: Autonomous Response + Privacy — Q3 2026
 - [ ] Auto-remediation workflows
@@ -123,6 +125,7 @@ Instead of waiting for alerts, Zyra educates users in real-time:
 - [ ] Multi-tenant for enterprises
 - [ ] Mobile app
 - [ ] Vertical-specific modules (healthcare, finance)
+- [ ] **ISO 27001 Certification** (pending funding)
 
 ---
 
