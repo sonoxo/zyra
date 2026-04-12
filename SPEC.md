@@ -112,6 +112,7 @@ Instead of waiting for alerts, Zyra educates users in real-time:
 - [ ] SOAR playbook automation
 - [ ] **HoundDog Privacy Scanner** — PII detection, GDPR/HIPAA compliance
 - [ ] Data leak alerts (Discord/Slack)
+- [ ] **AI-Powered Threat Detection** — Detect AI-generated exploits (Mythos-level threats)
 - [ ] Privacy reports generation
 
 ### Phase 3: Proactive Protection — Q4 2026
