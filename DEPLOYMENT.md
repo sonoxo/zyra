@@ -144,4 +144,4 @@ Or connect GitHub repo to Vercel for automatic deployments.
 
 - Documentation: https://docs.zyra.host
 - Discord: https://discord.gg/zyra
-- Email: support@zyra.host
+- Email: support@zyra.host# Deployment trigger
