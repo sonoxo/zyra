@@ -1,4 +1,4 @@
-import { BookOpen, Sparkles, Users, ArrowRight } from "lucide-react"
+import { BookOpen, Sparkles, Users, ArrowRight, Shield } from "lucide-react"
 
 export default function Resources() {
   const guides = [
@@ -10,6 +10,16 @@ export default function Resources() {
     { title: "AI Slides", desc: "Create presentations with AI", url: "https://ruben.substack.com/p/powerpoint" },
     { title: "AI Interactive Charts", desc: "Build data visualizations", url: "https://ruben.substack.com/p/claude-charts" },
     { title: "AI Computer Use", desc: "Let AI control your computer", url: "https://ruben.substack.com/p/claude-computer" },
+    { title: "Prompt Engineering", desc: "Write better prompts for better results", url: "https://ruben.substack.com/p/magic" },
+    { title: "AI Workflows", desc: "Automate tasks with AI agents", url: "https://ruben.substack.com/p/claude-cowork-20" },
+    { title: "AI Security", desc: "Use AI responsibly and safely", url: "https://ruben.substack.com/p/how-to-better-use-ai-before-prompting" },
+  ]
+
+  const securityGuides = [
+    { title: "OWASP Top 10", desc: "Understand the most critical web security risks", url: "https://owasp.org/www-project-top-ten/" },
+    { title: "CVE Database", desc: "Search known vulnerabilities", url: "https://cve.mitre.org/" },
+    { title: "NIST Cybersecurity", desc: "Framework for improving security", url: "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final" },
+    { title: "Security Headers", desc: "HTTP security headers checklist", url: "https://securityheaders.com/" },
   ]
 
   const zyraGuides = [
@@ -71,6 +81,33 @@ export default function Resources() {
                 <div className="flex items-center text-primary text-sm">
                   Read guide <ArrowRight className="w-4 h-4 ml-1" />
                 </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Security Resources */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <Shield className="w-8 h-8 text-primary" />
+            <h2 className="text-2xl font-bold">Security Reference</h2>
+          </div>
+          <p className="text-slate-400 mb-8">
+            Essential security resources and standards to help you stay protected.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {securityGuides.map((guide, i) => (
+              <a
+                key={i}
+                href={guide.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-surface border border-border rounded-2xl p-6 hover:border-primary/50 transition-all"
+              >
+                <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                  {guide.title}
+                </h3>
+                <p className="text-slate-400 text-sm">{guide.desc}</p>
               </a>
             ))}
           </div>
