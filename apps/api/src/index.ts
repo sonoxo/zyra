@@ -41,6 +41,7 @@ import publicRoutes from './routes/public.js'
 import analyticsRoutes from './routes/analytics.js'
 import integrationsRoutes from './routes/integrations.js'
 import auditRoutes from './routes/audit.js'
+import githubRoutes from './routes/github.js'
 import bootstrapRoutes from './routes/bootstrap.js'
 import replitRoutes from './routes/replit.js'
 import ipAllowlistPlugin from './plugins/ipAllowlist.js'
@@ -92,6 +93,7 @@ await server.register(publicRoutes, { prefix: '/api/public' })
 await server.register(analyticsRoutes, { prefix: '/api/analytics' })
 await server.register(integrationsRoutes, { prefix: '/api/integrations' })
 await server.register(auditRoutes, { prefix: '/api/audit' })
+await server.register(githubRoutes, { prefix: '/api/github' })
 await server.register(bootstrapRoutes, { prefix: '/api/bootstrap' })
 await server.register(replitRoutes, { prefix: '/api/replit' })
 
