@@ -1,9 +1,19 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Shield, Loader2 } from "lucide-react"
 import { useAuth } from "../../../context/AuthContext"
+
+declare global {
+  interface Window {
+    turnstile: {
+      render: (container: string | HTMLElement, options: any) => string
+      reset: (widgetId?: string) => void
+      remove: (widgetId: string) => void
+    }
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter()

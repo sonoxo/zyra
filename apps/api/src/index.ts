@@ -47,6 +47,7 @@ import ipAllowlistPlugin from './plugins/ipAllowlist.js'
 import ssrfProtectionPlugin from './plugins/ssrfProtection.js'
 import botDetectionPlugin from './plugins/botDetection.js'
 import webhookSignaturePlugin from './plugins/webhookSignature.js'
+import turnstilePlugin from './plugins/turnstile.js'
 import { getSystemHealth } from '@zyra/monitoring'
 import { websocketRoutes } from './websocket/index.js'
 
@@ -79,6 +80,7 @@ await server.register(ssrfProtectionPlugin) // Block SSRF attacks
 await server.register(ipAllowlistPlugin)     // Restrict admin IP access
 await server.register(botDetectionPlugin)    // Detect bot attacks on auth
 await server.register(webhookSignaturePlugin, { secretEnvVar: 'WEBHOOK_SECRET' }) // Verify webhook signatures
+await server.register(turnstilePlugin, { secretKeyEnvVar: 'TURNSTILE_SECRET_KEY' }) // CAPTCHA on auth forms
 
 // Health check (simple)
 server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }))
