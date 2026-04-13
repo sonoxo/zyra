@@ -41,6 +41,9 @@ import integrationsRoutes from './routes/integrations.js';
 import auditRoutes from './routes/audit.js';
 import bootstrapRoutes from './routes/bootstrap.js';
 import replitRoutes from './routes/replit.js';
+import ipAllowlistPlugin from './plugins/ipAllowlist.js';
+import ssrfProtectionPlugin from './plugins/ssrfProtection.js';
+import botDetectionPlugin from './plugins/botDetection.js';
 import { getSystemHealth } from '@zyra/monitoring';
 import { websocketRoutes } from './websocket/index.js';
 const server = Fastify({
@@ -60,6 +63,10 @@ await server.register(websocket);
 // Request ID tracking + rate limiting
 requestIdMiddleware(server);
 server.addHook('preHandler', rateLimit());
+// Security plugins
+await server.register(ssrfProtectionPlugin); // Block SSRF attacks
+await server.register(ipAllowlistPlugin); // Restrict admin IP access
+await server.register(botDetectionPlugin); // Detect bot attacks on auth
 // Health check (simple)
 server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
 server.get('/api/health', async () => ({ success: true, status: 'ok', timestamp: new Date().toISOString() }));
