@@ -34,6 +34,7 @@ import apiKeyRoutes from './routes/keys.js';
 import passwordResetRoutes from './routes/password.js';
 import notificationRoutes from './routes/notifications.js';
 import healthRoutes from './routes/health.js';
+import copilotRoutes from './routes/copilot.js';
 import publicRoutes from './routes/public.js';
 import analyticsRoutes from './routes/analytics.js';
 import integrationsRoutes from './routes/integrations.js';
@@ -86,6 +87,7 @@ await server.register(pricingRoutes, { prefix: '/api/pricing' });
 await server.register(apiKeyRoutes, { prefix: '/api/keys' });
 await server.register(passwordResetRoutes, { prefix: '/api/password' });
 await server.register(notificationRoutes, { prefix: '/api/notifications' });
+await server.register(copilotRoutes, { prefix: '/api/copilot' });
 await server.register(webhookRoutes, { prefix: '/api/webhooks' });
 await server.register(jobRoutes, { prefix: '/api/jobs' });
 // WebSocket

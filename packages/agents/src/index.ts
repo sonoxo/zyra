@@ -95,4 +95,7 @@ export const agents = {
   copilot: new AICopilot(),
 }
 
+// AI Copilot with Claude integration
+export { copilot, ZyraCopilot } from './copilot'
+
 export type { Agent, AgentType }
