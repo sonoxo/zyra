@@ -34,6 +34,7 @@ import PosturePage from "@/pages/posture";
 import SecurityAwarenessPage from "@/pages/security-awareness";
 import VendorRiskPage from "@/pages/vendor-risk";
 import DarkWebPage from "@/pages/dark-web";
+import DarkWebDetailPage from "@/pages/dark-web-detail";
 import SecurityRoadmapPage from "@/pages/security-roadmap";
 import BugBountyPage from "@/pages/bug-bounty";
 import ContainerSecurityPage from "@/pages/container-security";
@@ -151,6 +152,7 @@ function Router() {
       <Route path="/posture">{() => <ProtectedRoute component={PosturePage} />}</Route>
       <Route path="/security-awareness">{() => <ProtectedRoute component={SecurityAwarenessPage} />}</Route>
       <Route path="/vendor-risk">{() => <ProtectedRoute component={VendorRiskPage} />}</Route>
+      <Route path="/dark-web/:id">{() => <ProtectedRoute component={DarkWebDetailPage} />}</Route>
       <Route path="/dark-web">{() => <ProtectedRoute component={DarkWebPage} />}</Route>
       <Route path="/security-roadmap">{() => <ProtectedRoute component={SecurityRoadmapPage} />}</Route>
       <Route path="/bug-bounty">{() => <ProtectedRoute component={BugBountyPage} />}</Route>

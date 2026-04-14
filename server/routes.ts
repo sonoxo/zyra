@@ -2409,6 +2409,12 @@ export async function registerRoutes(
     res.json({ scanned: domain, status: "scan_queued", existingAlerts: domainAlerts.length, alerts: domainAlerts });
   });
 
+  app.get("/api/dark-web/alerts/:id", requireAuth, async (req: Request, res: Response) => {
+    const alert = await storage.getDarkWebAlert(req.params.id, req.user!.organizationId);
+    if (!alert) return res.status(404).json({ message: "Dark web alert not found" });
+    res.json(alert);
+  });
+
   app.put("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const parsed = darkWebAlertUpdateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });

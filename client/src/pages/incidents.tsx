@@ -26,10 +26,10 @@ const formSchema = insertIncidentSchema.extend({
 });
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  triage: { label: "Triage", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: AlertTriangle },
-  assign: { label: "Assigned", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: Users },
+  triage: { label: "New", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: AlertTriangle },
+  assign: { label: "Investigating", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: Users },
   contain: { label: "Contained", color: "bg-orange-500/10 text-orange-500 border-orange-500/20", icon: Shield },
-  remediate: { label: "Remediating", color: "bg-purple-500/10 text-purple-500 border-purple-500/20", icon: Flame },
+  remediate: { label: "Resolved", color: "bg-purple-500/10 text-purple-500 border-purple-500/20", icon: Flame },
   close: { label: "Closed", color: "bg-green-500/10 text-green-500 border-green-500/20", icon: CheckCircle2 },
 };
 

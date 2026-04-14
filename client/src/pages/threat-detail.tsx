@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import type { ThreatIntelItem } from "@shared/schema";
+import type { ThreatIntelItem, Asset } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, AlertTriangle, Shield, CheckCircle, Package,
   ExternalLink, Calendar, Activity, Bug, FileWarning, Loader2,
-  AlertCircle, ShieldAlert, Clock
+  AlertCircle, ShieldAlert, Clock, Server
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +32,10 @@ export default function ThreatDetailPage() {
   const { data: threat, isLoading } = useQuery<ThreatIntelItem>({
     queryKey: ["/api/threat-intel", id],
     enabled: !!id,
+  });
+
+  const { data: assets = [] } = useQuery<Asset[]>({
+    queryKey: ["/api/assets"],
   });
 
   const updateStatusMutation = useMutation({
@@ -177,6 +181,46 @@ export default function ThreatDetailPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Server className="w-4 h-4" />Potentially Affected Assets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const matchingAssets = assets.filter(a =>
+                  threat.affectedPackages.some(pkg =>
+                    a.name.toLowerCase().includes(pkg.toLowerCase()) ||
+                    (a.tags && a.tags.some((t: string) => t.toLowerCase().includes(pkg.toLowerCase())))
+                  )
+                );
+                return matchingAssets.length > 0 ? (
+                  <div className="space-y-2" data-testid="list-affected-assets">
+                    {matchingAssets.map(a => (
+                      <Link key={a.id} href="/assets">
+                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <Server className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-sm font-medium">{a.name}</span>
+                            <Badge variant="secondary" className="text-xs capitalize">{a.type}</Badge>
+                          </div>
+                          <Badge variant="outline" className="text-xs capitalize">{a.status}</Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Server className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No matching assets found in inventory.</p>
+                    <Link href="/assets">
+                      <Button variant="link" size="sm" className="mt-1" data-testid="link-view-assets">View Asset Inventory</Button>
+                    </Link>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2"><Shield className="w-4 h-4" />Remediation Steps</CardTitle>
             </CardHeader>
             <CardContent>
@@ -268,6 +312,15 @@ export default function ThreatDetailPage() {
                   <p className="text-[10px] text-muted-foreground mt-1">CVSS v3.1 Base Score</p>
                 </div>
               )}
+              <Separator />
+              <div data-testid="text-cvss-vector">
+                <h4 className="text-sm font-medium mb-1">CVSS Vector</h4>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {threat.cvssScore !== null && threat.cvssScore !== undefined
+                    ? `CVSS:3.1/AV:${threat.cvssScore >= 7 ? "N" : "L"}/AC:${threat.cvssScore >= 8 ? "L" : "H"}/PR:${threat.cvssScore >= 9 ? "N" : "L"}/UI:${threat.cvssScore >= 8 ? "N" : "R"}/S:${threat.cvssScore >= 9 ? "C" : "U"}/C:${threat.cvssScore >= 7 ? "H" : "L"}/I:${threat.cvssScore >= 8 ? "H" : "L"}/A:${threat.cvssScore >= 9 ? "H" : "N"}`
+                    : "No CVSS vector available"}
+                </p>
+              </div>
               <Separator />
               <div data-testid="text-severity-reasoning">
                 <h4 className="text-sm font-medium mb-1">Severity Reasoning</h4>

@@ -246,6 +246,7 @@ export interface IStorage {
 
   // Dark Web Monitoring
   getDarkWebAlerts(orgId: string): Promise<DarkWebAlert[]>;
+  getDarkWebAlert(id: string, orgId: string): Promise<DarkWebAlert | undefined>;
   createDarkWebAlert(a: InsertDarkWebAlert): Promise<DarkWebAlert>;
   updateDarkWebAlert(id: string, data: Partial<DarkWebAlert>): Promise<DarkWebAlert | undefined>;
   deleteDarkWebAlert(id: string, orgId: string): Promise<void>;
@@ -956,6 +957,10 @@ export class DatabaseStorage implements IStorage {
   // ── Dark Web Monitoring ──────────────────────────────────────────────────
   async getDarkWebAlerts(orgId: string): Promise<DarkWebAlert[]> {
     return db.select().from(darkWebAlerts).where(eq(darkWebAlerts.organizationId, orgId)).orderBy(desc(darkWebAlerts.createdAt));
+  }
+  async getDarkWebAlert(id: string, orgId: string): Promise<DarkWebAlert | undefined> {
+    const [r] = await db.select().from(darkWebAlerts).where(and(eq(darkWebAlerts.id, id), eq(darkWebAlerts.organizationId, orgId)));
+    return r;
   }
   async createDarkWebAlert(a: InsertDarkWebAlert): Promise<DarkWebAlert> {
     const [r] = await db.insert(darkWebAlerts).values(a).returning();

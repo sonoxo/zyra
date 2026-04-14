@@ -22,10 +22,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any; description: string }> = {
-  triage: { label: "Triage", color: "text-yellow-600 dark:text-yellow-400", bgColor: "bg-yellow-500/10 border-yellow-500/20", icon: AlertTriangle, description: "Assess severity and impact" },
-  assign: { label: "Assigned", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500/10 border-blue-500/20", icon: Users, description: "Team assigned and investigating" },
+  triage: { label: "New", color: "text-yellow-600 dark:text-yellow-400", bgColor: "bg-yellow-500/10 border-yellow-500/20", icon: AlertTriangle, description: "Assess severity and impact" },
+  assign: { label: "Investigating", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500/10 border-blue-500/20", icon: Users, description: "Team assigned and investigating" },
   contain: { label: "Contained", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-500/10 border-orange-500/20", icon: Shield, description: "Threat contained, limiting spread" },
-  remediate: { label: "Remediating", color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500/10 border-purple-500/20", icon: Flame, description: "Actively resolving root cause" },
+  remediate: { label: "Resolved", color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-500/10 border-purple-500/20", icon: Flame, description: "Root cause resolved" },
   close: { label: "Closed", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-500/10 border-green-500/20", icon: CheckCircle2, description: "Incident resolved and documented" },
 };
 
