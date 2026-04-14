@@ -153,19 +153,21 @@ export default function Billing() {
     }
   }, [isViewer]);
 
+  const canFetchBilling = !!currentUser && !isViewer;
+
   const { data: subscription, isLoading: subLoading } = useQuery<SubscriptionWithTrial>({
     queryKey: ["/api/billing/subscription"],
-    enabled: !isViewer,
+    enabled: canFetchBilling,
   });
 
   const { data: usage, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ["/api/billing/usage"],
-    enabled: !isViewer,
+    enabled: canFetchBilling,
   });
 
   const { data: stripeStatus } = useQuery<{ configured: boolean }>({
     queryKey: ["/api/stripe/status"],
-    enabled: !isViewer,
+    enabled: canFetchBilling,
   });
 
   if (isViewer) {
