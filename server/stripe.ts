@@ -45,11 +45,17 @@ export function isPaidPlan(plan: string): boolean {
 }
 
 export function registerStripeRoutes(app: Express, requireAuth: (req: Request, res: Response, next: () => void) => void) {
-  app.get("/api/stripe/status", requireAuth, (_req: Request, res: Response) => {
+  app.get("/api/stripe/status", requireAuth, (req: Request, res: Response, next: () => void) => {
+    if (req.user?.role === "viewer") return res.status(403).json({ message: "Access denied" });
+    next();
+  }, (_req: Request, res: Response) => {
     return res.json({ configured: !!STRIPE_SECRET_KEY });
   });
 
-  app.post("/api/stripe/create-checkout-session", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/stripe/create-checkout-session", requireAuth, (req: Request, res: Response, next: () => void) => {
+    if (!["owner", "admin"].includes(req.user?.role || "")) return res.status(403).json({ message: "Access denied" });
+    next();
+  }, async (req: Request, res: Response) => {
     try {
       const stripe = getStripe();
       if (!stripe) {
@@ -100,7 +106,10 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
     }
   });
 
-  app.get("/api/stripe/session/:sessionId", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/stripe/session/:sessionId", requireAuth, (req: Request, res: Response, next: () => void) => {
+    if (req.user?.role === "viewer") return res.status(403).json({ message: "Access denied" });
+    next();
+  }, async (req: Request, res: Response) => {
     try {
       const stripe = getStripe();
       if (!stripe) {

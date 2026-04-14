@@ -301,6 +301,23 @@ export async function runScanSimulation(scanId: string, orgId: string, scanType:
       infoCount,
       securityScore: Math.min(100, securityScore),
     });
+
+    try {
+      const scan = await storage.getScan(scanId, orgId);
+      if (scan) {
+        await storage.createNotification({
+          organizationId: orgId,
+          title: "Scan Completed",
+          message: `${scan.name || scanType} scan finished with ${totalFindings} findings (${criticalCount} critical, ${highCount} high). Security score: ${Math.min(100, securityScore)}/100.`,
+          type: "success",
+          severity: criticalCount > 0 ? "high" : "info",
+          resourceType: "scan",
+          resourceId: scanId,
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to create scan notification:", notifErr);
+    }
   } catch (err) {
     console.error("Scan simulation error:", err);
     await storage.updateScan(scanId, {

@@ -144,7 +144,16 @@ function AddAssetDialog() {
   const form = useForm({ defaultValues: { hostname: "", ip: "", assetType: "server", environment: "production", criticality: "medium", cloudProvider: "", os: "", owner: "" } });
 
   const mutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/assets", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/assets", {
+      hostname: data.hostname,
+      ip: data.ip || undefined,
+      assetType: data.assetType,
+      environment: data.environment,
+      criticality: data.criticality,
+      cloudProvider: data.cloudProvider || undefined,
+      os: data.os || undefined,
+      owner: data.owner || undefined,
+    }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/assets"] }); setOpen(false); form.reset(); toast({ title: "Asset added to inventory" }); },
   });
 

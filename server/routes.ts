@@ -142,11 +142,15 @@ const bountyReportUpdateSchema = z.object({
 }).strict();
 
 const assetUpdateSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  type: z.string().max(100).optional(),
+  hostname: z.string().min(1).max(200).optional(),
+  assetType: z.string().max(100).optional(),
   status: z.enum(["active", "inactive", "decommissioned"]).optional(),
   criticality: z.enum(["critical", "high", "medium", "low"]).optional(),
   owner: z.string().max(200).optional(),
+  ip: z.string().max(100).optional(),
+  environment: z.string().max(50).optional(),
+  os: z.string().max(100).optional(),
+  cloudProvider: z.string().max(100).optional(),
 }).strict();
 
 const attackPathUpdateSchema = z.object({
@@ -1132,11 +1136,11 @@ export async function registerRoutes(
     enterprise: { name: "Enterprise", price: 499, maxUsers: -1, maxScansPerMonth: -1, maxRepositories: -1, features: ["Unlimited everything", "All compliance frameworks", "Dedicated support", "SSO & SAML", "Custom integrations", "SLA guarantee", "Multi-region deployment", "Audit log export", "Advanced RBAC"] },
   };
 
-  app.get("/api/billing/plans", requireAuth, async (_req: Request, res: Response) => {
+  app.get("/api/billing/plans", requireAuth, requireRole("owner", "admin", "analyst"), async (_req: Request, res: Response) => {
     return res.json(Object.entries(PLAN_DETAILS).map(([key, val]) => ({ id: key, ...val })));
   });
 
-  app.get("/api/billing/subscription", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/billing/subscription", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const orgId = req.user!.organizationId;
     let sub = await storage.getSubscription(orgId);
     if (!sub) {
@@ -1206,7 +1210,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/billing/usage", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/billing/usage", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
       const [teamMembers, scans, repos, sub] = await Promise.all([
@@ -1497,6 +1501,21 @@ export async function registerRoutes(
     if (!updated) return res.status(404).json({ message: "Item not found" });
     if (parsed.data.status) {
       await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "threat-intel.status-change", resource: "threat_intel", resourceId: req.params.id, details: { previousStatus: existing?.status, newStatus: parsed.data.status, cveId: updated.cveId } });
+      if (parsed.data.status === "acknowledged") {
+        try {
+          await storage.createNotification({
+            organizationId: req.user!.organizationId,
+            title: "Threat Acknowledged",
+            message: `Threat "${updated.title}" has been acknowledged${updated.cveId ? ` (${updated.cveId})` : ""}.`,
+            type: "threat_intel",
+            severity: updated.severity || "info",
+            resourceType: "threat_intel",
+            resourceId: req.params.id,
+          });
+        } catch (notifErr) {
+          console.error("Failed to create threat ack notification:", notifErr);
+        }
+      }
     }
     res.json(updated);
   });
@@ -2619,15 +2638,15 @@ export async function registerRoutes(
   });
 
   const assetSchema = z.object({
-    name: z.string().min(1, "Name is required").max(255),
-    type: z.string().min(1),
-    hostname: z.string().optional(),
-    ipAddress: z.string().optional(),
+    hostname: z.string().min(1, "Hostname is required").max(255),
+    ip: z.string().optional(),
+    assetType: z.string().optional().default("server"),
+    environment: z.string().optional().default("production"),
+    cloudProvider: z.string().optional(),
     os: z.string().optional(),
-    status: z.string().optional().default("active"),
     criticality: z.string().optional().default("medium"),
+    status: z.string().optional().default("active"),
     owner: z.string().optional(),
-    location: z.string().optional(),
     tags: z.array(z.string()).optional(),
   });
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface SecurityEvent {
+  id: string;
+  eventType: string;
+  source: string;
+  severity: string;
+  title: string;
+  description: string | null;
+  metadata: any;
+  createdAt: string;
+}
+
 interface ThreatEvent {
   id: string;
   timestamp: number;
-  type: "intrusion" | "malware" | "ddos" | "phishing" | "exfiltration" | "bruteforce" | "exploit" | "recon";
+  type: string;
   severity: "critical" | "high" | "medium" | "low";
   source: string;
   target: string;
@@ -42,35 +54,6 @@ interface AttackFlow {
   speed: number;
 }
 
-const THREAT_TYPES = [
-  { type: "intrusion", label: "Intrusion Attempt", protocols: ["SSH", "RDP", "VNC", "Telnet"] },
-  { type: "malware", label: "Malware Detected", protocols: ["HTTP", "HTTPS", "SMTP", "FTP"] },
-  { type: "ddos", label: "DDoS Attack", protocols: ["UDP", "TCP SYN", "HTTP Flood", "DNS Amplification"] },
-  { type: "phishing", label: "Phishing Campaign", protocols: ["SMTP", "HTTP", "HTTPS"] },
-  { type: "exfiltration", label: "Data Exfiltration", protocols: ["HTTPS", "DNS Tunnel", "ICMP", "FTP"] },
-  { type: "bruteforce", label: "Brute Force", protocols: ["SSH", "RDP", "HTTP Auth", "LDAP"] },
-  { type: "exploit", label: "Exploit Attempt", protocols: ["HTTP", "SMB", "RPC", "WebSocket"] },
-  { type: "recon", label: "Reconnaissance", protocols: ["ICMP", "TCP SYN", "DNS", "SNMP"] },
-] as const;
-
-const COUNTRIES = [
-  "Russia", "China", "North Korea", "Iran", "Brazil", "United States",
-  "Germany", "Ukraine", "Romania", "Nigeria", "India", "Turkey",
-  "Vietnam", "Indonesia", "Pakistan", "Netherlands", "France"
-];
-
-const SOURCE_IPS = [
-  "185.220.101.", "45.33.32.", "198.51.100.", "203.0.113.",
-  "91.219.236.", "23.129.64.", "104.244.76.", "171.25.193.",
-  "62.210.105.", "178.62.197.", "139.59.144.", "167.71.13."
-];
-
-const TARGET_SYSTEMS = [
-  "Web Server (DMZ)", "API Gateway", "Auth Service", "Database Cluster",
-  "Mail Server", "DNS Server", "Load Balancer", "Container Registry",
-  "CI/CD Pipeline", "Storage Service", "VPN Gateway", "Identity Provider"
-];
-
 const SEVERITY_CONFIG = {
   critical: { color: "#ef4444", glow: "rgba(239,68,68,0.6)", bg: "bg-red-500/10 text-red-400", border: "border-red-500/30" },
   high: { color: "#f97316", glow: "rgba(249,115,22,0.5)", bg: "bg-orange-500/10 text-orange-400", border: "border-orange-500/30" },
@@ -85,35 +68,48 @@ const STATUS_CONFIG = {
   investigating: { label: "INVESTIGATING", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
 };
 
-function generateThreatEvent(): ThreatEvent {
-  const typeInfo = THREAT_TYPES[Math.floor(Math.random() * THREAT_TYPES.length)];
-  const severities: ThreatEvent["severity"][] = ["critical", "high", "medium", "low"];
-  const weights = [0.1, 0.25, 0.35, 0.3];
-  let r = Math.random(), severity = severities[0];
-  for (let i = 0, sum = 0; i < weights.length; i++) {
-    sum += weights[i];
-    if (r <= sum) { severity = severities[i]; break; }
-  }
-  const statuses: ThreatEvent["status"][] = ["blocked", "detected", "mitigated", "investigating"];
-  const statusWeights = [0.5, 0.2, 0.2, 0.1];
-  r = Math.random();
-  let status = statuses[0];
-  for (let i = 0, sum = 0; i < statusWeights.length; i++) {
-    sum += statusWeights[i];
-    if (r <= sum) { status = statuses[i]; break; }
-  }
+const STATUS_MAP: Record<string, ThreatEvent["status"]> = {
+  blocked: "blocked",
+  detected: "detected",
+  mitigated: "mitigated",
+  resolved: "mitigated",
+  investigating: "investigating",
+  active: "investigating",
+};
+
+const TYPE_MAP: Record<string, string> = {
+  waf_block: "intrusion",
+  intrusion_detection: "intrusion",
+  malware_detection: "malware",
+  ddos_mitigation: "ddos",
+  phishing_detection: "phishing",
+  data_exfiltration: "exfiltration",
+  brute_force: "bruteforce",
+  exploit_attempt: "exploit",
+  port_scan: "recon",
+  failed_login: "bruteforce",
+  cspm_change: "recon",
+  soar_execution: "exploit",
+  cve_correlation: "exploit",
+};
+
+function mapSecurityEventToThreat(evt: SecurityEvent): ThreatEvent {
+  const meta = evt.metadata || {};
+  const severityVal = (["critical", "high", "medium", "low"].includes(evt.severity) ? evt.severity : "medium") as ThreatEvent["severity"];
+  const rawStatus = meta.status || meta.action || "detected";
+  const status = STATUS_MAP[rawStatus] || "detected";
 
   return {
-    id: Math.random().toString(36).slice(2, 10),
-    timestamp: Date.now(),
-    type: typeInfo.type as ThreatEvent["type"],
-    severity,
-    source: SOURCE_IPS[Math.floor(Math.random() * SOURCE_IPS.length)] + Math.floor(Math.random() * 255),
-    target: TARGET_SYSTEMS[Math.floor(Math.random() * TARGET_SYSTEMS.length)],
-    action: typeInfo.label,
+    id: evt.id,
+    timestamp: new Date(evt.createdAt).getTime(),
+    type: TYPE_MAP[evt.eventType] || "recon",
+    severity: severityVal,
+    source: meta.sourceIp || meta.source_ip || evt.source || "Unknown",
+    target: meta.targetSystem || meta.target || meta.asset || "Infrastructure",
+    action: evt.title,
     status,
-    country: COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)],
-    protocol: typeInfo.protocols[Math.floor(Math.random() * typeInfo.protocols.length)],
+    country: meta.country || meta.geoLocation || "Unknown",
+    protocol: meta.protocol || meta.service || evt.eventType.replace(/_/g, " ").toUpperCase().slice(0, 10),
   };
 }
 
@@ -359,9 +355,13 @@ function NetworkCanvas({ isRunning }: { isRunning: boolean }) {
 
 function AttackOriginRing({ events }: { events: ThreatEvent[] }) {
   const countryMap = new Map<string, number>();
-  events.forEach(e => countryMap.set(e.country, (countryMap.get(e.country) || 0) + 1));
+  events.forEach(e => { if (e.country !== "Unknown") countryMap.set(e.country, (countryMap.get(e.country) || 0) + 1); });
   const sorted = [...countryMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const max = sorted[0]?.[1] || 1;
+
+  if (sorted.length === 0) {
+    return <p className="text-xs text-muted-foreground text-center py-4">No origin data available</p>;
+  }
 
   return (
     <div className="space-y-2">
@@ -387,6 +387,10 @@ function ProtocolBreakdown({ events }: { events: ThreatEvent[] }) {
   const sorted = [...protoMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
   const colors = ["text-red-400", "text-orange-400", "text-yellow-400", "text-blue-400", "text-cyan-400", "text-purple-400"];
 
+  if (sorted.length === 0) {
+    return <p className="text-xs text-muted-foreground text-center py-4">No protocol data available</p>;
+  }
+
   return (
     <div className="grid grid-cols-2 gap-2">
       {sorted.map(([proto, count], i) => (
@@ -402,57 +406,22 @@ function ProtocolBreakdown({ events }: { events: ThreatEvent[] }) {
 
 export default function ThreatSimulationPage() {
   const [isRunning, setIsRunning] = useState(true);
-  const [events, setEvents] = useState<ThreatEvent[]>([]);
-  const [stats, setStats] = useState({
-    totalAttacks: 0,
-    blocked: 0,
-    detected: 0,
-    mitigated: 0,
-    eventsPerSec: 0,
-    criticalCount: 0,
+
+  const { data: securityEvents = [], isLoading } = useQuery<SecurityEvent[]>({
+    queryKey: ["/api/security-events"],
+    refetchInterval: isRunning ? 15000 : false,
   });
 
-  useEffect(() => {
-    const initial: ThreatEvent[] = [];
-    for (let i = 0; i < 15; i++) {
-      const evt = generateThreatEvent();
-      evt.timestamp = Date.now() - (15 - i) * 2000;
-      initial.push(evt);
-    }
-    setEvents(initial);
-    const blockedCount = initial.filter(e => e.status === "blocked").length;
-    const detectedCount = initial.filter(e => e.status === "detected").length;
-    const mitigatedCount = initial.filter(e => e.status === "mitigated").length;
-    setStats({
-      totalAttacks: initial.length,
-      blocked: blockedCount,
-      detected: detectedCount,
-      mitigated: mitigatedCount,
-      eventsPerSec: 2.4,
-      criticalCount: initial.filter(e => e.severity === "critical").length,
-    });
-  }, []);
+  const events: ThreatEvent[] = securityEvents.map(mapSecurityEventToThreat);
 
-  useEffect(() => {
-    if (!isRunning) return;
-    const interval = setInterval(() => {
-      const newEvent = generateThreatEvent();
-      setEvents(prev => {
-        const updated = [newEvent, ...prev].slice(0, 200);
-        return updated;
-      });
-      setStats(prev => ({
-        totalAttacks: prev.totalAttacks + 1,
-        blocked: prev.blocked + (newEvent.status === "blocked" ? 1 : 0),
-        detected: prev.detected + (newEvent.status === "detected" ? 1 : 0),
-        mitigated: prev.mitigated + (newEvent.status === "mitigated" ? 1 : 0),
-        eventsPerSec: Math.round((2 + Math.random() * 4) * 10) / 10,
-        criticalCount: prev.criticalCount + (newEvent.severity === "critical" ? 1 : 0),
-      }));
-    }, 800 + Math.random() * 1200);
-
-    return () => clearInterval(interval);
-  }, [isRunning]);
+  const stats = {
+    totalAttacks: events.length,
+    blocked: events.filter(e => e.status === "blocked").length,
+    detected: events.filter(e => e.status === "detected").length,
+    mitigated: events.filter(e => e.status === "mitigated").length,
+    eventsPerSec: events.length > 0 ? Math.round((events.length / Math.max(1, (Date.now() - (events[events.length - 1]?.timestamp || Date.now())) / 1000)) * 10) / 10 : 0,
+    criticalCount: events.filter(e => e.severity === "critical").length,
+  };
 
   const severityCounts = {
     critical: events.filter(e => e.severity === "critical").length,
@@ -498,7 +467,7 @@ export default function ThreatSimulationPage() {
           <CardContent className="pt-3 pb-2 px-3">
             <div className="flex items-center gap-2">
               <Target className="w-4 h-4 text-red-400" />
-              <span className="text-xs text-muted-foreground">Attacks</span>
+              <span className="text-xs text-muted-foreground">Events</span>
             </div>
             <p className="text-xl font-bold text-red-400 mt-1 font-mono" data-testid="text-total-attacks">
               {stats.totalAttacks.toLocaleString()}
@@ -545,7 +514,7 @@ export default function ThreatSimulationPage() {
               <span className="text-xs text-muted-foreground">Events/sec</span>
             </div>
             <p className="text-xl font-bold text-cyan-400 mt-1 font-mono" data-testid="text-events-per-sec">
-              {stats.eventsPerSec}
+              {stats.eventsPerSec || "—"}
             </p>
           </CardContent>
         </Card>
@@ -618,7 +587,7 @@ export default function ThreatSimulationPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Flame className="w-4 h-4 text-orange-400" />
-                Live Threat Feed
+                Security Event Feed
               </CardTitle>
               <div className="flex gap-2 text-[10px]">
                 {Object.entries(severityCounts).map(([sev, count]) => (
@@ -631,51 +600,64 @@ export default function ThreatSimulationPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="max-h-[380px] overflow-y-auto" data-testid="feed-threat-events">
-              {events.slice(0, 50).map((event, idx) => {
-                const sevCfg = SEVERITY_CONFIG[event.severity];
-                const statusCfg = STATUS_CONFIG[event.status];
-                return (
-                  <div
-                    key={event.id}
-                    className={cn(
-                      "flex items-start gap-3 px-4 py-2.5 border-b border-border/30 transition-all",
-                      idx === 0 && isRunning && "animate-in fade-in slide-in-from-top-1 duration-300",
-                      "hover:bg-muted/30"
-                    )}
-                    data-testid={`row-threat-${event.id}`}
-                  >
-                    <div className="pt-1 shrink-0">
-                      <div className={cn("w-2 h-2 rounded-full")} style={{ backgroundColor: sevCfg.color }} />
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                  <Activity className="w-5 h-5 animate-spin mr-2" /> Loading security events...
+                </div>
+              ) : events.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Shield className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">No security events recorded yet</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Events will appear here as your security tools detect activity</p>
+                </div>
+              ) : (
+                events.slice(0, 50).map((event, idx) => {
+                  const sevCfg = SEVERITY_CONFIG[event.severity];
+                  const statusCfg = STATUS_CONFIG[event.status];
+                  return (
+                    <div
+                      key={event.id}
+                      className={cn(
+                        "flex items-start gap-3 px-4 py-2.5 border-b border-border/30 transition-all",
+                        "hover:bg-muted/30"
+                      )}
+                      data-testid={`row-threat-${event.id}`}
+                    >
+                      <div className="pt-1 shrink-0">
+                        <div className={cn("w-2 h-2 rounded-full")} style={{ backgroundColor: sevCfg.color }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm">{event.action}</span>
+                          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", sevCfg.bg, sevCfg.border)}>
+                            {event.severity.toUpperCase()}
+                          </Badge>
+                          <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", statusCfg.color)}>
+                            {statusCfg.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span className="font-mono">{event.source}</span>
+                          <span>→</span>
+                          <span>{event.target}</span>
+                          <span className="text-muted-foreground/60">via {event.protocol}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground shrink-0 text-right">
+                        {event.country !== "Unknown" && (
+                          <div className="flex items-center gap-1">
+                            <Globe className="w-3 h-3" />
+                            {event.country}
+                          </div>
+                        )}
+                        <div className="mt-0.5 font-mono text-[10px]">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{event.action}</span>
-                        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", sevCfg.bg, sevCfg.border)}>
-                          {event.severity.toUpperCase()}
-                        </Badge>
-                        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", statusCfg.color)}>
-                          {statusCfg.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        <span className="font-mono">{event.source}</span>
-                        <span>→</span>
-                        <span>{event.target}</span>
-                        <span className="text-muted-foreground/60">via {event.protocol}</span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground shrink-0 text-right">
-                      <div className="flex items-center gap-1">
-                        <Globe className="w-3 h-3" />
-                        {event.country}
-                      </div>
-                      <div className="mt-0.5 font-mono text-[10px]">
-                        {new Date(event.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </CardContent>
         </Card>
@@ -730,7 +712,9 @@ export default function ThreatSimulationPage() {
                 {(() => {
                   const targetMap = new Map<string, number>();
                   events.forEach(e => targetMap.set(e.target, (targetMap.get(e.target) || 0) + 1));
-                  return [...targetMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([target, count]) => (
+                  const entries = [...targetMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+                  if (entries.length === 0) return <p className="text-xs text-muted-foreground text-center py-2">No target data</p>;
+                  return entries.map(([target, count]) => (
                     <div key={target} className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground truncate mr-2">{target}</span>
                       <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0">
