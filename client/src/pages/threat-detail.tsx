@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import type { ThreatIntelItem, Asset } from "@shared/schema";
+import type { ThreatIntelItem, AssetInventoryItem } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ export default function ThreatDetailPage() {
     enabled: !!id,
   });
 
-  const { data: assets = [] } = useQuery<Asset[]>({
+  const { data: assets = [] } = useQuery<AssetInventoryItem[]>({
     queryKey: ["/api/assets"],
   });
 
@@ -187,7 +187,7 @@ export default function ThreatDetailPage() {
               {(() => {
                 const matchingAssets = assets.filter(a =>
                   threat.affectedPackages.some(pkg =>
-                    a.name.toLowerCase().includes(pkg.toLowerCase()) ||
+                    a.hostname.toLowerCase().includes(pkg.toLowerCase()) ||
                     (a.tags && a.tags.some((t: string) => t.toLowerCase().includes(pkg.toLowerCase())))
                   )
                 );
@@ -198,8 +198,8 @@ export default function ThreatDetailPage() {
                         <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                           <div className="flex items-center gap-2">
                             <Server className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-sm font-medium">{a.name}</span>
-                            <Badge variant="secondary" className="text-xs capitalize">{a.type}</Badge>
+                            <span className="text-sm font-medium">{a.hostname}</span>
+                            <Badge variant="secondary" className="text-xs capitalize">{a.assetType}</Badge>
                           </div>
                           <Badge variant="outline" className="text-xs capitalize">{a.status}</Badge>
                         </div>

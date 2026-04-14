@@ -10,6 +10,7 @@ export async function fetchCveDatabase(orgId: string) {
   return threatIntelItems
     .filter(item => item.cveId)
     .map(item => ({
+      id: item.id,
       cveId: item.cveId,
       title: item.title,
       severity: item.severity,
