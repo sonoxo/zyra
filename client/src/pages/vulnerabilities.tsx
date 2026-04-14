@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,7 @@ const severityColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground border-border",
 };
 
-const vulnFilters: FilterDefinition[] = [
+const baseVulnFilters: FilterDefinition[] = [
   { key: "search", label: "Search", type: "text", placeholder: "Search vulnerabilities..." },
   {
     key: "severity", label: "Severity", type: "select",
@@ -62,18 +62,30 @@ const vulnFilters: FilterDefinition[] = [
       { value: "verified", label: "Verified" },
     ],
   },
-  { key: "assignee", label: "Assignee", type: "text", placeholder: "Filter by assignee..." },
+  { key: "assignee", label: "Assignee", type: "select", options: [] },
   { key: "date", label: "Date Range", type: "date-range" },
 ];
 
 export default function VulnerabilitiesPage() {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const filterState = useFilterValues(vulnFilters);
+  const filterState = useFilterValues(baseVulnFilters);
   const { values } = filterState;
 
   const { data: vulns = [], isLoading } = useQuery<Vulnerability[]>({ queryKey: ["/api/vulnerabilities"] });
   const { data: stats } = useQuery<any>({ queryKey: ["/api/vulnerabilities/stats"] });
+  const { data: teamData } = useQuery<{ members: { id: string; username: string; fullName: string | null }[] }>({ queryKey: ["/api/team"] });
+
+  const vulnFilters = useMemo<FilterDefinition[]>(() => {
+    const memberOptions = (teamData?.members || []).map(m => ({
+      value: m.username,
+      label: m.fullName || m.username,
+    }));
+    return baseVulnFilters.map(f => {
+      if (f.key === "assignee") return { ...f, options: memberOptions };
+      return f;
+    });
+  }, [teamData]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,8 +125,8 @@ export default function VulnerabilitiesPage() {
         const q = values.search.toLowerCase();
         if (!v.title.toLowerCase().includes(q) && !(v.description?.toLowerCase().includes(q)) && !(v.cve?.toLowerCase().includes(q))) return false;
       }
-      if (values.assignee) {
-        if (!v.assignedTo?.toLowerCase().includes(values.assignee.toLowerCase())) return false;
+      if (values.assignee && values.assignee !== "all") {
+        if (v.assignedTo?.toLowerCase() !== values.assignee.toLowerCase()) return false;
       }
       if (values.date_from) {
         if (new Date(v.createdAt) < new Date(values.date_from)) return false;
