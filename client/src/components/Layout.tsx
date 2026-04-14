@@ -284,7 +284,11 @@ function MobileNavItem({ href, label, icon: Icon, onNavigate }: { href: string; 
   );
 }
 
+const VIEWER_HIDDEN_PATHS = ["/billing"];
+
 function SidebarContent({ user, subscription, initials, isTrialing, isExpired, isActive, trialDaysRemaining, theme, toggleTheme, logoutMutation, onNavigate }: any) {
+  const isViewer = user?.role === "viewer";
+
   return (
     <>
       <div className="p-4 border-b border-sidebar-border">
@@ -308,20 +312,24 @@ function SidebarContent({ user, subscription, initials, isTrialing, isExpired, i
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-3">
-        {navGroups.map((group) => (
-          <div key={group.label}>
-            <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {group.label}
+        {navGroups.map((group) => {
+          const items = isViewer ? group.items.filter((i: any) => !VIEWER_HIDDEN_PATHS.includes(i.href)) : group.items;
+          if (items.length === 0) return null;
+          return (
+            <div key={group.label}>
+              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {group.label}
+              </div>
+              <div className="space-y-0.5">
+                {items.map((item: any) => (
+                  onNavigate
+                    ? <MobileNavItem key={item.href} {...item} onNavigate={onNavigate} />
+                    : <NavItem key={item.href} {...item} />
+                ))}
+              </div>
             </div>
-            <div className="space-y-0.5">
-              {group.items.map((item) => (
-                onNavigate
-                  ? <MobileNavItem key={item.href} {...item} onNavigate={onNavigate} />
-                  : <NavItem key={item.href} {...item} />
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="p-3 border-t border-sidebar-border space-y-2">
@@ -395,9 +403,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [location]);
 
   const { data: user } = useQuery<AuthUser>({ queryKey: ["/api/auth/me"] });
+  const canViewBilling = user?.role && user.role !== "viewer";
   const { data: subscription } = useQuery<SubscriptionWithTrial>({
     queryKey: ["/api/billing/subscription"],
     refetchInterval: 60000,
+    enabled: !!canViewBilling,
   });
 
   const isTrialing = subscription?.status === "trialing";
