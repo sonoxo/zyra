@@ -902,6 +902,7 @@ export async function registerRoutes(
   app.delete("/api/repositories/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
     await storage.deleteRepository(id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "repository.deleted", "repository", id, {}, req.ip);
     return res.json({ message: "Deleted" });
   });
 
@@ -1415,6 +1416,7 @@ export async function registerRoutes(
   app.delete("/api/cloud-security/targets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
     await storage.deleteCloudScanTarget(id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "cloud_target.deleted", "cloud_target", id, {}, req.ip);
     res.json({ message: "Target deleted" });
   });
 
@@ -1566,6 +1568,7 @@ export async function registerRoutes(
   app.delete("/api/alerts/rules/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
     await storage.deleteAlertRule(id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "alert_rule.deleted", "alert_rule", id, {}, req.ip);
     res.json({ message: "Rule deleted" });
   });
 
@@ -1608,6 +1611,7 @@ export async function registerRoutes(
   app.delete("/api/pipelines/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const id = req.params.id as string;
     await storage.deletePipelineConfig(id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "pipeline.deleted", "pipeline", id, {}, req.ip);
     res.json({ message: "Pipeline deleted" });
   });
 
@@ -1688,7 +1692,11 @@ export async function registerRoutes(
     }
     const item = await storage.updateIncident(req.params.id, updateData, req.user!.organizationId);
     if (!item) return res.status(404).json({ message: "Not found" });
-    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status, previousStatus: existing.status } });
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      await logAudit(req.user!.organizationId, req.user!.userId, "incident.status_changed", "incident", item.id, { previousStatus: existing.status, newStatus: parsed.data.status }, req.ip);
+    } else {
+      await logAudit(req.user!.organizationId, req.user!.userId, "incident.updated", "incident", item.id, {}, req.ip);
+    }
     res.json(item);
   });
   app.delete("/api/incidents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
@@ -1861,6 +1869,7 @@ export async function registerRoutes(
   });
   app.delete("/api/sbom/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteSbomItem(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "sbom.deleted", "sbom", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -1906,6 +1915,7 @@ export async function registerRoutes(
   });
   app.delete("/api/secrets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteSecretsFinding(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "secret_finding.deleted", "secret_finding", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -1999,6 +2009,7 @@ export async function registerRoutes(
   });
   app.delete("/api/attack-surface/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteAttackSurfaceAsset(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "attack_surface.deleted", "attack_surface_asset", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -2283,6 +2294,7 @@ export async function registerRoutes(
 
   app.delete("/api/security-awareness/training/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteTrainingRecord(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "training.deleted", "training_record", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2324,6 +2336,7 @@ export async function registerRoutes(
 
   app.delete("/api/security-awareness/campaigns/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deletePhishingCampaign(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "campaign.deleted", "phishing_campaign", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2382,6 +2395,7 @@ export async function registerRoutes(
 
   app.delete("/api/vendors/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteVendor(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "vendor.deleted", "vendor", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2433,6 +2447,7 @@ export async function registerRoutes(
 
   app.delete("/api/dark-web/alerts/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteDarkWebAlert(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "dark_web_alert.deleted", "dark_web_alert", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2470,6 +2485,7 @@ export async function registerRoutes(
 
   app.delete("/api/roadmap/tasks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteRemediationTask(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "roadmap_task.deleted", "roadmap_task", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2506,6 +2522,7 @@ export async function registerRoutes(
 
   app.delete("/api/bounty/reports/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteBountyReport(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "bounty_report.deleted", "bounty_report", req.params.id, {}, req.ip);
     res.json({ ok: true });
   });
 
@@ -2633,6 +2650,7 @@ export async function registerRoutes(
 
   app.delete("/api/assets/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteAsset(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "asset.deleted", "asset", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -2696,6 +2714,7 @@ export async function registerRoutes(
 
   app.delete("/api/attack-paths/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteAttackPath(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "attack_path.deleted", "attack_path", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -2722,6 +2741,7 @@ export async function registerRoutes(
 
   app.delete("/api/hunt/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteThreatHuntQuery(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "hunt_query.deleted", "hunt_query", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
 
@@ -2771,6 +2791,7 @@ export async function registerRoutes(
 
   app.delete("/api/copilot/history", requireAuth, async (req: Request, res: Response) => {
     await storage.upsertCopilotConversation(req.user!.organizationId, req.user!.userId, []);
+    await logAudit(req.user!.organizationId, req.user!.userId, "copilot_history.cleared", "copilot", undefined, {}, req.ip);
     res.json({ success: true });
   });
 
