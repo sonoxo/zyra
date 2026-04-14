@@ -153,18 +153,18 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-gray-400",
 };
 
-const NOTIFICATION_ROUTES: Record<string, string> = {
-  incident: "/incidents",
-  vulnerability: "/vulnerabilities",
-  scan: "/scans",
-  threat_intel: "/threat-intel",
-  task: "/task-center",
+const NOTIFICATION_ROUTES: Record<string, { base: string; hasDetail: boolean }> = {
+  incident: { base: "/incidents", hasDetail: true },
+  vulnerability: { base: "/vulnerabilities", hasDetail: false },
+  scan: { base: "/scans", hasDetail: true },
+  threat_intel: { base: "/threat-intel", hasDetail: true },
+  task: { base: "/task-center", hasDetail: false },
 };
 
 function getNotificationPath(n: Notification): string | null {
-  const base = NOTIFICATION_ROUTES[n.resourceType ?? ""];
-  if (!base) return null;
-  return n.resourceId ? `${base}/${n.resourceId}` : base;
+  const route = NOTIFICATION_ROUTES[n.resourceType ?? ""];
+  if (!route) return null;
+  return route.hasDetail && n.resourceId ? `${route.base}/${n.resourceId}` : route.base;
 }
 
 function NotificationBell({ orgId }: { orgId: string | undefined }) {
