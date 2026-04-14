@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -43,7 +43,7 @@ const severityConfig: Record<string, { color: string }> = {
 
 const workflowSteps = ["triage", "assign", "contain", "remediate", "close"];
 
-const incidentFilters: FilterDefinition[] = [
+const baseIncidentFilters: FilterDefinition[] = [
   { key: "search", label: "Search", type: "text", placeholder: "Search incidents..." },
   {
     key: "severity", label: "Severity", type: "select",
@@ -64,7 +64,8 @@ const incidentFilters: FilterDefinition[] = [
       { value: "close", label: "Closed" },
     ],
   },
-  { key: "assignee", label: "Assignee", type: "text", placeholder: "Filter by assignee..." },
+  { key: "assignee", label: "Assignee", type: "select", options: [] },
+  { key: "asset", label: "Affected Asset", type: "select", options: [] },
   { key: "date", label: "Date Range", type: "date-range" },
 ];
 
@@ -72,11 +73,29 @@ export default function IncidentsPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const filterState = useFilterValues(incidentFilters);
+  const filterState = useFilterValues(baseIncidentFilters);
   const { values } = filterState;
 
   const { data: incidents = [], isLoading } = useQuery<Incident[]>({ queryKey: ["/api/incidents"] });
   const { data: stats } = useQuery<any>({ queryKey: ["/api/incidents/stats"] });
+  const { data: teamData } = useQuery<{ members: { id: string; username: string; fullName: string | null }[] }>({ queryKey: ["/api/team"] });
+  const { data: assets = [] } = useQuery<{ id: string; name: string }[]>({ queryKey: ["/api/assets"] });
+
+  const incidentFilters = useMemo<FilterDefinition[]>(() => {
+    const memberOptions = (teamData?.members || []).map(m => ({
+      value: m.username,
+      label: m.fullName || m.username,
+    }));
+    const uniqueAssets = new Set<string>();
+    incidents.forEach(i => i.affectedSystems?.forEach(a => uniqueAssets.add(a)));
+    assets.forEach(a => uniqueAssets.add(a.name));
+    const assetOptions = Array.from(uniqueAssets).sort().map(a => ({ value: a, label: a }));
+    return baseIncidentFilters.map(f => {
+      if (f.key === "assignee") return { ...f, options: memberOptions };
+      if (f.key === "asset") return { ...f, options: assetOptions };
+      return f;
+    });
+  }, [teamData, incidents, assets]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -132,8 +151,11 @@ export default function IncidentsPage() {
         const q = values.search.toLowerCase();
         if (!i.title.toLowerCase().includes(q) && !(i.description?.toLowerCase().includes(q))) return false;
       }
-      if (values.assignee) {
-        if (!i.assignedTo?.toLowerCase().includes(values.assignee.toLowerCase())) return false;
+      if (values.assignee && values.assignee !== "all") {
+        if (i.assignedTo?.toLowerCase() !== values.assignee.toLowerCase()) return false;
+      }
+      if (values.asset && values.asset !== "all") {
+        if (!i.affectedSystems?.some(a => a.toLowerCase() === values.asset.toLowerCase())) return false;
       }
       if (values.date_from) {
         if (new Date(i.createdAt) < new Date(values.date_from)) return false;

@@ -1750,8 +1750,13 @@ export async function registerRoutes(
     if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
     const data = { ...parsed.data };
     if (data.status === "verified" && !(data as any).verifiedAt) (data as any).verifiedAt = new Date();
+    const existing = await storage.getVulnerability(req.params.id, req.user!.organizationId);
+    if (!existing) return res.status(404).json({ message: "Not found" });
     const item = await storage.updateVulnerability(req.params.id, data);
     if (!item) return res.status(404).json({ message: "Not found" });
+    if (data.status && data.status !== existing.status) {
+      await logAudit(req.user!.organizationId, req.user!.userId, "vulnerability.status_changed", "vulnerability", req.params.id, { previousStatus: existing.status, newStatus: data.status }, req.ip);
+    }
     res.json(item);
   });
   app.delete("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
