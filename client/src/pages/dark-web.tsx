@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Search, AlertTriangle, CheckCircle2, Trash2, Loader2, Key, Mail, FileCode, Shield, EyeOff } from "lucide-react";
+import { Eye, Search, AlertTriangle, CheckCircle2, Trash2, Loader2, Key, Mail, FileCode, Shield, EyeOff, FileWarning } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { DarkWebAlert } from "@shared/schema";
@@ -28,6 +29,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 export default function DarkWebPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [domain, setDomain] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -58,6 +60,24 @@ export default function DarkWebPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/dark-web/alerts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dark-web/stats"] });
+    },
+  });
+
+  const createIncidentMutation = useMutation({
+    mutationFn: async (alert: DarkWebAlert) => {
+      const res = await apiRequest("POST", "/api/incidents", {
+        title: `Dark Web Alert: ${alert.alertType.replace("_", " ")} exposure on ${alert.domain}`,
+        description: alert.description,
+        severity: alert.severity === "critical" ? "critical" : alert.severity === "high" ? "high" : "medium",
+        status: "triage",
+        tags: ["dark-web", alert.alertType, alert.domain],
+      });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/incidents"] });
+      toast({ title: "Incident created", description: "A new incident has been created from this dark web alert." });
+      navigate(`/incidents/${data.id}`);
     },
   });
 
@@ -167,9 +187,14 @@ export default function DarkWebPage() {
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {alert.status !== "resolved" && (
-                        <Button variant="outline" size="sm" onClick={() => resolveMutation.mutate({ id: alert.id, status: "resolved" })} data-testid={`button-resolve-${alert.id}`}>
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Resolve
-                        </Button>
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => createIncidentMutation.mutate(alert)} disabled={createIncidentMutation.isPending} data-testid={`button-escalate-${alert.id}`}>
+                            <FileWarning className="w-3.5 h-3.5 mr-1" />Escalate
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => resolveMutation.mutate({ id: alert.id, status: "resolved" })} data-testid={`button-resolve-${alert.id}`}>
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Resolve
+                          </Button>
+                        </>
                       )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(alert.id)} data-testid={`button-delete-alert-${alert.id}`}>
                         <Trash2 className="w-3.5 h-3.5" />

@@ -1490,8 +1490,12 @@ export async function registerRoutes(
   app.put("/api/threat-intel/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const parsed = threatIntelUpdateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
+    const existing = await storage.getThreatIntelItem(req.params.id, req.user!.organizationId);
     const updated = await storage.updateThreatIntelItem(req.params.id, parsed.data, req.user!.organizationId);
     if (!updated) return res.status(404).json({ message: "Item not found" });
+    if (parsed.data.status) {
+      await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "threat-intel.status-change", resource: "threat_intel", resourceId: req.params.id, details: { previousStatus: existing?.status, newStatus: parsed.data.status, cveId: updated.cveId } });
+    }
     res.json(updated);
   });
 
@@ -1671,9 +1675,16 @@ export async function registerRoutes(
   app.put("/api/incidents/:id", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const parsed = incidentUpdateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid update data", errors: parsed.error.flatten().fieldErrors });
-    const item = await storage.updateIncident(req.params.id, parsed.data, req.user!.organizationId);
+    const existing = await storage.getIncident(req.params.id, req.user!.organizationId);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const updateData = { ...parsed.data };
+    if (parsed.data.status && parsed.data.status !== existing.status) {
+      const timelineEntry = { timestamp: new Date().toISOString(), action: `Status changed from ${existing.status} to ${parsed.data.status}`, note: "", user: req.user!.userId };
+      updateData.timeline = [...(existing.timeline as any[] || []), timelineEntry];
+    }
+    const item = await storage.updateIncident(req.params.id, updateData, req.user!.organizationId);
     if (!item) return res.status(404).json({ message: "Not found" });
-    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status } });
+    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.update", resource: "incident", resourceId: item.id, details: { status: item.status, previousStatus: existing.status } });
     res.json(item);
   });
   app.delete("/api/incidents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
@@ -1683,9 +1694,10 @@ export async function registerRoutes(
   app.post("/api/incidents/:id/timeline", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
     const incident = await storage.getIncident(req.params.id, req.user!.organizationId);
     if (!incident) return res.status(404).json({ message: "Not found" });
-    const entry = { timestamp: new Date().toISOString(), action: req.body.action, note: req.body.note, user: req.body.user || "System" };
+    const entry = { timestamp: new Date().toISOString(), action: req.body.action, note: req.body.note, user: req.body.user || req.user!.userId };
     const timeline = [...(incident.timeline as any[] || []), entry];
-    const updated = await storage.updateIncident(req.params.id, { timeline });
+    const updated = await storage.updateIncident(req.params.id, { timeline }, req.user!.organizationId);
+    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.timeline.add", resource: "incident", resourceId: req.params.id, details: { action: entry.action, note: entry.note } });
     res.json(updated);
   });
 
