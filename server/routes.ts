@@ -1647,8 +1647,12 @@ export async function registerRoutes(
     severity: z.enum(["critical", "high", "medium", "low"]),
     status: z.string().optional().default("triage"),
     assignee: z.string().optional(),
+    assignedTo: z.string().optional(),
     source: z.string().optional(),
     type: z.string().optional(),
+    affectedSystems: z.array(z.string()).optional(),
+    tags: z.array(z.string()).optional(),
+    category: z.string().optional(),
   });
 
   app.post("/api/incidents", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {

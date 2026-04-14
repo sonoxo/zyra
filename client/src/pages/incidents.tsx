@@ -47,7 +47,6 @@ export default function IncidentsPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: incidents = [], isLoading } = useQuery<Incident[]>({ queryKey: ["/api/incidents"] });
@@ -77,7 +76,6 @@ export default function IncidentsPage() {
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["/api/incidents"] });
       queryClient.invalidateQueries({ queryKey: ["/api/incidents/stats"] });
-      if (selectedIncident?.id === updated.id) setSelectedIncident(updated);
       toast({ title: "Incident updated" });
     },
   });
@@ -227,48 +225,6 @@ export default function IncidentsPage() {
         </div>
       )}
 
-      <Dialog open={!!selectedIncident} onOpenChange={o => !o && setSelectedIncident(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          {selectedIncident && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={cn("text-xs", severityConfig[selectedIncident.severity]?.color)}>{selectedIncident.severity.toUpperCase()}</Badge>
-                  <Badge variant="outline" className={cn("text-xs", statusConfig[selectedIncident.status]?.color)}>{statusConfig[selectedIncident.status]?.label}</Badge>
-                </div>
-                <DialogTitle className="mt-2">{selectedIncident.title}</DialogTitle>
-                {selectedIncident.description && <DialogDescription>{selectedIncident.description}</DialogDescription>}
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex gap-1">
-                  {workflowSteps.map((s, i) => {
-                    const idx = workflowSteps.indexOf(selectedIncident.status);
-                    const cfg = statusConfig[s];
-                    return (
-                      <div key={s} className="flex-1 text-center">
-                        <div className={cn("h-2 rounded-full mb-1", i <= idx ? "bg-primary" : "bg-muted")} />
-                        <p className="text-xs text-muted-foreground">{cfg.label}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-muted-foreground">Assigned To:</span> <span className="ml-2">{selectedIncident.assignedTo || "Unassigned"}</span></div>
-                  <div><span className="text-muted-foreground">Created:</span> <span className="ml-2">{format(new Date(selectedIncident.createdAt), "MMM d, yyyy")}</span></div>
-                  {selectedIncident.mttr && <div><span className="text-muted-foreground">MTTR:</span> <span className="ml-2">{selectedIncident.mttr} minutes</span></div>}
-                  {selectedIncident.resolvedAt && <div><span className="text-muted-foreground">Resolved:</span> <span className="ml-2">{format(new Date(selectedIncident.resolvedAt), "MMM d, yyyy")}</span></div>}
-                </div>
-                {selectedIncident.status !== "close" && (
-                  <Button className="w-full" onClick={() => advanceStatus(selectedIncident)} disabled={updateMutation.isPending} data-testid="button-advance-detail">
-                    {updateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ChevronRight className="w-4 h-4 mr-2" />}
-                    Advance to {statusConfig[workflowSteps[workflowSteps.indexOf(selectedIncident.status) + 1]]?.label}
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

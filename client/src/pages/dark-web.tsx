@@ -32,6 +32,7 @@ export default function DarkWebPage() {
   const [, navigate] = useLocation();
   const [domain, setDomain] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedAlert, setSelectedAlert] = useState<DarkWebAlert | null>(null);
 
   const { data: stats } = useQuery<any>({ queryKey: ["/api/dark-web/stats"] });
   const { data: alerts = [], isLoading } = useQuery<DarkWebAlert[]>({ queryKey: ["/api/dark-web/alerts"] });
@@ -158,7 +159,7 @@ export default function DarkWebPage() {
           {filtered.map(alert => {
             const TypeIcon = TYPE_ICONS[alert.alertType] ?? Shield;
             return (
-              <Card key={alert.id} data-testid={`card-alert-${alert.id}`} className={cn(alert.status === "new" && "border-red-500/20")}>
+              <Card key={alert.id} data-testid={`card-alert-${alert.id}`} className={cn("cursor-pointer transition-colors hover:bg-muted/50", alert.status === "new" && "border-red-500/20", selectedAlert?.id === alert.id && "ring-2 ring-primary")} onClick={() => setSelectedAlert(selectedAlert?.id === alert.id ? null : alert)}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className={cn("p-2 rounded-lg mt-0.5", SEVERITY_COLORS[alert.severity] ?? "bg-muted")}>
@@ -185,7 +186,7 @@ export default function DarkWebPage() {
                         <span>{format(new Date(alert.createdAt), "MMM d, yyyy")}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
                       {alert.status !== "resolved" && (
                         <>
                           <Button variant="outline" size="sm" onClick={() => createIncidentMutation.mutate(alert)} disabled={createIncidentMutation.isPending} data-testid={`button-escalate-${alert.id}`}>
@@ -206,6 +207,71 @@ export default function DarkWebPage() {
             );
           })}
         </div>
+      )}
+
+      {selectedAlert && (
+        <Card className="border-primary/20" data-testid="dark-web-alert-detail">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye className="w-4 h-4" />Alert Detail
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedAlert(null)} data-testid="button-close-detail">Close</Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs text-muted-foreground">Type</span>
+                  <p className="text-sm font-medium capitalize">{selectedAlert.alertType.replace("_", " ")}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Domain</span>
+                  <p className="text-sm font-medium">{selectedAlert.domain}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Source</span>
+                  <p className="text-sm font-medium">{selectedAlert.source}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Severity</span>
+                  <Badge variant="outline" className={cn("text-xs", SEVERITY_COLORS[selectedAlert.severity] ?? "")}>{selectedAlert.severity}</Badge>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs text-muted-foreground">Description</span>
+                  <p className="text-sm text-muted-foreground">{selectedAlert.description}</p>
+                </div>
+                {selectedAlert.maskedValue && (
+                  <div>
+                    <span className="text-xs text-muted-foreground">Exposed Value</span>
+                    <code className="block text-sm bg-muted px-2 py-1 rounded mt-1">{selectedAlert.maskedValue}</code>
+                  </div>
+                )}
+                <div>
+                  <span className="text-xs text-muted-foreground">Detected</span>
+                  <p className="text-sm">{format(new Date(selectedAlert.createdAt), "MMM d, yyyy 'at' HH:mm")}</p>
+                </div>
+                {selectedAlert.resolvedAt && (
+                  <div>
+                    <span className="text-xs text-muted-foreground">Resolved</span>
+                    <p className="text-sm">{format(new Date(selectedAlert.resolvedAt), "MMM d, yyyy 'at' HH:mm")}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            {selectedAlert.status !== "resolved" && (
+              <div className="flex gap-2 mt-4 pt-4 border-t">
+                <Button size="sm" onClick={() => createIncidentMutation.mutate(selectedAlert)} disabled={createIncidentMutation.isPending} data-testid="button-detail-escalate">
+                  <FileWarning className="w-3.5 h-3.5 mr-1" />Escalate to Incident
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => { resolveMutation.mutate({ id: selectedAlert.id, status: "resolved" }); setSelectedAlert(null); }} data-testid="button-detail-resolve">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Mark Resolved
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

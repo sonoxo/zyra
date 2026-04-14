@@ -51,11 +51,12 @@ export default function ThreatDetailPage() {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/incidents", {
         title: `[${threat!.cveId}] ${threat!.title}`,
-        description: threat!.description,
+        description: `Threat intelligence alert: ${threat!.description}\n\nSource: ${threat!.source}\nCVSS Score: ${threat!.cvssScore ?? "N/A"}`,
         severity: threat!.severity === "critical" ? "critical" : threat!.severity === "high" ? "high" : "medium",
         status: "triage",
+        category: "threat-intel",
         affectedSystems: threat!.affectedPackages || [],
-        tags: [threat!.cveId, threat!.source],
+        tags: [threat!.cveId, threat!.source].filter(Boolean),
       });
       return res.json();
     },
@@ -197,6 +198,47 @@ export default function ThreatDetailPage() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Clock className="w-4 h-4" />Discovery Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3" data-testid="threat-timeline">
+                <div className="flex gap-3 items-start">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Published</p>
+                    <p className="text-xs text-muted-foreground">{threat.publishedAt ? format(new Date(threat.publishedAt), "MMM dd, yyyy 'at' HH:mm") : "Date unknown"}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Discovered by Zyra</p>
+                    <p className="text-xs text-muted-foreground">{format(new Date(threat.createdAt), "MMM dd, yyyy 'at' HH:mm")}</p>
+                  </div>
+                </div>
+                {threat.status === "acknowledged" && (
+                  <div className="flex gap-3 items-start">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500 mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Acknowledged</p>
+                      <p className="text-xs text-muted-foreground">Threat has been reviewed and acknowledged by the team</p>
+                    </div>
+                  </div>
+                )}
+                {threat.status === "resolved" && (
+                  <div className="flex gap-3 items-start">
+                    <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Resolved</p>
+                      <p className="text-xs text-muted-foreground">Threat has been mitigated and resolved</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -226,6 +268,16 @@ export default function ThreatDetailPage() {
                   <p className="text-[10px] text-muted-foreground mt-1">CVSS v3.1 Base Score</p>
                 </div>
               )}
+              <Separator />
+              <div data-testid="text-severity-reasoning">
+                <h4 className="text-sm font-medium mb-1">Severity Reasoning</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {threat.severity === "critical" ? `This vulnerability has a critical severity rating${threat.cvssScore ? ` (CVSS ${threat.cvssScore.toFixed(1)})` : ""}. It may allow remote code execution, privilege escalation, or complete system compromise. Immediate action is required.`
+                    : threat.severity === "high" ? `This vulnerability is rated high severity${threat.cvssScore ? ` (CVSS ${threat.cvssScore.toFixed(1)})` : ""}. It may allow unauthorized access or significant data exposure. Prioritize remediation within your next maintenance window.`
+                    : threat.severity === "medium" ? `This vulnerability is rated medium severity${threat.cvssScore ? ` (CVSS ${threat.cvssScore.toFixed(1)})` : ""}. Exploitation may require specific conditions or user interaction. Plan remediation accordingly.`
+                    : `This vulnerability is rated low severity${threat.cvssScore ? ` (CVSS ${threat.cvssScore.toFixed(1)})` : ""}. Impact is limited and exploitation is unlikely. Monitor for updates.`}
+                </p>
+              </div>
             </CardContent>
           </Card>
 
