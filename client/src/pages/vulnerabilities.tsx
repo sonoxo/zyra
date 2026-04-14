@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Bug, ShieldAlert, CheckCircle2, Loader2, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
+import { FilterBar, useFilterValues, type FilterDefinition } from "@/components/filter-bar";
 
 const formSchema = insertVulnerabilitySchema.extend({
   organizationId: z.string().optional(),

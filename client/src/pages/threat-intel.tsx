@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
+import { FilterBar, useFilterValues, type FilterDefinition } from "@/components/filter-bar";
 
 const threatFilters: FilterDefinition[] = [
   { key: "search", label: "Search", type: "text", placeholder: "Search CVE, title, description..." },

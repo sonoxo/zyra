@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Plus, AlertTriangle, Clock, Shield, CheckCircle2, Loader2, Flame, Users, Timer, TrendingDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
+import { FilterBar, useFilterValues, type FilterDefinition } from "@/components/filter-bar";
 
 const formSchema = insertIncidentSchema.extend({
   organizationId: z.string().optional(),
