@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   CreditCard, Check, Star, Crown, Clock,
   Users, ScanSearch, GitBranch, Loader2,
-  FileText, Calendar, ExternalLink, CheckCircle2, XCircle, Info, AlertTriangle
+  FileText, Calendar, ExternalLink, CheckCircle2, XCircle, Info, AlertTriangle, ShieldAlert
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Subscription } from "@shared/schema";
+import type { AuthUser } from "@/lib/auth";
 
 interface SubscriptionWithTrial extends Subscription {
   trialDaysRemaining: number;
@@ -122,7 +123,15 @@ export default function Billing() {
   const { toast } = useToast();
   const [checkoutStatus, setCheckoutStatus] = useState<"success" | "cancelled" | null>(null);
 
+  const { data: currentUser } = useQuery<AuthUser | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const isViewer = currentUser?.role === "viewer";
+
   useEffect(() => {
+    if (isViewer) return;
     const params = new URLSearchParams(window.location.search);
     const status = params.get("status");
     const sessionId = params.get("session_id");
@@ -142,19 +151,34 @@ export default function Billing() {
     if (status) {
       window.history.replaceState({}, "", "/billing");
     }
-  }, []);
+  }, [isViewer]);
 
   const { data: subscription, isLoading: subLoading } = useQuery<SubscriptionWithTrial>({
     queryKey: ["/api/billing/subscription"],
+    enabled: !isViewer,
   });
 
   const { data: usage, isLoading: usageLoading } = useQuery<UsageData>({
     queryKey: ["/api/billing/usage"],
+    enabled: !isViewer,
   });
 
   const { data: stripeStatus } = useQuery<{ configured: boolean }>({
     queryKey: ["/api/stripe/status"],
+    enabled: !isViewer,
   });
+
+  if (isViewer) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center" data-testid="billing-access-denied">
+        <ShieldAlert className="w-12 h-12 text-muted-foreground/40 mb-4" />
+        <h2 className="text-lg font-semibold mb-2">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Billing information is only available to organization owners, admins, and analysts.
+        </p>
+      </div>
+    );
+  }
 
   const stripeConfigured = stripeStatus?.configured ?? false;
 
