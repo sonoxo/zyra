@@ -54,7 +54,6 @@ export default function ThreatIntelPage() {
   const [, navigate] = useLocation();
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   const { data: threats, isLoading } = useQuery<ThreatIntelItem[]>({
     queryKey: ["/api/threat-intel"],
@@ -311,84 +310,9 @@ export default function ThreatIntelPage() {
                                 Resolve
                               </Button>
                             )}
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              {expandedRows[threat.id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                      {expandedRows[threat.id] && (
-                        <TableRow className="bg-muted/30">
-                          <TableCell colSpan={7} className="p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-4">
-                                <div>
-                                  <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                                    <Info className="w-4 h-4" /> Description
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {threat.description}
-                                  </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                                      <Package className="w-4 h-4" /> Affected Versions
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1">
-                                      {threat.affectedVersions.map((v, i) => (
-                                        <Badge key={i} variant="secondary" className="text-[10px]">{v}</Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                                      <CheckCircle className="w-4 h-4" /> Patched Versions
-                                    </h4>
-                                    <div className="flex flex-wrap gap-1">
-                                      {threat.patchedVersions.map((v, i) => (
-                                        <Badge key={i} variant="outline" className="text-[10px] border-green-200 text-green-700 bg-green-50">{v}</Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <div>
-                                  <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                                    <ExternalLink className="w-4 h-4" /> Source & Data
-                                  </h4>
-                                  <div className="text-sm space-y-1">
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">Source:</span>
-                                      <span className="font-medium uppercase">{threat.source}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">Published:</span>
-                                      <span className="font-medium">
-                                        {threat.publishedAt ? format(new Date(threat.publishedAt), 'MMM dd, yyyy') : 'Unknown'}
-                                      </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">CVSS Vector:</span>
-                                      <span className="font-mono text-xs">AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="text-sm font-semibold mb-1">Remediation Steps</h4>
-                                  <Card className="bg-background/50 border-dashed">
-                                    <CardContent className="p-3 text-xs font-mono">
-                                      Update to the latest patched version of {threat.affectedPackages[0]}.
-                                      Check for transitive dependencies in your environment.
-                                    </CardContent>
-                                  </Card>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
                     </>
                   ))
                 )}

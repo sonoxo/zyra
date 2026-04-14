@@ -93,7 +93,7 @@ export default function IncidentDetailPage() {
 
   const addNote = () => {
     if (!noteText.trim()) return;
-    timelineMutation.mutate({ action: "note", note: noteText, user: "Analyst" });
+    timelineMutation.mutate({ action: "note", note: noteText });
   };
 
   const updateAssignee = () => {
