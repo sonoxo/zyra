@@ -6,9 +6,6 @@ import {
   RefreshCw, 
   AlertTriangle, 
   CheckCircle, 
-  Info, 
-  ChevronDown, 
-  ChevronUp,
   Package,
   ExternalLink,
   Calendar,
@@ -95,10 +92,6 @@ export default function ThreatIntelPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/threat-intel/stats"] });
     },
   });
-
-  const toggleRow = (id: string) => {
-    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {

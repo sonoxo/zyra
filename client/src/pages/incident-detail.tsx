@@ -65,7 +65,7 @@ export default function IncidentDetailPage() {
   });
 
   const timelineMutation = useMutation({
-    mutationFn: async (entry: { action: string; note: string; user: string }) => {
+    mutationFn: async (entry: { action: string; note: string; user?: string }) => {
       const res = await apiRequest("POST", `/api/incidents/${id}/timeline`, entry);
       return res.json();
     },
