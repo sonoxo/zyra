@@ -1,39 +1,99 @@
 # Contributing to Zyra
 
-Thank you for your interest in contributing!
-
-## How to Contribute
-
-1. **Fork** the repository
-2. **Clone** your fork locally
-3. **Create a branch** for your feature or fix
-4. **Make your changes** and test thoroughly
-5. **Push** to your fork
-6. **Submit a Pull Request** to `main`
+Thank you for your interest in contributing to Zyra!
 
 ## Development Setup
 
+### Prerequisites
+
+- Node.js 20+
+- npm 9+
+- Git
+
+### Local Development
+
 ```bash
+# Clone the repository
+git clone https://github.com/sonoxo/zyra.git
+cd zyra
+
+# Install dependencies
 npm install
+
+# Set up environment
+cp .env.local.example .env.local
+# Edit .env.local with your values
+
+# Run development servers
 npm run dev
 ```
 
-## Code Style
+This starts:
+- Frontend: http://localhost:3000
+- API: http://localhost:3001
 
-- Use TypeScript
-- Follow existing code conventions
-- Keep components small and reusable
+### Building
 
-## Pull Request Guidelines
+```bash
+# Build all packages and apps
+npm run build
 
-- Clear description of changes
-- Link any related issues
-- Ensure all tests pass
+# Build specific app
+npm run build:web
+npm run build:api
+```
 
-## Issues
+## Project Structure
 
-Use GitHub Issues for bug reports, feature requests, and questions.
+```
+zyra/
+├── apps/
+│   ├── web/          # Next.js frontend
+│   └── api/          # Fastify backend
+├── packages/
+│   ├── agents/       # AI agents
+│   ├── config/       # Shared config
+│   ├── types/        # TypeScript types
+│   ├── integrations/ # Nango integrations
+│   ├── notifications/# Discord, Slack alerts
+│   ├── security-scanner/
+│   └── privacy-scanner/
+├── docs/             # Documentation
+└── scripts/          # Build scripts
+```
 
----
+## Coding Standards
 
-**Together, let's build the future of AI-native security.** 🛡️🐍
+- Use TypeScript for all new code
+- Follow existing code style (ESLint + Prettier)
+- Add types for all function parameters
+- Write meaningful commit messages
+
+## Submitting Changes
+
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make changes and test
+4. Commit with clear messages
+5. Push and open a PR
+
+## Testing
+
+```bash
+# Run tests
+npm test
+
+# Run specific package tests
+npm test --workspace=@zyra/agents
+```
+
+## Security
+
+- Never commit secrets to Git
+- Use environment variables for sensitive data
+- Report vulnerabilities to security@zyra.host
+
+## Getting Help
+
+- Discord: https://discord.gg/zyra
+- Email: support@zyra.host

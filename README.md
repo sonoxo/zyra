@@ -1,178 +1,236 @@
 # 🛡️ Zyra — AI-Native Cybersecurity Platform
 
-<p align="left">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
-  <img src="https://img.shields.io/badge/Node.js-20%2B-blue?style=for-the-badge" alt="Node" />
-  <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge" alt="TypeScript" />
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-1.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/Stack-Next.js-Fastify-purple" alt="Stack">
 </p>
 
-> Enterprise-grade AI security platform built for scale, automation, and revenue. Like having a sec‑ops team that never sleeps, never complains, and actually delivers results.
+Zyra is an enterprise-grade AI-native cybersecurity platform that combines automated threat detection, AI-powered analysis, and compliance management in a single unified system.
 
 ---
 
-## ✨ Why Zyra?
+## 🚀 Capabilities
 
-| Feature | What It Does |
-|---------|--------------|
-| 🔍 **AI Vulnerability Scanner** | Real security scans — checks HTTPS, headers, exposed files, CVE references |
-| 🧠 **Threat Intelligence** | Detects anomalies before they become headlines |
-| 📊 **Unified Dashboard** | Single pane for all your security data |
-| 💰 **Monetization Ready** | Stripe integration — go from security to revenue |
-| 🔐 **Zero‑Trust Auth** | JWT-based auth with RBAC (Admin/Analyst/Viewer) |
-| 🚀 **Production‑Ready** | Docker, Vercel, Railway — deploy anywhere |
+### Core Features
 
-Think of Zyra as your 24/7 security sidekick. It's like having a senior pentester on retainer, but cheaper and it doesn't need coffee.
+| Feature | Description |
+|---------|-------------|
+| **AI Copilot** | Claude-powered threat analysis, prioritization, and remediation recommendations |
+| **Automated Scanning** | Vulnerability discovery, port scanning, privacy scanning |
+| **Real-time Monitoring** | WebSocket-based live threat feed |
+| **Compliance** | HIPAA, SOC 2, PCI DSS, GDPR ready |
+| **Integrations** | GitHub, Blockchain (ETH, Polygon, BSC), Slack, Discord |
+| **Security Hardening** | SSRF protection, IP allowlisting, bot detection, webhook signing, CAPTCHA |
 
----
+### Security Stack
 
-## 🚀 Quick Start
-
-### Option 1: Live Platform
-
-Visit **[zyra.host](https://zyra.host)** — just open, connect assets, and start scanning. No setup required.
-
-### Option 2: Local Dev
-
-```bash
-# Clone & enter
-git clone https://github.com/sonoxo/zyra.git
-cd zyra
-
-# Install deps
-npm install
-
-# Copy env template
-cp .env.example .env
-
-# Fire it up
-npm run dev
-```
-
-Then you'll see two servers:
-- **Frontend (Dashboard):** http://localhost:3000
-- **API (Backend):** http://localhost:3001
-
-### Option 3: Deploy to Vercel (Frontend)
-
-1. Fork this repo
-2. Import in [Vercel](https://vercel.com)
-3. Add env vars:
-   ```
-   NEXT_PUBLIC_API_URL=https://your-api.vercel.app
-   STRIPE_SECRET_KEY=sk_test_...
-   ```
-4. Deploy 🎉
-
-### Option 4: Deploy Full Stack (Railway/Render)
-
-1. Fork → Railway → Add variables:
-   ```
-   DATABASE_URL=postgresql://...
-   JWT_SECRET=<生成 with: openssl rand -base64 32>
-   STRIPE_SECRET_KEY=sk_live_...
-   ```
-2. Deploy
-
-> **Pro tip:** For dev, SQLite works out of the box. No DB required to test features.
+- ✅ SSRF Protection — Blocks internal network requests
+- ✅ IP Allowlisting — Restricts admin endpoints
+- ✅ Bot Detection — Rate limiting + auto-lockout
+- ✅ Webhook Signing — HMAC verification
+- ✅ Turnstile CAPTCHA — Blocks bots on auth forms
+- ✅ Input Sanitization — Prisma parameterized queries
+- ✅ Audit Logging — Full action trails
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-zyra-monorepo/
-├── apps/
-│   ├── web/          # Next.js 14 Dashboard (App Router)
-│   └── api/          # Fastify API Server
-├── packages/
-│   ├── types/        # Shared TypeScript definitions
-│   ├── config/       # Environment & config
-│   ├── security-scanner/  # 🎯 Our open‑source scanner
-│   └── fastify-security/  # 🔒 Security middleware
-└── prisma/           # Database schema (PostgreSQL)
+┌─────────────────────────────────────────────────────────────┐
+│                        Zyra Platform                        │
+├─────────────────────────────────────────────────────────────┤
+│  Frontend (Next.js 14)                                      │
+│  ├── Dashboard    │ Scanner  │ Compliance │ Resources       │
+└─────────────────────────────────────────────────────────────┘
+          │                       ▲
+          ▼                       │
+┌─────────────────────────────────────────────────────────────┐
+│  API Gateway (Fastify)                                      │
+│  ├── /api/auth/*       — Authentication                    │
+│  ├── /api/copilot/*    — AI Analysis (Claude)             │
+│  ├── /api/github/*     — GitHub Security Alerts            │
+│  ├── /api/blockchain/* — On-chain Monitoring               │
+│  ├── /api/scan/*       — Vulnerability Scanner             │
+│  └── /api/notifications/* — Discord, Slack                │
+└─────────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Data Layer (Prisma + SQLite)                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📦 Open‑Source Packages
+## 🧩 Packages
 
-We eat our own dog food. These packages are extracted from Zyra and ready for your projects:
+| Package | Purpose |
+|---------|---------|
+| `@zyra/agents` | AI agents (Pentest, Threat Detection, Incident Response, Copilot) |
+| `@zyra/config` | Shared configuration |
+| `@zyra/types` | TypeScript type definitions |
+| `@zyra/integrations` | Nango-based integrations (Microsoft Defender, Okta, etc.) |
+| `@zyra/notifications` | Discord, Slack alert delivery |
+| `@zyra/security-scanner` | Vulnerability scanning engine |
+| `@zyra/privacy-scanner` | Privacy compliance scanner |
+| `@zyra/monitoring` | Health checks, metrics |
 
-| Package | Install | What It Does |
-|---------|---------|--------------|
-| `@zyra/security-scanner` | `npm i @zyra/security-scanner` | Lightweight vulnerability scanner |
-| `@zyra/fastify-security` | `npm i @zyra/fastify-security` | Headers, rate‑limit, sanitization |
+---
 
-```typescript
-import { scan } from '@zyra/security-scanner'
+## 📡 API Endpoints
 
-const result = await scan('https://your-site.com')
-console.log(result.score, result.riskLevel)
-// → 85, MEDIUM
+### AI Copilot
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/copilot/analyze-threat` | POST | AI analysis of a threat |
+| `/api/copilot/prioritize` | POST | Rank threats by business risk |
+| `/api/copilot/suggest-fix` | POST | Generate remediation steps |
+| `/api/copilot/analyze-incident` | POST | Incident response recommendations |
+| `/api/copilot/generate-report` | POST | Generate executive security report |
+
+### GitHub Integration
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/github/security-alerts` | GET | Fetch Dependabot alerts |
+| `/api/github/code-scanning-alerts` | GET | Fetch Advanced Security alerts |
+| `/api/github/webhook` | POST | Receive GitHub events |
+
+### Blockchain Monitoring
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/blockchain/monitor` | GET | Analyze address for suspicious activity |
+| `/api/blockchain/balance` | GET | Check token balance |
+| `/api/blockchain/webhook` | POST | Register for alerts |
+
+### Security & Auth
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/register` | POST | Create account |
+| `/api/auth/login` | POST | Login |
+| `/api/health` | GET | Health check |
+| `/api/scan/vulnerability` | POST | Run vulnerability scan |
+
+---
+
+## 🤖 AI Copilot Usage
+
+### Analyze a Threat
+
+```bash
+curl -X POST https://zyra.host/api/copilot/analyze-threat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "threat": {
+      "title": "SQL Injection in /api/users",
+      "severity": "CRITICAL",
+      "category": "Injection",
+      "description": "User input not sanitized in SQL query"
+    }
+  }'
+```
+
+### Generate a Report
+
+```bash
+curl -X POST https://zyra.host/api/copilot/generate-report \
+  -H "Content-Type: application/json" \
+  -d '{
+    "threats": [
+      { "title": "XSS in comments", "severity": "HIGH", "category": "XSS" },
+      { "title": "Outdated dependency", "severity": "MEDIUM", "category": "Supply Chain" }
+    ],
+    "title": "Q1 2026 Security Review"
+  }'
 ```
 
 ---
 
-## 🔌 API Endpoints
+## 🔐 Environment Variables
 
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Get JWT token |
-| GET | `/api/auth/me` | Current user |
-
-### Assets & Scans
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET/POST | `/api/assets` | List / create assets |
-| GET/POST | `/api/scan` | Run vulnerability scans |
-| GET | `/api/public/scan` | Free public scan (no auth) |
-
-### Organizations
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/orgs` | List orgs |
-| GET | `/api/incidents` | View security incidents |
-
-> Full API docs coming soon. But hey — it's REST. Read the code or curl it.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | Prisma connection string |
+| `JWT_SECRET` | Yes | Auth token secret |
+| `ANTHROPIC_API_KEY` | For AI Copilot | Claude API key |
+| `ETHERSCAN_API_KEY` | For blockchain | Etherscan API (free) |
+| `STRIPE_SECRET_KEY` | For payments | Stripe API key |
+| `DISCORD_WEBHOOK_URL` | For Discord alerts | Discord webhook |
+| `SLACK_WEBHOOK_URL` | For Slack alerts | Slack webhook |
+| `WEBHOOK_SECRET` | For webhook signing | HMAC secret |
+| `TURNSTILE_SECRET_KEY` | For CAPTCHA | Cloudflare Turnstile |
+| `ALLOWED_ADMIN_IPS` | Optional | Comma-separated IPs |
 
 ---
 
-## 🛠️ Tech Stack
+## 🖥️ Deployment
 
-<div align="center">
+### Quick Start (Local)
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 14, TypeScript, Tailwind |
-| API | Fastify, TypeScript |
-| Auth | JWT + bcrypt |
-| Database | PostgreSQL / SQLite (dev) |
-| Payments | Stripe |
-| Deploy | Vercel, Railway, Docker |
+```bash
+# Clone
+git clone https://github.com/sonoxo/zyra.git
+cd zyra
 
-</div>
+# Install
+npm install
+
+# Build
+npm run build
+
+# Run
+npm run start
+```
+
+### Replit Deployment
+
+1. Import repo to Replit
+2. Set secrets:
+   - `ANTHROPIC_API_KEY`
+   - `DATABASE_URL`
+   - etc.
+3. Deploy
+
+### Docker (Coming Soon)
+
+```bash
+docker pull zyra/zyra:latest
+docker run -p 3000:3000 -p 3001:3001 zyra/zyra:latest
+```
 
 ---
 
-## 🤝 Contributing
+## 🛡️ Security
 
-1. Fork it
-2. Create a feature branch (`git checkout -b cool-feature`)
-3. Commit with conventional commits
-4. Push & PR
+### Reporting Vulnerabilities
 
-All contributions welcome — whether it's a bug fix, new scanner check, or better docs.
+If you find a security issue, please email: `security@zyra.host`
+
+### Security Features
+
+- All inputs sanitized via Prisma parameterized queries
+- Rate limiting on all endpoints
+- HMAC-signed webhooks
+- IP allowlisting for admin routes
+- CAPTCHA on auth forms
+- Full audit logging
 
 ---
 
-## 📜 License
+## 📄 License
 
-MIT © 2026 [Zyra](https://zyra.host)
+MIT License — see [LICENSE](LICENSE)
 
 ---
+
+## 🐍 Stay Protected
 
 <p align="center">
-  <sub>Built with 🔥 by developers who care about security</sub>
+  <strong>Zyra — AI-Native Cybersecurity Platform</strong><br>
+  Built with ⚡ by <a href="https://24k-media.com">24k-Media Productions</a>
 </p>
