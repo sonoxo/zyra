@@ -48,3 +48,6 @@ BOOTSTRAP_SECRET = "zyra-bootstrap-2026"
 [userenv.production]
 FRONTEND_URL = "https://zyra.host"
 BACKEND_URL = "https://zyra-host.replit.app"
+
+[agent]
+integrations = ["github:1.0.0"]
