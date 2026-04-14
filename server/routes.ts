@@ -1757,9 +1757,8 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
     }
     const item = await storage.createVulnerability({ ...parsed.data, organizationId: orgId });
-    if (item.severity === "critical" || item.severity === "high") {
-      await storage.createNotification({ organizationId: orgId, title: `${item.severity === "critical" ? "Critical" : "High"} Vulnerability Discovered`, message: `${item.title}${item.cve ? ` (${item.cve})` : ""} — CVSS ${item.cvss ?? "N/A"}`, type: "vulnerability", severity: item.severity, resourceType: "vulnerability", resourceId: item.id });
-    }
+    const sevLabel = item.severity ? item.severity.charAt(0).toUpperCase() + item.severity.slice(1) : "New";
+    await storage.createNotification({ organizationId: orgId, title: `${sevLabel} Vulnerability Discovered`, message: `${item.title}${item.cve ? ` (${item.cve})` : ""} — CVSS ${item.cvss ?? "N/A"}`, type: "vulnerability", severity: item.severity || "info", resourceType: "vulnerability", resourceId: item.id });
     res.json(item);
   });
   const vulnUpdateSchema = z.object({

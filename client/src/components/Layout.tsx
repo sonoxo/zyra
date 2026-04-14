@@ -153,8 +153,23 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-gray-400",
 };
 
+const NOTIFICATION_ROUTES: Record<string, string> = {
+  incident: "/incidents",
+  vulnerability: "/vulnerabilities",
+  scan: "/scans",
+  threat_intel: "/threat-intel",
+  task: "/task-center",
+};
+
+function getNotificationPath(n: Notification): string | null {
+  const base = NOTIFICATION_ROUTES[n.resourceType ?? ""];
+  if (!base) return null;
+  return n.resourceId ? `${base}/${n.resourceId}` : base;
+}
+
 function NotificationBell({ orgId }: { orgId: string | undefined }) {
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data } = useQuery<{ notifications: Notification[]; unreadCount: number }>({
     queryKey: ["/api/notifications"],
@@ -166,6 +181,12 @@ function NotificationBell({ orgId }: { orgId: string | undefined }) {
     mutationFn: (id?: string) => apiRequest("POST", "/api/notifications/read", { id }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/notifications"] }),
   });
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.read) markReadMutation.mutate(n.id);
+    const path = getNotificationPath(n);
+    if (path) navigate(path);
+  };
 
   const unread = data?.unreadCount ?? 0;
   const items = data?.notifications ?? [];
@@ -192,6 +213,7 @@ function NotificationBell({ orgId }: { orgId: string | undefined }) {
             <button
               onClick={() => markReadMutation.mutate(undefined)}
               className="text-xs text-primary hover:underline"
+              data-testid="button-mark-all-read"
             >
               Mark all read
             </button>
@@ -204,28 +226,35 @@ function NotificationBell({ orgId }: { orgId: string | undefined }) {
               No notifications yet
             </div>
           ) : (
-            items.slice(0, 20).map(n => (
-              <div
-                key={n.id}
-                onClick={() => !n.read && markReadMutation.mutate(n.id)}
-                className={cn(
-                  "px-3 py-2.5 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors",
-                  !n.read && "bg-primary/5"
-                )}
-              >
-                <div className="flex items-start gap-2">
-                  <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", SEVERITY_COLORS[n.severity] ?? "bg-gray-400")} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-foreground truncate">{n.title}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{n.message}</div>
-                    <div className="text-[10px] text-muted-foreground mt-1">
-                      {new Date(n.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            items.slice(0, 20).map(n => {
+              const navPath = getNotificationPath(n);
+              return (
+                <div
+                  key={n.id}
+                  onClick={() => handleNotificationClick(n)}
+                  className={cn(
+                    "px-3 py-2.5 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors",
+                    !n.read && "bg-primary/5"
+                  )}
+                  data-testid={`notification-item-${n.id}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", SEVERITY_COLORS[n.severity] ?? "bg-gray-400")} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-foreground truncate">{n.title}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">{n.message}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(n.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        {navPath && <span className="text-[10px] text-primary/60">View →</span>}
+                      </div>
                     </div>
+                    {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                   </div>
-                  {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </ScrollArea>
       </DropdownMenuContent>
