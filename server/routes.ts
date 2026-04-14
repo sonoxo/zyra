@@ -1463,15 +1463,22 @@ export async function registerRoutes(
 
   app.get("/api/threat-intel/stats", requireAuth, async (req: Request, res: Response) => {
     const items = await storage.getThreatIntelItems(req.user!.organizationId);
-    const severityStats: Record<string, number> = {};
-    const sourceStats: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+    const bySource: Record<string, number> = {};
     
     items.forEach(i => {
-      severityStats[i.severity] = (severityStats[i.severity] || 0) + 1;
-      sourceStats[i.source] = (sourceStats[i.source] || 0) + 1;
+      bySeverity[i.severity] = (bySeverity[i.severity] || 0) + 1;
+      bySource[i.source] = (bySource[i.source] || 0) + 1;
     });
 
-    res.json({ severity: severityStats, source: sourceStats });
+    res.json({
+      bySeverity,
+      bySource,
+      total: items.length,
+      critical: bySeverity["critical"] || 0,
+      high: bySeverity["high"] || 0,
+      acknowledged: items.filter(i => i.status === "acknowledged").length,
+    });
   });
 
   app.get("/api/threat-intel/:id", requireAuth, async (req: Request, res: Response) => {

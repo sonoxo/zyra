@@ -57,7 +57,7 @@ export default function ThreatIntelPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   const { data: threats, isLoading } = useQuery<ThreatIntelItem[]>({
-    queryKey: ["/api/threat-intel", { status: statusFilter }],
+    queryKey: ["/api/threat-intel"],
   });
 
   const { data: stats } = useQuery<{ 
@@ -120,6 +120,7 @@ export default function ThreatIntelPage() {
   };
 
   const filteredThreats = threats?.filter(t => {
+    if (statusFilter !== "all" && t.status !== statusFilter) return false;
     if (severityFilter !== "all" && t.severity.toLowerCase() !== severityFilter.toLowerCase()) return false;
     return true;
   }) || [];

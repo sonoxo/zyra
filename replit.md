@@ -96,6 +96,19 @@ shared/
 - Limits sourced from subscription record (maxUsers, maxScansPerMonth, maxRepositories)
 - Scans counted for current calendar month only
 
+## Detail Pages & Navigation
+- **Threat Detail** (`/threat-intel/:id`): Full CVE detail view with severity assessment, CVSS score bar, affected packages/versions, patched versions, remediation steps, metadata, "Create Incident" button, external links (NVD, CVE Record)
+- **Incident Detail** (`/incidents/:id`): Full incident lifecycle view with visual workflow stepper (triage → assign → contain → remediate → close), activity timeline with note entry, assignee management, quick status change, MTTR tracking
+- **Navigation**: Threat-intel rows, CVE-intelligence rows, and incident cards all navigate to their respective detail pages
+- **Route ordering**: Static endpoints (`/stats`) always declared before dynamic `/:id` routes in Express to prevent shadowing
+- **Org-scoped updates**: `updateIncident` and `updateThreatIntelItem` both accept optional `orgId` parameter for tenant isolation
+- **Status enums**: Incident statuses: `triage/assign/contain/remediate/close` (primary) + legacy `open/investigating/contained/resolved/closed`; Threat intel statuses: `active/acknowledged/resolved/monitoring`
+
+## GitHub Integration
+- Connected via Replit connectors (`@replit/connectors-sdk`)
+- Proxy pattern: `connectors.proxy("github", "/endpoint")` with automatic OAuth token injection
+- Permissions: `read:org, read:project, read:user, repo, user:email`
+
 ## Input Validation
 - All PUT/PATCH routes use Zod `.strict()` schemas — unknown fields are rejected
 - Validated entities: incidents, vulnerabilities, risks, assets, SBOM, secrets, attack-surface, threat-intel, alert rules, pipelines, training, campaigns, vendors, dark-web alerts, roadmap tasks, bounty reports, attack-paths, tasks, deployment config, settings
