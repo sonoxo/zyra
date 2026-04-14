@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -16,10 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, AlertTriangle, Clock, Shield, CheckCircle2, Loader2, Flame, Users, Timer, TrendingDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
 
 const formSchema = insertIncidentSchema.extend({
   organizationId: z.string().optional(),
@@ -43,11 +43,37 @@ const severityConfig: Record<string, { color: string }> = {
 
 const workflowSteps = ["triage", "assign", "contain", "remediate", "close"];
 
+const incidentFilters: FilterDefinition[] = [
+  { key: "search", label: "Search", type: "text", placeholder: "Search incidents..." },
+  {
+    key: "severity", label: "Severity", type: "select",
+    options: [
+      { value: "critical", label: "Critical" },
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+    ],
+  },
+  {
+    key: "status", label: "Status", type: "select",
+    options: [
+      { value: "triage", label: "New" },
+      { value: "assign", label: "Investigating" },
+      { value: "contain", label: "Contained" },
+      { value: "remediate", label: "Resolved" },
+      { value: "close", label: "Closed" },
+    ],
+  },
+  { key: "assignee", label: "Assignee", type: "text", placeholder: "Filter by assignee..." },
+  { key: "date", label: "Date Range", type: "date-range" },
+];
+
 export default function IncidentsPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const filterState = useFilterValues(incidentFilters);
+  const { values } = filterState;
 
   const { data: incidents = [], isLoading } = useQuery<Incident[]>({ queryKey: ["/api/incidents"] });
   const { data: stats } = useQuery<any>({ queryKey: ["/api/incidents/stats"] });
@@ -98,7 +124,28 @@ export default function IncidentsPage() {
     }
   };
 
-  const filtered = statusFilter === "all" ? incidents : incidents.filter(i => i.status === statusFilter);
+  const filtered = useMemo(() => {
+    return incidents.filter(i => {
+      if (values.status && values.status !== "all" && i.status !== values.status) return false;
+      if (values.severity && values.severity !== "all" && i.severity !== values.severity) return false;
+      if (values.search) {
+        const q = values.search.toLowerCase();
+        if (!i.title.toLowerCase().includes(q) && !(i.description?.toLowerCase().includes(q))) return false;
+      }
+      if (values.assignee) {
+        if (!i.assignedTo?.toLowerCase().includes(values.assignee.toLowerCase())) return false;
+      }
+      if (values.date_from) {
+        if (new Date(i.createdAt) < new Date(values.date_from)) return false;
+      }
+      if (values.date_to) {
+        const to = new Date(values.date_to);
+        to.setDate(to.getDate() + 1);
+        if (new Date(i.createdAt) > to) return false;
+      }
+      return true;
+    });
+  }, [incidents, values]);
 
   return (
     <div className="p-6 space-y-6">
@@ -168,14 +215,13 @@ export default function IncidentsPage() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
-        {["all", ...workflowSteps].map(s => (
-          <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setStatusFilter(s)} data-testid={`filter-${s}`}>
-            {s === "all" ? "All" : statusConfig[s]?.label}
-            {s !== "all" && <Badge variant="secondary" className="ml-2 text-xs">{stats?.byStatus?.[s] ?? 0}</Badge>}
-          </Button>
-        ))}
-      </div>
+      <FilterBar
+        page="incidents"
+        filters={incidentFilters}
+        totalCount={incidents.length}
+        filteredCount={filtered.length}
+        filterState={filterState}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-40"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>

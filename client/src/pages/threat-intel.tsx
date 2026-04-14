@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { 
@@ -27,7 +27,6 @@ import { ThreatIntelItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Table, 
   TableBody, 
@@ -36,21 +35,38 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
+
+const threatFilters: FilterDefinition[] = [
+  { key: "search", label: "Search", type: "text", placeholder: "Search CVE, title, description..." },
+  {
+    key: "severity", label: "Severity", type: "select",
+    options: [
+      { value: "critical", label: "Critical" },
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+    ],
+  },
+  {
+    key: "status", label: "Status", type: "select",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "acknowledged", label: "Acknowledged" },
+      { value: "resolved", label: "Resolved" },
+      { value: "monitoring", label: "Monitoring" },
+    ],
+  },
+  { key: "date", label: "Date Range", type: "date-range" },
+];
 
 export default function ThreatIntelPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [severityFilter, setSeverityFilter] = useState("all");
+  const filterState = useFilterValues(threatFilters);
+  const { values } = filterState;
 
   const { data: threats, isLoading } = useQuery<ThreatIntelItem[]>({
     queryKey: ["/api/threat-intel"],
@@ -111,11 +127,26 @@ export default function ThreatIntelPage() {
     return "text-blue-600 font-bold";
   };
 
-  const filteredThreats = threats?.filter(t => {
-    if (statusFilter !== "all" && t.status !== statusFilter) return false;
-    if (severityFilter !== "all" && t.severity.toLowerCase() !== severityFilter.toLowerCase()) return false;
-    return true;
-  }) || [];
+  const filteredThreats = useMemo(() => {
+    if (!threats) return [];
+    return threats.filter(t => {
+      if (values.status && values.status !== "all" && t.status !== values.status) return false;
+      if (values.severity && values.severity !== "all" && t.severity.toLowerCase() !== values.severity.toLowerCase()) return false;
+      if (values.search) {
+        const q = values.search.toLowerCase();
+        if (!t.cveId.toLowerCase().includes(q) && !t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false;
+      }
+      if (values.date_from && t.publishedAt) {
+        if (new Date(t.publishedAt) < new Date(values.date_from)) return false;
+      }
+      if (values.date_to && t.publishedAt) {
+        const to = new Date(values.date_to);
+        to.setDate(to.getDate() + 1);
+        if (new Date(t.publishedAt) > to) return false;
+      }
+      return true;
+    });
+  }, [threats, values]);
 
   const chartData = stats?.bySeverity ? Object.entries(stats.bySeverity).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -141,7 +172,6 @@ export default function ThreatIntelPage() {
         </Button>
       </div>
 
-      {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card data-testid="card-total-threats">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-1">
@@ -183,32 +213,14 @@ export default function ThreatIntelPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full sm:w-auto">
-              <TabsList>
-                <TabsTrigger value="all" data-testid="tab-status-all">All</TabsTrigger>
-                <TabsTrigger value="active" data-testid="tab-status-active">Active</TabsTrigger>
-                <TabsTrigger value="acknowledged" data-testid="tab-status-acknowledged">Acknowledged</TabsTrigger>
-                <TabsTrigger value="resolved" data-testid="tab-status-resolved">Resolved</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <FilterBar
+            page="threat-intel"
+            filters={threatFilters}
+            totalCount={threats?.length ?? 0}
+            filteredCount={filteredThreats.length}
+            filterState={filterState}
+          />
 
-            <Select value={severityFilter} onValueChange={setSeverityFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]" data-testid="select-severity-filter">
-                <SelectValue placeholder="Filter Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Severities</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* CVE Table */}
           <Card>
             <Table>
               <TableHeader>
@@ -243,70 +255,68 @@ export default function ThreatIntelPage() {
                   </TableRow>
                 ) : (
                   filteredThreats.map((threat) => (
-                    <>
-                      <TableRow 
-                        key={threat.id} 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/threat-intel/${threat.id}`)}
-                        data-testid={`row-threat-${threat.id}`}
-                      >
-                        <TableCell className="font-mono font-medium">{threat.cveId}</TableCell>
-                        <TableCell className="font-medium">{threat.title}</TableCell>
-                        <TableCell>
-                          <Badge className={getSeverityColor(threat.severity)}>
-                            {threat.severity}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className={getCvssColor(threat.cvssScore)}>
-                            {threat.cvssScore?.toFixed(1) || "N/A"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {threat.affectedPackages.slice(0, 2).map((pkg, idx) => (
-                              <Badge key={idx} variant="outline" className="text-[10px] px-1.5 h-4">
-                                {pkg}
-                              </Badge>
-                            ))}
-                            {threat.affectedPackages.length > 2 && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 h-4">
-                                +{threat.affectedPackages.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="capitalize">
-                            {threat.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                            {threat.status === "active" && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                data-testid={`button-acknowledge-${threat.id}`}
-                                onClick={() => updateStatusMutation.mutate({ id: threat.id, status: "acknowledged" })}
-                              >
-                                Acknowledge
-                              </Button>
-                            )}
-                            {threat.status !== "resolved" && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                data-testid={`button-resolve-${threat.id}`}
-                                onClick={() => updateStatusMutation.mutate({ id: threat.id, status: "resolved" })}
-                              >
-                                Resolve
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    </>
+                    <TableRow 
+                      key={threat.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/threat-intel/${threat.id}`)}
+                      data-testid={`row-threat-${threat.id}`}
+                    >
+                      <TableCell className="font-mono font-medium">{threat.cveId}</TableCell>
+                      <TableCell className="font-medium">{threat.title}</TableCell>
+                      <TableCell>
+                        <Badge className={getSeverityColor(threat.severity)}>
+                          {threat.severity}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={getCvssColor(threat.cvssScore)}>
+                          {threat.cvssScore?.toFixed(1) || "N/A"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {threat.affectedPackages.slice(0, 2).map((pkg, idx) => (
+                            <Badge key={idx} variant="outline" className="text-[10px] px-1.5 h-4">
+                              {pkg}
+                            </Badge>
+                          ))}
+                          {threat.affectedPackages.length > 2 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 h-4">
+                              +{threat.affectedPackages.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {threat.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          {threat.status === "active" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              data-testid={`button-acknowledge-${threat.id}`}
+                              onClick={() => updateStatusMutation.mutate({ id: threat.id, status: "acknowledged" })}
+                            >
+                              Acknowledge
+                            </Button>
+                          )}
+                          {threat.status !== "resolved" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              data-testid={`button-resolve-${threat.id}`}
+                              onClick={() => updateStatusMutation.mutate({ id: threat.id, status: "resolved" })}
+                            >
+                              Resolve
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
@@ -315,7 +325,6 @@ export default function ThreatIntelPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Severity Graph */}
           <Card>
             <CardHeader>
               <CardTitle>Affected Packages by Severity</CardTitle>
@@ -340,7 +349,6 @@ export default function ThreatIntelPage() {
             </CardContent>
           </Card>
 
-          {/* Threat Feed Timeline */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

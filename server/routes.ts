@@ -1693,6 +1693,7 @@ export async function registerRoutes(
   });
   app.delete("/api/incidents/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteIncident(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "incident.deleted", "incident", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
   app.post("/api/incidents/:id/timeline", requireAuth, requireRole("owner", "admin", "analyst"), async (req: Request, res: Response) => {
@@ -1755,6 +1756,7 @@ export async function registerRoutes(
   });
   app.delete("/api/vulnerabilities/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteVulnerability(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "vulnerability.deleted", "vulnerability", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
   app.get("/api/vulnerabilities/stats", requireAuth, async (req: Request, res: Response) => {
@@ -1949,6 +1951,7 @@ export async function registerRoutes(
   });
   app.delete("/api/risks/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     await storage.deleteRisk(req.params.id, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "risk.deleted", "risk", req.params.id, {}, req.ip);
     res.json({ success: true });
   });
   app.get("/api/risks/matrix", requireAuth, async (req: Request, res: Response) => {
@@ -3137,5 +3140,38 @@ async function registerMetricsRoutes(app: Express) {
       await logAudit(req.user!.organizationId, req.user!.userId, "admin.user_removed", "user", req.params.id, {}, req.ip);
       res.json({ success: true });
     } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ===== SAVED VIEWS =====
+  const savedViewSchema = z.object({
+    name: z.string().min(1).max(100),
+    page: z.string().min(1).max(50),
+    filters: z.record(z.string()).default({}),
+  });
+
+  app.get("/api/saved-views", requireAuth, async (req: Request, res: Response) => {
+    const page = req.query.page as string | undefined;
+    const views = await storage.getSavedViews(req.user!.userId, req.user!.organizationId, page);
+    res.json(views);
+  });
+
+  app.post("/api/saved-views", requireAuth, async (req: Request, res: Response) => {
+    const parsed = savedViewSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues.map(i => i.message).join(", ") });
+    const { name, page, filters } = parsed.data;
+    const view = await storage.createSavedView({
+      userId: req.user!.userId,
+      organizationId: req.user!.organizationId,
+      name,
+      page,
+      filters,
+    });
+    res.json(view);
+  });
+
+  app.delete("/api/saved-views/:id", requireAuth, async (req: Request, res: Response) => {
+    await storage.deleteSavedView(req.params.id, req.user!.userId, req.user!.organizationId);
+    await logAudit(req.user!.organizationId, req.user!.userId, "saved_view.deleted", "saved_view", req.params.id, {}, req.ip);
+    res.json({ success: true });
   });
 }

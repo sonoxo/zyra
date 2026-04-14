@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Bug, ShieldAlert, CheckCircle2, Loader2, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { FilterBar, useFilterValues, type FilterDefinition, type FilterState } from "@/components/filter-bar";
 
 const formSchema = insertVulnerabilitySchema.extend({
   organizationId: z.string().optional(),
@@ -40,10 +41,36 @@ const severityColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground border-border",
 };
 
+const vulnFilters: FilterDefinition[] = [
+  { key: "search", label: "Search", type: "text", placeholder: "Search vulnerabilities..." },
+  {
+    key: "severity", label: "Severity", type: "select",
+    options: [
+      { value: "critical", label: "Critical" },
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+      { value: "info", label: "Info" },
+    ],
+  },
+  {
+    key: "status", label: "Status", type: "select",
+    options: [
+      { value: "open", label: "Open" },
+      { value: "in_progress", label: "In Progress" },
+      { value: "remediated", label: "Remediated" },
+      { value: "verified", label: "Verified" },
+    ],
+  },
+  { key: "assignee", label: "Assignee", type: "text", placeholder: "Filter by assignee..." },
+  { key: "date", label: "Date Range", type: "date-range" },
+];
+
 export default function VulnerabilitiesPage() {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const filterState = useFilterValues(vulnFilters);
+  const { values } = filterState;
 
   const { data: vulns = [], isLoading } = useQuery<Vulnerability[]>({ queryKey: ["/api/vulnerabilities"] });
   const { data: stats } = useQuery<any>({ queryKey: ["/api/vulnerabilities/stats"] });
@@ -78,7 +105,28 @@ export default function VulnerabilitiesPage() {
     if (next) updateMutation.mutate({ id: v.id, data: { status: next } });
   };
 
-  const filtered = statusFilter === "all" ? vulns : vulns.filter(v => v.status === statusFilter);
+  const filtered = useMemo(() => {
+    return vulns.filter(v => {
+      if (values.status && values.status !== "all" && v.status !== values.status) return false;
+      if (values.severity && values.severity !== "all" && v.severity !== values.severity) return false;
+      if (values.search) {
+        const q = values.search.toLowerCase();
+        if (!v.title.toLowerCase().includes(q) && !(v.description?.toLowerCase().includes(q)) && !(v.cve?.toLowerCase().includes(q))) return false;
+      }
+      if (values.assignee) {
+        if (!v.assignedTo?.toLowerCase().includes(values.assignee.toLowerCase())) return false;
+      }
+      if (values.date_from) {
+        if (new Date(v.createdAt) < new Date(values.date_from)) return false;
+      }
+      if (values.date_to) {
+        const to = new Date(values.date_to);
+        to.setDate(to.getDate() + 1);
+        if (new Date(v.createdAt) > to) return false;
+      }
+      return true;
+    });
+  }, [vulns, values]);
 
   const workflowPct = (status: string) => {
     const steps = ["open", "in_progress", "remediated", "verified"];
@@ -177,14 +225,13 @@ export default function VulnerabilitiesPage() {
         ))}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {["all", "open", "in_progress", "remediated", "verified"].map(s => (
-          <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setStatusFilter(s)} data-testid={`filter-vuln-${s}`}>
-            {s === "all" ? "All" : statusConfig[s]?.label ?? s}
-            {s !== "all" && <Badge variant="secondary" className="ml-1 text-xs">{(stats?.byStatus as any)?.[s] ?? 0}</Badge>}
-          </Button>
-        ))}
-      </div>
+      <FilterBar
+        page="vulnerabilities"
+        filters={vulnFilters}
+        totalCount={vulns.length}
+        filteredCount={filtered.length}
+        filterState={filterState}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-40"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>

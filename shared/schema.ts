@@ -1098,3 +1098,17 @@ export type EscalationPolicy = typeof escalationPolicies.$inferSelect;
 export type InsertEscalationPolicy = z.infer<typeof insertEscalationPolicySchema>;
 export type ApprovalRequest = typeof approvalRequests.$inferSelect;
 export type InsertApprovalRequest = z.infer<typeof insertApprovalRequestSchema>;
+
+export const savedViews = pgTable("saved_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  page: text("page").notNull(),
+  filters: jsonb("filters").notNull().default(sql`'{}'`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertSavedViewSchema = createInsertSchema(savedViews).omit({ id: true, createdAt: true });
+export type SavedView = typeof savedViews.$inferSelect;
+export type InsertSavedView = z.infer<typeof insertSavedViewSchema>;

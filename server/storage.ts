@@ -74,6 +74,8 @@ import {
   incidentComments, teamActivities, oncallSchedules, escalationPolicies, approvalRequests,
   exposureAlerts, remediationActions,
   siemConfigs, retentionPolicies, workspaces, tasks,
+  savedViews,
+  type SavedView, type InsertSavedView,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, isNull, gt } from "drizzle-orm";
@@ -374,6 +376,10 @@ export interface IStorage {
   createTask(t: InsertTask): Promise<Task>;
   updateTask(id: string, data: Partial<Task>): Promise<Task | undefined>;
   deleteTask(id: string, orgId: string): Promise<void>;
+
+  getSavedViews(userId: string, orgId: string, page?: string): Promise<SavedView[]>;
+  createSavedView(v: InsertSavedView): Promise<SavedView>;
+  deleteSavedView(id: string, userId: string, orgId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1366,6 +1372,19 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteTask(id: string, orgId: string): Promise<void> {
     await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.organizationId, orgId)));
+  }
+
+  async getSavedViews(userId: string, orgId: string, page?: string): Promise<SavedView[]> {
+    const conditions = [eq(savedViews.userId, userId), eq(savedViews.organizationId, orgId)];
+    if (page) conditions.push(eq(savedViews.page, page));
+    return db.select().from(savedViews).where(and(...conditions)).orderBy(desc(savedViews.createdAt));
+  }
+  async createSavedView(v: InsertSavedView): Promise<SavedView> {
+    const [r] = await db.insert(savedViews).values(v).returning();
+    return r;
+  }
+  async deleteSavedView(id: string, userId: string, orgId: string): Promise<void> {
+    await db.delete(savedViews).where(and(eq(savedViews.id, id), eq(savedViews.userId, userId), eq(savedViews.organizationId, orgId)));
   }
 }
 
