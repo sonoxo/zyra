@@ -35,8 +35,10 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@prisma/client": "^5.15.0",
-    "@sentry/node": "^10.47.0",
+    "@sentry/node": "^10.49.0",
+    "fastify": "^5.8.5",
     "prisma": "5.15.0",
     "zod": "^4.3.6"
   }
