@@ -37,6 +37,7 @@ import passwordResetRoutes from './routes/password.js'
 import notificationRoutes from './routes/notifications.js'
 import healthRoutes from './routes/health.js'
 import copilotRoutes from './routes/copilot.js'
+import shadowAIRoutes from './routes/shadow-ai.js'
 import learningRoutes from './plugins/learning.js'
 import publicRoutes from './routes/public.js'
 import analyticsRoutes from './routes/analytics.js'
@@ -119,6 +120,7 @@ await server.register(passwordResetRoutes, { prefix: '/api/password' })
 await server.register(notificationRoutes, { prefix: '/api/notifications' })
 await server.register(copilotRoutes, { prefix: '/api/copilot' })
   await server.register(learningRoutes, { prefix: '/api/learning' })
+  await server.register(shadowAIRoutes, { prefix: '/api/shadow-ai' })
 await server.register(webhookRoutes, { prefix: '/api/webhooks' })
 await server.register(jobRoutes, { prefix: '/api/jobs' })
 

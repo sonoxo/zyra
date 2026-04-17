@@ -243,3 +243,19 @@ export const learning = {
   getAutoGuide: () =>
     fetchApi<{ guide: any }>('/api/learning/auto-guide'),
 }
+
+// Shadow AI Scanner
+export const shadowAI = {
+  scan: (assets?: string[]) =>
+    fetchApi<{ findings: any[]; summary: any }>('/api/shadow-ai/scan', {
+      method: 'POST',
+      body: JSON.stringify({ assets }),
+    }),
+  getFindings: () =>
+    fetchApi<{ findings: any[] }>('/api/shadow-ai/findings'),
+  remediate: (findingId: string, action: 'block' | 'monitor' | 'whitelist') =>
+    fetchApi<{ message: string }>('/api/shadow-ai/remediate', {
+      method: 'POST',
+      body: JSON.stringify({ findingId, action }),
+    }),
+}
