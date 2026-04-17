@@ -73,6 +73,9 @@ export interface Threat {
   cve?: string
   status: ThreatStatus
   assetId: string
+  category?: string
+  affectedSystems?: string[]
+  indicators?: string[]
   createdAt: Date
   resolvedAt?: Date
 }
@@ -87,6 +90,9 @@ export interface Incident {
   description: string
   status: IncidentStatus
   priority: Priority
+  type?: string
+  severity?: Severity
+  timeline?: string[]
   orgId: string
   assignedToId?: string
   createdAt: Date
