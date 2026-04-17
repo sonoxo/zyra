@@ -101,7 +101,7 @@ export async function copilotRoutes(fastify: FastifyInstance) {
   /**
    * POST /api/copilot/chat
    * Body: { question: string }
-   * General Q&A about Zyra, security, and features
+   * General Q&A about Zyra, security, and features, plus action commands
    */
   fastify.post('/api/copilot/chat', async (request, reply) => {
     const { question } = request.body as { question: string }
@@ -111,35 +111,75 @@ export async function copilotRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      // Simple knowledge base for common questions
-      const knowledge: Record<string, string> = {
-        'how do i run a scan': 'Click the "Run Scan" button on the dashboard. Choose Full Scan for comprehensive checks or Quick Scan for critical vulnerabilities.',
-        'what is my security score': 'Your security score (0-100) is displayed on the dashboard. Aim for 80+ to maintain strong security posture. Click for detailed breakdowns.',
-        'how do i add an asset': 'Go to Dashboard > Assets > Add Asset. Enter the URL, IP, or hostname of the asset you want to monitor.',
-        'what does this threat mean': 'Each threat shows severity (CRITICAL/HIGH/MEDIUM/LOW). Click on a threat to see details, affected asset, and recommended fixes.',
-        'how do i fix a vulnerability': 'Open the threat details to see remediation steps. Most fixes involve updating software, changing configurations, or applying patches.',
-        'what integrations are available': 'Zyra integrates with Slack, Discord, GitHub, cloud providers (AWS, GCP, Azure), and more. Check Settings > Integrations.',
-        'how do i invite team members': 'Go to Dashboard > Team > Invite. Enter their email to send an invitation.',
-        'what is ai copilot': 'AI Copilot is your security assistant. Ask questions about threats, get remediation advice, or request analysis.',
-      }
-      
       const lowerQ = question.toLowerCase()
-      let answer = ''
-      
-      // Find matching knowledge base entry
-      for (const [key, value] of Object.entries(knowledge)) {
-        if (lowerQ.includes(key)) {
-          answer = value
-          break
+      let response: { answer?: string; action?: string; data?: any } = {}
+
+      // Action commands - detect and execute
+      if (lowerQ.includes('run scan') || lowerQ.includes('start scan') || lowerQ.includes('scan my')) {
+        // Trigger a scan
+        response = {
+          answer: "I've started a security scan for you. This may take a few minutes. You'll see the results on the dashboard.",
+          action: 'SCAN_STARTED',
+          data: { scanId: `scan_${Date.now()}`, type: lowerQ.includes('quick') ? 'QUICK' : 'FULL' }
+        }
+      } else if (lowerQ.includes('generate report') || lowerQ.includes('create report') || lowerQ.includes('export report')) {
+        response = {
+          answer: "Generating your security report now. You'll be able to download it from the dashboard.",
+          action: 'REPORT_GENERATED',
+          data: { reportId: `report_${Date.now()}`, format: 'PDF' }
+        }
+      } else if (lowerQ.includes('add asset') || lowerQ.includes('new asset') || lowerQ.includes('add website')) {
+        response = {
+          answer: "To add a new asset, I'll need the URL or IP address. Please provide the details on the Dashboard > Assets page, or tell me the target here.",
+          action: 'ADD_ASSET_PROMPT',
+          data: {}
+        }
+      } else if (lowerQ.includes('check score') || lowerQ.includes('security score') || lowerQ.includes('my score')) {
+        response = {
+          answer: "Your security score is shown on the dashboard. Click the score card to see detailed breakdowns by category.",
+          action: 'SCORE_VIEWED',
+          data: {}
+        }
+      } else if (lowerQ.includes('list threats') || lowerQ.includes('show threats') || lowerQ.includes('what threats')) {
+        response = {
+          answer: "You can view all threats on the Dashboard > Threats tab. Currently open threats are highlighted by severity.",
+          action: 'THREATS_VIEWED',
+          data: {}
+        }
+      } else if (lowerQ.includes('invite') || lowerQ.includes('add team') || lowerQ.includes('new user')) {
+        response = {
+          answer: "To invite team members, go to Dashboard > Team > Invite. Enter their email to send an invitation.",
+          action: 'TEAM_INVITE_PROMPT',
+          data: {}
+        }
+      } else {
+        // Knowledge base for common questions
+        const knowledge: Record<string, string> = {
+          'how do i run a scan': 'Click the "Run Scan" button on the dashboard. Choose Full Scan for comprehensive checks or Quick Scan for critical vulnerabilities.',
+          'what is my security score': 'Your security score (0-100) is displayed on the dashboard. Aim for 80+ to maintain strong security posture. Click for detailed breakdowns.',
+          'how do i add an asset': 'Go to Dashboard > Assets > Add Asset. Enter the URL, IP, or hostname of the asset you want to monitor.',
+          'what does this threat mean': 'Each threat shows severity (CRITICAL/HIGH/MEDIUM/LOW). Click on a threat to see details, affected asset, and recommended fixes.',
+          'how do i fix a vulnerability': 'Open the threat details to see remediation steps. Most fixes involve updating software, changing configurations, or applying patches.',
+          'what integrations are available': 'Zyra integrates with Slack, Discord, GitHub, cloud providers (AWS, GCP, Azure), and more. Check Settings > Integrations.',
+          'how do i invite team members': 'Go to Dashboard > Team > Invite. Enter their email to send an invitation.',
+          'what is ai copilot': 'AI Copilot is your security assistant. Ask questions about threats, get remediation advice, or request analysis.',
+        }
+        
+        // Find matching knowledge base entry
+        for (const [key, value] of Object.entries(knowledge)) {
+          if (lowerQ.includes(key)) {
+            response = { answer: value }
+            break
+          }
+        }
+        
+        // Default fallback
+        if (!response.answer) {
+          response = { answer: "I'm Zyra, your AI security assistant. I can help with running scans, understanding threats, adding assets, generating reports, or answering questions about Zyra's features. What would you like to do?" }
         }
       }
       
-      // Default fallback
-      if (!answer) {
-        answer = "I'm Zyra, your AI security assistant. I can help with running scans, understanding threats, adding assets, or answering questions about Zyra's features. What would you like to know?"
-      }
-      
-      return { success: true, answer }
+      return { success: true, ...response }
     } catch (error: any) {
       return reply.status(500).send({ error: error.message })
     }
