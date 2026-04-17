@@ -219,3 +219,12 @@ export function clearToken() {
     localStorage.removeItem('zyra_token')
   }
 }
+
+// AI Copilot chat
+export const copilot = {
+  chat: (question: string) =>
+    fetchApi<{ answer: string }>('/api/copilot/chat', {
+      method: 'POST',
+      body: JSON.stringify({ question }),
+    }),
+}
