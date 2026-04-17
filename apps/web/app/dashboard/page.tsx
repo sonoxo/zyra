@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Shield, Lock, Eye, Activity, AlertTriangle, CheckCircle, XCircle, Plus, Users, Settings, LogOut, Bell, Zap, CreditCard, Check, Server, Database, Key, ShieldAlert } from "lucide-react"
 import { useAuth } from "../../context/AuthContext"
 import { orgs, activities, assets, threats, incidents } from "../../lib/api"
+import { HelpTooltip } from "@/components/HelpTooltip"
 
 interface ActivityLog {
   id: string
@@ -79,10 +80,10 @@ export default function Dashboard() {
   const grade = securityScore >= 90 ? 'A' : securityScore >= 80 ? 'B' : securityScore >= 70 ? 'C' : securityScore >= 60 ? 'D' : 'F'
 
   const stats = [
-    { icon: Shield, label: 'Security Score', value: `${securityScore}/100`, color: securityScore >= 80 ? 'text-green-400' : 'text-yellow-400', note: `Grade: ${grade}` },
-    { icon: Lock, label: 'Assets', value: `${assetList.length}`, color: 'text-cyan-400', note: assetList.length === 0 ? 'Add assets to protect' : 'Monitored' },
-    { icon: Eye, label: 'Threats', value: `${threatList.filter(t => t.status === 'OPEN').length}`, color: threatList.filter(t => t.status === 'OPEN').length > 0 ? 'text-red-400' : 'text-green-400', note: 'Open threats' },
-    { icon: Activity, label: 'Incidents', value: `${incidentList.filter(i => i.status === 'OPEN').length}`, color: incidentList.filter(i => i.status === 'OPEN').length > 0 ? 'text-yellow-400' : 'text-green-400', note: 'Open incidents' },
+    { icon: Shield, label: 'Security Score', value: `${securityScore}/100`, color: securityScore >= 80 ? 'text-green-400' : 'text-yellow-400', note: `Grade: ${grade}`, helpKey: 'dashboard-score' },
+    { icon: Lock, label: 'Assets', value: `${assetList.length}`, color: 'text-cyan-400', note: assetList.length === 0 ? 'Add assets to protect' : 'Monitored', helpKey: 'assets' },
+    { icon: Eye, label: 'Threats', value: `${threatList.filter(t => t.status === 'OPEN').length}`, color: threatList.filter(t => t.status === 'OPEN').length > 0 ? 'text-red-400' : 'text-green-400', note: 'Open threats', helpKey: 'threats-list' },
+    { icon: Activity, label: 'Incidents', value: `${incidentList.filter(i => i.status === 'OPEN').length}`, color: incidentList.filter(i => i.status === 'OPEN').length > 0 ? 'text-yellow-400' : 'text-green-400', note: 'Open incidents', helpKey: 'incidents' },
   ]
 
   if (loading || orgLoading) {
@@ -171,7 +172,11 @@ export default function Dashboard() {
                     <stat.icon className={`w-8 h-8 ${stat.color}`} />
                     <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
                   </div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
+                  <div className="text-sm text-gray-400">
+                    {stat.helpKey ? (
+                      <HelpTooltip helpKey={stat.helpKey}>{stat.label}</HelpTooltip>
+                    ) : stat.label}
+                  </div>
                   <div className="text-xs text-gray-500 mt-1">{stat.note}</div>
                 </div>
               ))}
@@ -201,10 +206,12 @@ export default function Dashboard() {
                     <Plus className="w-4 h-4 text-cyan-400" />
                     <span className="text-sm">Add Asset</span>
                   </button>
-                  <button className="flex items-center space-x-2 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
-                    <Shield className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm">Run Scan</span>
-                  </button>
+                  <HelpTooltip helpKey="scan-button">
+                    <button className="flex items-center space-x-2 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+                      <Shield className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm">Run Scan</span>
+                    </button>
+                  </HelpTooltip>
                   <button className="flex items-center space-x-2 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
                     <AlertTriangle className="w-4 h-4 text-cyan-400" />
                     <span className="text-sm">Report Incident</span>

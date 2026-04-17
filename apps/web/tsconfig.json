@@ -15,7 +15,9 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./app/*", "./components/*"],
+      "@/*": ["./app/*", "./components/*", "./lib/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/components/*": ["./components/*"],
       "@zyra/config": ["../../packages/config/src"],
       "@zyra/types": ["../../packages/types/src"]
     }
