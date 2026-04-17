@@ -1,271 +1,291 @@
-import { Shield, Lock, Eye, FileText, CheckCircle, Server, Database, Users, Bell, Activity } from "lucide-react"
+'use client'
 
-export default function Compliance() {
-  const certifications = [
-    { name: "SOC 2 Type II", status: "Ready", icon: CheckCircle },
-    { name: "HIPAA Compliant", status: "Ready", icon: CheckCircle },
-    { name: "GDPR Compliant", status: "Ready", icon: CheckCircle },
-    { name: "PCI DSS Level 1", status: "Ready", icon: CheckCircle },
-    { name: "ISO 27001", status: "In Progress", icon: Shield },
-  ]
+import { useState, useEffect } from 'react'
+import { Shield, CheckCircle, AlertTriangle, XCircle, FileText, Download, RefreshCw, Activity, Lock, Globe } from 'lucide-react'
+import { useAuth } from "../../context/AuthContext"
+import { compliance } from '@/lib/api'
 
-  const soc2Controls = [
-    { category: "Security", controls: ["Access Control", "Encryption", "Network Security", "Incident Response"] },
-    { category: "Availability", controls: ["Uptime Monitoring", "Backup & Recovery", "Disaster Recovery"] },
-    { category: "Processing Integrity", controls: ["Data Validation", "Error Handling", "Quality Assurance"] },
-    { category: "Confidentiality", controls: ["Data Classification", "PII Protection", "Encryption at Rest"] },
-    { category: "Privacy", controls: ["Consent Management", "Data Retention", "Right to Deletion"] },
-  ]
+interface Framework {
+  id: string
+  name: string
+  score: number
+  status: 'compliant' | 'needs_attention' | 'non_compliant'
+}
 
-  const pciRequirements = [
-    { req: "1", desc: "Install and maintain firewall configuration" },
-    { req: "2", desc: "Change vendor-supplied defaults" },
-    { req: "3", desc: "Protect stored cardholder data" },
-    { req: "4", desc: "Encrypt transmission of cardholder data" },
-    { req: "5", desc: "Use and regularly update anti-virus software" },
-    { req: "6", desc: "Develop and maintain secure systems" },
-    { req: "7", desc: "Restrict access to cardholder data" },
-    { req: "8", desc: "Assign unique IDs to each user" },
-    { req: "9", desc: "Restrict physical access to cardholder data" },
-    { req: "10", desc: "Track and monitor all access" },
-    { req: "11", desc: "Regularly test security systems" },
-    { req: "12", desc: "Maintain信息安全 policy" },
-  ]
+interface Control {
+  id: string
+  name: string
+  status: 'PASS' | 'FAIL' | 'PENDING' | 'N/A'
+  evidence?: string
+  lastChecked: string
+}
+
+interface Report {
+  framework: string
+  score: number
+  totalControls: number
+  passedControls: number
+  failedControls: number
+  pendingControls: number
+  generatedAt: string
+  controls: Control[]
+  summary: string
+  recommendations: string[]
+}
+
+export default function CompliancePage() {
+  const { isAuthenticated, loading } = useAuth()
+  const [frameworks, setFrameworks] = useState<Framework[]>([])
+  const [selectedFramework, setSelectedFramework] = useState<string>('SOC2')
+  const [report, setReport] = useState<Report | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [exporting, setExporting] = useState(false)
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      // Redirect handled by auth
+    }
+  }, [loading, isAuthenticated])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadFrameworks()
+    }
+  }, [isAuthenticated])
+
+  async function loadFrameworks() {
+    try {
+      const data = await compliance.getFrameworks()
+      // Set initial frameworks with mock scores
+      setFrameworks([
+        { id: 'SOC2', name: 'SOC 2 Type II', score: 85, status: 'compliant' },
+        { id: 'PCI', name: 'PCI DSS', score: 72, status: 'needs_attention' },
+        { id: 'HIPAA', name: 'HIPAA', score: 90, status: 'compliant' },
+        { id: 'ISO27001', name: 'ISO 27001', score: 68, status: 'needs_attention' },
+      ])
+    } catch (e) {
+      console.error('Failed to load frameworks', e)
+    }
+  }
+
+  async function generateReport() {
+    setGenerating(true)
+    try {
+      const res = await compliance.generateReport(selectedFramework)
+      setReport(res.report)
+    } catch (e) {
+      console.error('Failed to generate report', e)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  async function exportReport(format: 'pdf' | 'json') {
+    setExporting(true)
+    try {
+      const res = await compliance.exportReport(selectedFramework, format)
+      alert(`Report ready! Download: ${res.downloadUrl}`)
+    } catch (e) {
+      console.error('Failed to export', e)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-cyan-400 animate-pulse">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
-    <div className="min-h-screen bg-background text-white">
-      {/* Header */}
-      <header className="border-b border-border bg-surface/50 backdrop-blur-xl sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-950 text-white">
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <Shield className="w-8 h-8 text-primary drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
-            <span className="text-xl font-bold gradient-text">Zyra</span>
+            <Shield className="w-8 h-8 text-cyan-400" />
+            <span className="text-xl font-bold">Zyra</span>
           </div>
-          <nav className="flex space-x-8 text-sm">
-            <a href="/" className="text-slate-400 hover:text-primary transition-colors">Home</a>
-            <a href="/dashboard" className="text-slate-400 hover:text-primary transition-colors">Dashboard</a>
-            <a href="/scan" className="text-slate-400 hover:text-primary transition-colors">Scanner</a>
-            <a href="/pricing" className="text-slate-400 hover:text-primary transition-colors">Pricing</a>
-          </nav>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Compliance & <span className="text-primary">Legal</span>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold flex items-center gap-3">
+            <Lock className="w-8 h-8 text-cyan-400" />
+            Compliance Dashboard
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            Zyra is built with security and privacy at its core. We're committed to meeting the highest industry standards.
+          <p className="text-gray-400 mt-2">
+            Generate and track compliance reports for SOC 2, PCI DSS, HIPAA, and ISO 27001
           </p>
         </div>
 
-        {/* Compliance Status */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-8">Compliance Certifications</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {certifications.map((cert, i) => (
-              <div key={i} className="bg-surface border border-border rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <cert.icon className={`w-8 h-8 ${cert.status === 'Ready' ? 'text-emerald-400' : 'text-amber-400'}`} />
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    cert.status === 'Ready' 
-                      ? 'bg-emerald-400/10 text-emerald-400' 
-                      : 'bg-amber-400/10 text-amber-400'
-                  }`}>
-                    {cert.status}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold">{cert.name}</h3>
+        {/* Framework Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {frameworks.map(fw => (
+            <div 
+              key={fw.id}
+              className={`bg-gray-900 border rounded-xl p-6 cursor-pointer transition-all ${
+                selectedFramework === fw.id ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-gray-800 hover:border-gray-700'
+              }`}
+              onClick={() => setSelectedFramework(fw.id)}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <Globe className="w-6 h-6 text-cyan-400" />
+                <span className={`text-2xl font-bold ${
+                  fw.score >= 80 ? 'text-green-400' : fw.score >= 60 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {fw.score}%
+                </span>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* SOC 2 Section */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-3xl p-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500/20 p-4 rounded-2xl">
-                <Activity className="w-8 h-8 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-4">SOC 2 Type II Compliance</h2>
-                <p className="text-slate-300 mb-6">
-                  Zyra maintains SOC 2 Type II compliance, verified by independent audits. We meet the highest standards for security, availability, processing integrity, confidentiality, and privacy.
-                </p>
-                
-                <h3 className="text-lg font-semibold mb-4">Trust Service Criteria</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {soc2Controls.map((cat, i) => (
-                    <div key={i} className="bg-surface/50 rounded-xl p-4">
-                      <h4 className="font-semibold text-blue-300 mb-2">{cat.category}</h4>
-                      <ul className="space-y-1 text-sm text-slate-400">
-                        {cat.controls.map((c, j) => (
-                          <li key={j} className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-emerald-400" /> {c}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
-                  <p className="text-blue-200 text-sm">
-                    <strong>Audit Status:</strong> Annual SOC 2 Type II audits conducted by independent firms. Latest report available upon request.
-                  </p>
-                </div>
-              </div>
+              <h3 className="font-semibold">{fw.name}</h3>
+              <p className={`text-sm mt-1 ${
+                fw.status === 'compliant' ? 'text-green-400' : 'text-yellow-400'
+              }`}>
+                {fw.status === 'compliant' ? 'Compliant' : 'Needs Attention'}
+              </p>
             </div>
-          </div>
-        </section>
-
-        {/* PCI DSS Section */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-3xl p-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-emerald-500/20 p-4 rounded-2xl">
-                <Database className="w-8 h-8 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-4">PCI DSS Level 1 Compliance</h2>
-                <p className="text-slate-300 mb-6">
-                  Zyra is PCI DSS Level 1 compliant — the highest level of compliance. We securely process, store, and transmit cardholder data in accordance with PCI DSS requirements.
-                </p>
-                
-                <h3 className="text-lg font-semibold mb-4">12 Requirements Met</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {pciRequirements.map((r, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-surface/50 rounded-lg p-3">
-                      <span className="bg-emerald-500/20 text-emerald-400 font-mono text-sm px-2 py-1 rounded">
-                        {r.req}
-                      </span>
-                      <span className="text-slate-300 text-sm">{r.desc}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2 text-emerald-400">
-                    <Lock className="w-5 h-5" />
-                    <span className="text-sm">AES-256 Encryption</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-400">
-                    <Server className="w-5 h-5" />
-                    <span className="text-sm">Tokenized Payments</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-400">
-                    <Eye className="w-5 h-5" />
-                    <span className="text-sm">Quarterly ASV Scans</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* HIPAA Section */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-3xl p-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-emerald-500/20 p-4 rounded-2xl">
-                <Shield className="w-8 h-8 text-emerald-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-4">HIPAA Compliance</h2>
-                <p className="text-slate-300 mb-6">
-                  Zyra is designed to comply with the Health Insurance Portability and Accountability Act (HIPAA). 
-                  Our platform implements all required administrative, physical, and technical safeguards to protect 
-                  protected health information (PHI).
-                </p>
-                <h3 className="text-lg font-semibold mb-3">What this means for you:</h3>
-                <ul className="space-y-2 text-slate-300">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" /> Data encrypted at rest and in transit
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" /> Access controls and audit logging
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" /> Business Associate Agreements (BAA) available
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" /> Regular security assessments
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* GDPR Section */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-3xl p-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500/20 p-4 rounded-2xl">
-                <Lock className="w-8 h-8 text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-4">GDPR Compliance</h2>
-                <p className="text-slate-300 mb-6">
-                  Zyra complies with the General Data Protection Regulation (GDPR) for organizations handling 
-                  EU citizens' data. We implement data minimization, purpose limitation, and right to erasure.
-                </p>
-                <h3 className="text-lg font-semibold mb-3">Your rights under GDPR:</h3>
-                <ul className="space-y-2 text-slate-300">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-400" /> Right to access your data
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-400" /> Right to data portability
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-400" /> Right to be forgotten
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-blue-400" /> Data processing agreements
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Security Features */}
-        <section>
-          <h2 className="text-2xl font-bold mb-8">Security & Privacy Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-surface border border-border rounded-2xl p-6">
-              <Lock className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Encryption</h3>
-              <p className="text-slate-400">AES-256 encryption at rest, TLS 1.3 in transit. All data encrypted regardless of storage location.</p>
-            </div>
-            <div className="bg-surface border border-border rounded-2xl p-6">
-              <Eye className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Audit Logging</h3>
-              <p className="text-slate-400">Comprehensive audit logs for all access and actions. Available for compliance reporting.</p>
-            </div>
-            <div className="bg-surface border border-border rounded-2xl p-6">
-              <FileText className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Data Retention</h3>
-              <p className="text-slate-400">Configurable data retention policies. Auto-delete after defined period or on demand.</p>
-            </div>
-            <div className="bg-surface border border-border rounded-2xl p-6">
-              <Users className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Access Controls</h3>
-              <p className="text-slate-400">Role-based access control (RBAC). Multi-factor authentication supported.</p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-slate-500 text-sm">
-          <p>© 2026 Zyra — The Snake Shield 🛡️ | <a href="/privacy" className="hover:text-primary">Privacy Policy</a> | <a href="/terms" className="hover:text-primary">Terms of Service</a></p>
+          ))}
         </div>
-      </footer>
+
+        {/* Generate Report Section */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold mb-2">
+                {selectedFramework} Compliance Report
+              </h2>
+              <p className="text-gray-400 text-sm">
+                Generate a detailed compliance report with controls assessment
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={generateReport}
+                disabled={generating}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-900 font-medium rounded-lg transition-colors"
+              >
+                {generating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="w-4 h-4" />
+                    Generate Report
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => exportReport('pdf')}
+                disabled={!report || exporting}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 rounded-lg transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export PDF
+              </button>
+              <button
+                onClick={() => exportReport('json')}
+                disabled={!report || exporting}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 rounded-lg transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                Export JSON
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Report Results */}
+        {report && (
+          <>
+            {/* Score Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-1">Compliance Score</div>
+                <div className={`text-3xl font-bold ${
+                  report.score >= 80 ? 'text-green-400' : report.score >= 60 ? 'text-yellow-400' : 'text-red-400'
+                }`}>
+                  {report.score}%
+                </div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-1">Controls Passed</div>
+                <div className="text-3xl font-bold text-green-400">{report.passedControls}</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-1">Controls Failed</div>
+                <div className="text-3xl font-bold text-red-400">{report.failedControls}</div>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="text-gray-400 text-sm mb-1">Pending Review</div>
+                <div className="text-3xl font-bold text-yellow-400">{report.pendingControls}</div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+              <h3 className="text-lg font-semibold mb-4">Summary</h3>
+              <p className="text-gray-300">{report.summary}</p>
+              
+              {report.recommendations.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-400 mb-2">Recommendations</h4>
+                  <ul className="space-y-1">
+                    {report.recommendations.map((rec, i) => (
+                      <li key={i} className="text-sm text-cyan-400 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Controls List */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Control Details</h3>
+              <div className="space-y-3">
+                {report.controls.map(ctrl => (
+                  <div 
+                    key={ctrl.id}
+                    className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      {ctrl.status === 'PASS' ? (
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      ) : ctrl.status === 'FAIL' ? (
+                        <XCircle className="w-5 h-5 text-red-400" />
+                      ) : (
+                        <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                      )}
+                      <div>
+                        <span className="font-medium">{ctrl.id}</span>
+                        <span className="text-gray-400 ml-2">{ctrl.name}</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      ctrl.status === 'PASS' ? 'bg-green-500/20 text-green-400' :
+                      ctrl.status === 'FAIL' ? 'bg-red-500/20 text-red-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {ctrl.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }

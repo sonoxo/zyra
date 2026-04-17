@@ -264,3 +264,21 @@ export const shadowAI = {
       body: JSON.stringify(options || {}),
     }),
 }
+
+// Compliance
+export const compliance = {
+  getFrameworks: () =>
+    fetchApi<{ frameworks: any[] }>('/api/compliance/frameworks'),
+  generateReport: (framework: string) =>
+    fetchApi<{ report: any }>('/api/compliance/generate', {
+      method: 'POST',
+      body: JSON.stringify({ framework }),
+    }),
+  exportReport: (framework: string, format?: 'pdf' | 'json') =>
+    fetchApi<{ downloadUrl: string }>('/api/compliance/export', {
+      method: 'POST',
+      body: JSON.stringify({ framework, format }),
+    }),
+  getStatus: () =>
+    fetchApi<{ status: any }>('/api/compliance/status'),
+}
