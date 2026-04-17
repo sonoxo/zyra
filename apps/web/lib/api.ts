@@ -254,8 +254,13 @@ export const shadowAI = {
   getFindings: () =>
     fetchApi<{ findings: any[] }>('/api/shadow-ai/findings'),
   remediate: (findingId: string, action: 'block' | 'monitor' | 'whitelist') =>
-    fetchApi<{ message: string }>('/api/shadow-ai/remediate', {
+    fetchApi<{ message: string; remediation?: any }>('/api/shadow-ai/remediate', {
       method: 'POST',
       body: JSON.stringify({ findingId, action }),
+    }),
+  autoRemediate: (options?: { autoBlockHigh?: boolean; autoMonitorMedium?: boolean }) =>
+    fetchApi<{ autoRemediation: any }>('/api/shadow-ai/auto-remediate', {
+      method: 'POST',
+      body: JSON.stringify(options || {}),
     }),
 }

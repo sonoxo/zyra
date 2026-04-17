@@ -216,8 +216,8 @@ export async function shadowAIRoutes(fastify: FastifyInstance) {
     const { findingId, action } = request.body as { findingId: string; action: 'block' | 'monitor' | 'whitelist' }
 
     // In production, this would:
-    // - block: add to firewall blocklist
-    // - monitor: enable enhanced logging
+    // - block: add to firewall blocklist, create incident
+    // - monitor: enable enhanced logging, increase alert threshold
     // - whitelist: add to approved list
 
     const actions = {
@@ -226,11 +226,91 @@ export async function shadowAIRoutes(fastify: FastifyInstance) {
       whitelist: 'added to approved AI services'
     }
 
+    // Simulate remediation actions
+    const remediationResult = {
+      findingId,
+      action,
+      timestamp: new Date().toISOString(),
+      changes: [] as string[],
+      notifications: [] as string[]
+    }
+
+    switch (action) {
+      case 'block':
+        remediationResult.changes = [
+          `Added ${findingId} to network blocklist`,
+          'Firewall rules updated',
+          'Monitoring alerts disabled for this endpoint'
+        ]
+        remediationResult.notifications = [
+          'Security team notified',
+          'Incident created #INC-SHADOW-AI-001'
+        ]
+        break
+      case 'monitor':
+        remediationResult.changes = [
+          'Enhanced logging enabled',
+          'Alert threshold increased to HIGH only',
+          'Added to daily security report'
+        ]
+        break
+      case 'whitelist':
+        remediationResult.changes = [
+          'Added to approved AI services list',
+          'Risk level downgraded to LOW',
+          'Removed from active monitoring'
+        ]
+        break
+    }
+
     return {
       success: true,
-      message: `Finding ${findingId} ${actions[action]}`
+      message: `Finding ${findingId} ${actions[action]}`,
+      remediation: remediationResult
     }
   })
-}
+
+  /**
+   * POST /api/shadow-ai/auto-remediate
+   * Auto-remediate based on policy: block HIGH risk, monitor MEDIUM
+   * Body: { autoBlockHigh?: boolean, autoMonitorMedium?: boolean }
+   */
+  fastify.post('/api/shadow-ai/auto-remediate', async (request, reply) => {
+    const { autoBlockHigh = true, autoMonitorMedium = false } = request.body as {
+      autoBlockHigh?: boolean
+      autoMonitorMedium?: boolean
+    }
+
+    // In production, this would query database for recent findings
+    // For demo, return mock auto-remediation summary
+    
+    const autoRemediation = {
+      timestamp: new Date().toISOString(),
+      actions: [] as { type: string; target: string; result: string }[],
+      summary: {
+        blocked: autoBlockHigh ? 2 : 0,
+        monitored: autoMonitorMedium ? 1 : 0,
+        whitelisted: 0
+      }
+    }
+
+    if (autoBlockHigh) {
+      autoRemediation.actions.push(
+        { type: 'block', target: 'api.openai.com', result: 'blocked' },
+        { type: 'block', target: 'api.anthropic.com', result: 'blocked' }
+      )
+    }
+
+    if (autoMonitorMedium) {
+      autoRemediation.actions.push(
+        { type: 'monitor', target: 'chat.openai.com', result: 'monitoring enabled' }
+      )
+    }
+
+    return {
+      success: true,
+      autoRemediation
+    }
+  })
 
 export default shadowAIRoutes
