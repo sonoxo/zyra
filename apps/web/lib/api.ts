@@ -223,8 +223,23 @@ export function clearToken() {
 // AI Copilot chat
 export const copilot = {
   chat: (question: string) =>
-    fetchApi<{ answer: string }>('/api/copilot/chat', {
+    fetchApi<{ answer: string; action?: string; data?: any }>('/api/copilot/chat', {
       method: 'POST',
       body: JSON.stringify({ question }),
     }),
+}
+
+// Learning & insights
+export const learning = {
+  logQuestion: (question: string, answered = true, action?: string) =>
+    fetchApi('/api/learning/log-question', {
+      method: 'POST',
+      body: JSON.stringify({ question, answered, action }),
+    }),
+  getPopular: () =>
+    fetchApi<{ popular: { question: string; count: number }[] }>('/api/learning/popular'),
+  getInsights: () =>
+    fetchApi<{ insights: any }>('/api/learning/insights'),
+  getAutoGuide: () =>
+    fetchApi<{ guide: any }>('/api/learning/auto-guide'),
 }
