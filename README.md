@@ -227,6 +227,15 @@ Ready for enterprise compliance requirements:
 
 ---
 
+## 📚 Documentation
+
+- **[Skills Documentation](./skills/README.md)** — Structured cybersecurity skills for AI agents
+- **[Community Resources](./docs/community-resources/README.md)** — Curated tools, guides, and references for security professionals
+- **[API Reference](#api-reference)** — AI Copilot, Skills Engine, and Incident Response endpoints
+- **[Architecture](./ARCHITECTURE.md)** — System design and component overview
+
+---
+
 ## 🔐 Reporting Vulnerabilities
 
 If you discover a security vulnerability, please report responsibly:
