@@ -1,0 +1,84 @@
+name: Sync Cybersecurity Skills
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+    inputs:
+      fullSync:
+        description: 'Full sync (overwrite local changes)'
+        required: false
+        default: 'false'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Zyra
+        uses: actions/checkout@v4
+        with:
+          path: zyra
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install js-yaml
+
+      - name: Sync skills from upstream
+        run: |
+          # Clone the upstream skills repository
+          git clone --depth 1 https://github.com/mukul975/Anthropic-Cybersecurity-Skills.git upstream-skills
+          
+          # Copy skills to Zyra (merge or replace based on input)
+          if [ "${{ github.event.inputs.fullSync }}" == "true" ]; then
+            rm -rf zyra/skills/*
+          fi
+          
+          cp -r upstream-skills/skills/* zyra/skills/ 2>/dev/null || true
+          
+          # Clean up
+          rm -rf upstream-skills
+
+      - name: Run skills loader test
+        run: |
+          cd zyra
+          npx ts-node -e "
+            import { SkillLoader } from './lib/skills-loader';
+            const loader = new SkillLoader('./skills');
+            loader.loadSkills().then(() => {
+              console.log('Skills loaded successfully');
+              console.log('Domains:', loader.getDomains());
+            });
+          "
+
+      - name: Generate compliance report
+        run: |
+          cd zyra
+          npx ts-node -e "
+            import { SkillLoader } from './lib/skills-loader';
+            const loader = new SkillLoader('./skills');
+            loader.loadSkills().then(() => {
+              const report = loader.generateCoverageReport();
+              console.log('Framework Coverage:');
+              console.log(JSON.stringify(report, null, 2));
+            });
+          " >> coverage-report.json
+
+      - name: Commit and create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Update cybersecurity skills from upstream'
+          title: 'Update Zyra Cybersecurity Skills'
+          body: |
+            Automated update of cybersecurity skills from Anthropic-Cybersecurity-Skills repository.
+            
+            - Added new skills
+            - Updated framework mappings
+            - Generated compliance report
+          branch: skills-update
+          delete-branch: true
