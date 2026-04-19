@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,9 +15,9 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: 'npm'
       
       - name: Install dependencies
@@ -29,10 +26,8 @@ jobs:
       - name: Build web (Next.js frontend)
         run: npm run build:web
       
-      # Test disabled temporarily - enable after fixing
-      # - name: Test
-      #   run: npm run test
+      - name: Build API (Fastify)
+        run: npm run build:api
       
-      # API build disabled - handled by Replit deployment
-      # - name: Build API
-      #   run: npm run build:api
+      - name: Run tests
+        run: npm run test
