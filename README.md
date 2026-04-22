@@ -16,11 +16,18 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/zyra-security/zyra?style=flat-square&color=7c3aed" alt="Release" />
-  <img src="https://img.shields.io/github/actions/workflow/status/zyra-security/zyra/ci.yml?branch=main&style=flat-square" alt="CI" />
+  <a href="https://github.com/sonoxo/zyra/releases"><img src="https://img.shields.io/github/v/release/sonoxo/zyra?style=flat-square&color=7c3aed&label=release" alt="Release" /></a>
+  <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/last-commit/sonoxo/zyra?style=flat-square&color=7c3aed&label=last%20commit" alt="Last Commit" /></a>
+  <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/commit-activity/m/sonoxo/zyra?style=flat-square&color=7c3aed&label=commits%2Fmonth" alt="Commit Activity" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/sonoxo/zyra/ci.yml?branch=main&style=flat-square&label=build" alt="Build" /></a>
   <img src="https://img.shields.io/badge/coverage-85%25-brightgreen?style=flat-square" alt="Coverage" />
   <img src="https://img.shields.io/badge/license-BSL--1.1-blue?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+</p>
+
+<p align="center">
+  <strong>Current Release:</strong> <code>v1.1.0</code> &nbsp;&bull;&nbsp;
+  <strong>Build:</strong> <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/sha/sonoxo/zyra?style=flat-square&label=" alt="Build SHA" /></a>
 </p>
 
 ---
