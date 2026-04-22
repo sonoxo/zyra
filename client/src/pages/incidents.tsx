@@ -88,7 +88,7 @@ export default function IncidentsPage() {
     }));
     const uniqueAssets = new Set<string>();
     incidents.forEach(i => i.affectedSystems?.forEach(a => uniqueAssets.add(a)));
-    assets.forEach(a => uniqueAssets.add(a.name));
+    assets.forEach(a => { if (a.hostname) uniqueAssets.add(a.hostname); });
     const assetOptions = Array.from(uniqueAssets).sort().map(a => ({ value: a, label: a }));
     return baseIncidentFilters.map(f => {
       if (f.key === "assignee") return { ...f, options: memberOptions };
