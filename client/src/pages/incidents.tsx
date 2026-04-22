@@ -79,7 +79,7 @@ export default function IncidentsPage() {
   const { data: incidents = [], isLoading } = useQuery<Incident[]>({ queryKey: ["/api/incidents"] });
   const { data: stats } = useQuery<any>({ queryKey: ["/api/incidents/stats"] });
   const { data: teamData } = useQuery<{ members: { id: string; username: string; fullName: string | null }[] }>({ queryKey: ["/api/team"] });
-  const { data: assets = [] } = useQuery<{ id: string; name: string }[]>({ queryKey: ["/api/assets"] });
+  const { data: assets = [] } = useQuery<{ id: string; hostname: string }[]>({ queryKey: ["/api/assets"] });
 
   const incidentFilters = useMemo<FilterDefinition[]>(() => {
     const memberOptions = (teamData?.members || []).map(m => ({
