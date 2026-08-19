@@ -13,6 +13,7 @@ candidates+=(
   "$HOME/Developer/gpt-doug-llm"
   "$HOME/Documents/gpt-doug-llm"
   "$HOME/Desktop/gpt-doug-llm"
+  "$HOME/.local/share/gpt-doug-llm"
 )
 
 DOUG_HOME=""
@@ -25,54 +26,87 @@ done
 
 if [[ -z "$DOUG_HOME" ]]; then
   printf '%s\n' "ZYRA BRIDGE ERROR // gpt-doug-llm was not found." >&2
-  printf '%s\n' "Set GPT_DOUG_HOME to the gpt-doug-llm folder, then retry." >&2
+  printf '%s\n' "Install it at ~/gpt-doug-llm or set GPT_DOUG_HOME, then retry." >&2
   exit 127
 fi
 
+# Prefer the provider router, but make an already-installed local Ollama model
+# immediately usable without requiring the user to rename it to 'gpt-doug'.
 export GPT_DOUG_PROVIDER="${GPT_DOUG_PROVIDER:-auto}"
-
-if [[ $# -eq 0 ]]; then
-  if [[ -x "$DOUG_HOME/gpt-doug" ]]; then
-    cd "$DOUG_HOME"
-    exec ./gpt-doug
+if command -v ollama >/dev/null 2>&1; then
+  if ! curl -fsS --max-time 2 http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+    nohup ollama serve >"${TMPDIR:-/tmp}/zyra-ollama.log" 2>&1 &
+    sleep 2
   fi
-  printf '%s\n' "ZYRA BRIDGE ERROR // $DOUG_HOME/gpt-doug is missing or not executable." >&2
-  exit 126
+  if [[ -z "${OLLAMA_MODEL:-}" ]]; then
+    first_model="$(ollama list 2>/dev/null | awk 'NR==2 {print $1; exit}')"
+    [[ -n "$first_model" ]] && export OLLAMA_MODEL="$first_model"
+  fi
 fi
 
-export ZYRA_PROMPT="$*"
+export ZYRA_PROMPT="${*:-}"
 cd "$DOUG_HOME"
 exec python3 - <<'PY'
 import os
 
 from agents import llm_backend
 
+
+def provider_ready():
+    state = llm_backend.health()
+    ready = bool(state.get("configured") and state.get("model_available"))
+    if not ready:
+        provider = state.get("provider", "none")
+        message = state.get("message", "No AI provider is ready")
+        print(f"ZYRA > bridge connected; AI provider {provider!r} is not ready: {message}.")
+        print("ZYRA > configure Gemini/OpenAI/Claude, or start Ollama with any installed model.")
+    return ready
+
+
+def ask(messages):
+    try:
+        chunks = []
+        for event in llm_backend.chat_stream(messages, llm_backend.DEFAULT_MODEL, {}):
+            text = event.get("message", {}).get("content", "")
+            if text:
+                chunks.append(text)
+        return "".join(chunks).strip()
+    except Exception as exc:
+        print(f"ZYRA > provider request failed: {type(exc).__name__}.")
+        return ""
+
+
+if not provider_ready():
+    raise SystemExit(0)
+
 prompt = os.environ.get("ZYRA_PROMPT", "").strip()
-if not prompt:
+if prompt:
+    answer = ask([{"role": "user", "content": prompt}])
+    print(f"ZYRA > {answer}" if answer else "ZYRA > provider returned no text.")
     raise SystemExit(0)
 
-state = llm_backend.health()
-if not (state.get("configured") and state.get("model_available")):
-    provider = state.get("provider", "none")
-    message = state.get("message", "No AI provider is ready")
-    print(f"ZYRA > bridge connected; AI provider {provider!r} is not ready: {message}.")
-    print("ZYRA > set GPT_DOUG_PROVIDER=auto and configure Gemini/OpenAI/Claude, or start Ollama with an installed model.")
-    raise SystemExit(0)
-
-messages = [{"role": "user", "content": prompt}]
-try:
-    chunks = []
-    for event in llm_backend.chat_stream(messages, llm_backend.DEFAULT_MODEL, {}):
-        text = event.get("message", {}).get("content", "")
-        if text:
-            chunks.append(text)
-    answer = "".join(chunks).strip()
-except Exception as exc:
-    print(f"ZYRA > provider request failed: {type(exc).__name__}.")
-    raise SystemExit(0)
-
-if answer:
-    print(f"ZYRA > {answer}")
-else:
-    print("ZYRA > provider returned no text.")
+print("ZYRA TALK MODE // ONLINE")
+print("Type /exit to return to the command core.")
+history = []
+while True:
+    try:
+        prompt = input("ZYRA > ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        break
+    if not prompt:
+        continue
+    if prompt.lower() in {"/exit", "exit", "/quit", "quit"}:
+        break
+    if prompt.lower() == "/clear":
+        history.clear()
+        print("ZYRA > memory cleared")
+        continue
+    history.append({"role": "user", "content": prompt})
+    answer = ask(history)
+    if answer:
+        print(f"ZYRA > {answer}")
+        history.append({"role": "assistant", "content": answer})
+    else:
+        print("ZYRA > provider returned no text.")
 PY
