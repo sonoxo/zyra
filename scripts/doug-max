@@ -51,6 +51,13 @@ import os
 
 from agents import llm_backend
 
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
+
+def zyra_print(message: str) -> None:
+    print(f"{CYAN}ZYRA > {message}{RESET}")
+
 
 def provider_ready():
     state = llm_backend.health()
@@ -58,8 +65,8 @@ def provider_ready():
     if not ready:
         provider = state.get("provider", "none")
         message = state.get("message", "No AI provider is ready")
-        print(f"ZYRA > bridge connected; AI provider {provider!r} is not ready: {message}.")
-        print("ZYRA > configure Gemini/OpenAI/Claude, or start Ollama with any installed model.")
+        zyra_print(f"bridge connected; AI provider {provider!r} is not ready: {message}.")
+        zyra_print("configure Gemini/OpenAI/Claude, or start Ollama with any installed model.")
     return ready
 
 
@@ -72,7 +79,7 @@ def ask(messages):
                 chunks.append(text)
         return "".join(chunks).strip()
     except Exception as exc:
-        print(f"ZYRA > provider request failed: {type(exc).__name__}.")
+        zyra_print(f"provider request failed: {type(exc).__name__}.")
         return ""
 
 
@@ -82,15 +89,15 @@ if not provider_ready():
 prompt = os.environ.get("ZYRA_PROMPT", "").strip()
 if prompt:
     answer = ask([{"role": "user", "content": prompt}])
-    print(f"ZYRA > {answer}" if answer else "ZYRA > provider returned no text.")
+    zyra_print(answer if answer else "provider returned no text.")
     raise SystemExit(0)
 
-print("ZYRA TALK MODE // ONLINE")
+print(f"{CYAN}ZYRA TALK MODE // ONLINE{RESET}")
 print("Type /exit to return to the command core.")
 history = []
 while True:
     try:
-        prompt = input("ZYRA > ").strip()
+        prompt = input(f"{CYAN}ZYRA > {RESET}").strip()
     except (EOFError, KeyboardInterrupt):
         print()
         break
@@ -100,13 +107,13 @@ while True:
         break
     if prompt.lower() == "/clear":
         history.clear()
-        print("ZYRA > memory cleared")
+        zyra_print("memory cleared")
         continue
     history.append({"role": "user", "content": prompt})
     answer = ask(history)
     if answer:
-        print(f"ZYRA > {answer}")
+        zyra_print(answer)
         history.append({"role": "assistant", "content": answer})
     else:
-        print("ZYRA > provider returned no text.")
+        zyra_print("provider returned no text.")
 PY
