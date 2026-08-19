@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ZYRA_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+
+candidates=()
+[[ -n "${GPT_DOUG_HOME:-}" ]] && candidates+=("$GPT_DOUG_HOME")
+[[ -n "${ZYRA_GPT_DOUG_HOME:-}" ]] && candidates+=("$ZYRA_GPT_DOUG_HOME")
+candidates+=(
+  "$ZYRA_ROOT/../gpt-doug-llm"
+  "$HOME/gpt-doug-llm"
+  "$HOME/Developer/gpt-doug-llm"
+  "$HOME/Documents/gpt-doug-llm"
+  "$HOME/Desktop/gpt-doug-llm"
+)
+
+DOUG_HOME=""
+for candidate in "${candidates[@]}"; do
+  if [[ -f "$candidate/agents/llm_backend.py" ]]; then
+    DOUG_HOME="$(cd -- "$candidate" && pwd)"
+    break
+  fi
+done
+
+if [[ -z "$DOUG_HOME" ]]; then
+  printf '%s\n' "ZYRA BRIDGE ERROR // gpt-doug-llm was not found." >&2
+  printf '%s\n' "Set GPT_DOUG_HOME to the gpt-doug-llm folder, then retry." >&2
+  exit 127
+fi
+
+export GPT_DOUG_PROVIDER="${GPT_DOUG_PROVIDER:-auto}"
+
+if [[ $# -eq 0 ]]; then
+  if [[ -x "$DOUG_HOME/gpt-doug" ]]; then
+    cd "$DOUG_HOME"
+    exec ./gpt-doug
+  fi
+  printf '%s\n' "ZYRA BRIDGE ERROR // $DOUG_HOME/gpt-doug is missing or not executable." >&2
+  exit 126
+fi
+
+export ZYRA_PROMPT="$*"
+cd "$DOUG_HOME"
+exec python3 - <<'PY'
+import os
+
+from agents import llm_backend
+
+prompt = os.environ.get("ZYRA_PROMPT", "").strip()
+if not prompt:
+    raise SystemExit(0)
+
+state = llm_backend.health()
+if not (state.get("configured") and state.get("model_available")):
+    provider = state.get("provider", "none")
+    message = state.get("message", "No AI provider is ready")
+    print(f"ZYRA > bridge connected; AI provider {provider!r} is not ready: {message}.")
+    print("ZYRA > set GPT_DOUG_PROVIDER=auto and configure Gemini/OpenAI/Claude, or start Ollama with an installed model.")
+    raise SystemExit(0)
+
+messages = [{"role": "user", "content": prompt}]
+try:
+    chunks = []
+    for event in llm_backend.chat_stream(messages, llm_backend.DEFAULT_MODEL, {}):
+        text = event.get("message", {}).get("content", "")
+        if text:
+            chunks.append(text)
+    answer = "".join(chunks).strip()
+except Exception as exc:
+    print(f"ZYRA > provider request failed: {type(exc).__name__}.")
+    raise SystemExit(0)
+
+if answer:
+    print(f"ZYRA > {answer}")
+else:
+    print("ZYRA > provider returned no text.")
+PY
