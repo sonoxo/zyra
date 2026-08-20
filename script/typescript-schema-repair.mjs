@@ -47,6 +47,12 @@ function replaceAllRequired(source, before, after, expectedMinimum, label) {
   );
   source = replaceOnce(
     source,
+    '{session.summary && ((session.summary as any).findingsCount as number) > 0 && (',
+    '{Boolean(session.summary) && ((session.summary as any).findingsCount as number) > 0 && (',
+    "pentest unknown summary rendering",
+  );
+  source = replaceOnce(
+    source,
     '{(finding.testType as React.ReactNode).toString().replace("_", " ")}',
     '{String(finding.testType ?? "unknown").replace("_", " ")}',
     "pentest nullable testType",
