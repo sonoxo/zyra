@@ -1,0 +1,42 @@
+name: War Room CI
+
+on:
+  push:
+    branches:
+      - feature/cyberpunk-war-room
+  pull_request:
+    paths:
+      - "client/src/pages/war-room.tsx"
+      - "client/src/components/WarRoomLauncher.tsx"
+      - "server/war-room*.ts"
+      - "server/index.ts"
+      - ".github/workflows/war-room-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: War Room boundary tests
+        run: npx tsx --test server/war-room.test.ts
+
+      - name: TypeScript check
+        run: npm run check
+
+      - name: Production build
+        run: npm run build
