@@ -22,7 +22,21 @@ assert.equal(TITAN_RX_PLATFORM_REGISTRY.length > 0, true, "platform registry mus
 const platform = TITAN_RX_PLATFORM_REGISTRY[0];
 assert.equal(platform.safetyInterlockState, "ENFORCED");
 assert.equal(platform.evidenceState, "SIMULATED");
-assert.equal(platform.subsystems.length >= 6, true);
+assert.equal(platform.subsystems.length >= 18, true, "registry must include UAV readiness subsystems");
+
+const uav = platform.uavReadinessProfile;
+assert.equal(uav.platformClass, "MULTIROTOR_UAV_READINESS");
+assert.equal(uav.telemetryProtocol, "MAVLink");
+assert.equal(uav.autopilotBaselines.includes("PX4"), true);
+assert.equal(uav.autopilotBaselines.includes("ArduPilot"), true);
+assert.equal(uav.groundControlStations.includes("QGroundControl"), true);
+assert.equal(uav.groundControlStations.includes("Mission Planner"), true);
+assert.equal(uav.navigationSensors.includes("IMU"), true);
+assert.equal(uav.navigationSensors.includes("GNSS/Galileo"), true);
+assert.equal(uav.flightActuationEnabled, false);
+assert.equal(uav.payloadActuationEnabled, false);
+assert.equal(uav.weaponizationEnabled, false);
+assert.equal(uav.autonomousAttackEnabled, false);
 
 for (const scenario of scenarios) {
   const result = runTitanScenario(scenario);
@@ -34,9 +48,15 @@ for (const scenario of scenarios) {
 }
 
 assert.equal(TITAN_RX_CONTROL_BOUNDARY.externalHardwareControl, false);
+assert.equal(TITAN_RX_CONTROL_BOUNDARY.uavFlightActuation, false);
+assert.equal(TITAN_RX_CONTROL_BOUNDARY.uavPayloadActuation, false);
+assert.equal(TITAN_RX_CONTROL_BOUNDARY.weaponization, false);
+assert.equal(TITAN_RX_CONTROL_BOUNDARY.autonomousAttack, false);
 assert.equal(TITAN_RX_CONTROL_BOUNDARY.executionDomain, "READINESS_RECOVERY_ONLY");
 
 console.log("TITAN RX readiness digital twin verification: PASS");
 console.log(`platform=${platform.platformId}`);
+console.log(`subsystems=${platform.subsystems.length}`);
+console.log(`uavProfile=${uav.platformClass}`);
 console.log(`scenarios=${scenarios.length}`);
 console.log(`executionDomain=${TITAN_RX_CONTROL_BOUNDARY.executionDomain}`);
