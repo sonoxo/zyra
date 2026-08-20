@@ -20,8 +20,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { tscNodes } from "@/lib/tsc-node-registry";
 
-type Readiness = "READY" | "LIMITED" | "MAINTENANCE" | "UNKNOWN";
+type Readiness = "READY" | "LIMITED" | "MAINTENANCE" | "DEGRADED" | "UNKNOWN";
 
 type SystemCard = {
   id: string;
@@ -61,11 +62,16 @@ function MatrixField() {
   );
 }
 
-function readinessTone(readiness: Readiness) {
+function readinessTone(readiness: Readiness | string) {
   if (readiness === "READY") return "text-emerald-300 border-emerald-400/30 bg-emerald-500/10";
   if (readiness === "LIMITED") return "text-amber-300 border-amber-400/30 bg-amber-500/10";
   if (readiness === "MAINTENANCE") return "text-cyan-300 border-cyan-400/30 bg-cyan-500/10";
+  if (readiness === "DEGRADED") return "text-orange-300 border-orange-400/30 bg-orange-500/10";
   return "text-slate-300 border-slate-400/20 bg-slate-500/10";
+}
+
+function nodeIcon(kind: string) {
+  return kind === "NUCLEAR_SAFETY" ? Shield : RadioTower;
 }
 
 export default function TscPage() {
@@ -85,7 +91,8 @@ export default function TscPage() {
               </div>
               <h1 className="font-mono text-3xl font-black text-emerald-100 md:text-4xl">XRAYCLOUD // TSC DEFENSIVE SYSTEMS</h1>
               <p className="mt-2 max-w-4xl text-sm text-emerald-100/65">
-                Evidence-first readiness, maintenance, logistics, communications resilience, public/simulated awareness, recovery planning, and governed decision support.
+                Evidence-first readiness, maintenance, logistics, communications resilience, nuclear-infrastructure safety awareness,
+                unmanned-system readiness, public/simulated awareness, recovery planning, and governed decision support.
               </p>
             </div>
             <div className="flex gap-2 rounded-xl border border-emerald-400/20 bg-black/70 p-2">
@@ -95,7 +102,8 @@ export default function TscPage() {
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-400/20 bg-red-500/5 p-3 text-xs text-red-100/70">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
-            TSC does not provide target selection, weapon release, fire control, strike planning, autonomous lethal decisions, offensive cyber execution, or direct drone flight/payload control.
+            Nuclear nodes are safety/resilience models only. Drone nodes are readiness/maintenance models only. No reactor control,
+            safety-interlock bypass, target selection, weapon release, fire control, autonomous lethal decisions, or direct flight/payload control is exposed.
           </div>
         </div>
 
@@ -144,6 +152,57 @@ export default function TscPage() {
           ))}
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          {tscNodes.map((node) => {
+            const Icon = nodeIcon(node.kind);
+            return (
+              <Card key={node.nodeId} className={cn("border bg-black/60 backdrop-blur-xl", node.kind === "NUCLEAR_SAFETY" ? "border-amber-400/20" : "border-cyan-400/20")}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 font-mono text-sm text-emerald-100">
+                      <Icon className={cn("h-5 w-5", node.kind === "NUCLEAR_SAFETY" ? "text-amber-300" : "text-cyan-300")} />
+                      {node.name}
+                    </span>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className={readinessTone(node.state)}>{node.state}</Badge>
+                      <Badge variant="outline" className="border-violet-400/20 text-violet-300">{node.dataMode}</Badge>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{node.purpose}</p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {node.metrics.map((metric) => (
+                      <div key={metric.key} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-muted-foreground">{metric.label}</span>
+                          <Badge variant="outline" className={cn("text-[9px]", readinessTone(metric.state))}>{metric.state}</Badge>
+                        </div>
+                        <div className="mt-1 font-mono text-sm text-emerald-100">{metric.value}</div>
+                        <div className="mt-1 font-mono text-[9px] text-emerald-100/40">{metric.evidence}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg border border-emerald-400/10 bg-emerald-500/5 p-3">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-emerald-300">Allowed support actions</div>
+                      <div className="mt-2 space-y-1 font-mono text-[10px] text-emerald-100/60">
+                        {node.allowedActions.map((action) => <div key={action}>+ {action}</div>)}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-red-400/10 bg-red-500/5 p-3">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-red-300">Control paths absent</div>
+                      <div className="mt-2 space-y-1 font-mono text-[10px] text-red-100/60">
+                        {node.blockedActions.map((action) => <div key={action}>- {action}</div>)}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="border-emerald-400/15 bg-black/55 backdrop-blur-xl">
             <CardHeader><CardTitle className="flex items-center gap-2 font-mono text-sm text-emerald-200"><Network className="h-4 w-4" /> Continuity Graph</CardTitle></CardHeader>
@@ -151,6 +210,8 @@ export default function TscPage() {
               <div>IDENTITY → POLICY → MISSION</div>
               <div>MISSION → COMMS → SERVICES</div>
               <div>SERVICES → MAINTENANCE → LOGISTICS</div>
+              <div>NUCLEAR SAFETY → BACKUP → COMMS → VERIFY</div>
+              <div>DRONE READINESS → INSPECTION → COMMS → AVAILABILITY</div>
               <div>FAILURE → RECOVERY → VERIFY → ETHER</div>
             </CardContent>
           </Card>
@@ -162,6 +223,7 @@ export default function TscPage() {
               <div>• recommend safe failover</div>
               <div>• compare configuration drift</div>
               <div>• prioritize maintenance evidence</div>
+              <div>• validate emergency communications readiness</div>
               <div>• quarantine unsafe workloads through governed controls</div>
             </CardContent>
           </Card>
@@ -179,7 +241,7 @@ export default function TscPage() {
         </div>
 
         <div className="rounded-xl border border-emerald-400/15 bg-black/60 p-4 font-mono text-[11px] text-emerald-100/60">
-          TSC STATUS // SUPPORT SYSTEM ONLINE // HUMAN AUTHORITY REQUIRED // GOVERNED BY GOLDEN SHIELD // EVIDENCE-FIRST // NON-LETHAL DECISION SUPPORT
+          TSC STATUS // NUCLEAR SAFETY NODE ONLINE // DRONE READINESS NODE ONLINE // HUMAN AUTHORITY REQUIRED // GOVERNED BY GOLDEN SHIELD // EVIDENCE-FIRST // NON-OPERATIONAL SUPPORT
         </div>
       </div>
     </div>
