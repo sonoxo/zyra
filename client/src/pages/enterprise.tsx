@@ -239,7 +239,7 @@ function SsoTab({ isLoading: _parentLoading }: { settings?: Setting[]; isLoading
   );
 }
 
-function MultiRegionTab({ isLoading: _parentLoading }: { settings?: Setting[]; isLoading: boolean }) {
+function MultiRegionTab({ settings, isLoading: _parentLoading }: { settings?: Setting[]; isLoading: boolean }) {
   const { toast } = useToast();
 
   interface RegionInfo { id: string; name: string; status: string; }

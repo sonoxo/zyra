@@ -1249,7 +1249,7 @@ export async function registerRoutes(
       if (resolved.length > 0) {
         const totalMs = resolved.reduce((sum, f) => {
           const created = new Date(f.createdAt).getTime();
-          const updated = f.updatedAt ? new Date(f.updatedAt).getTime() : Date.now();
+          const updated = f.resolvedAt ? new Date(f.resolvedAt).getTime() : Date.now();
           return sum + (updated - created);
         }, 0);
         avgRemediationDays = Math.round((totalMs / resolved.length) / (1000 * 60 * 60 * 24) * 10) / 10;
@@ -1257,7 +1257,7 @@ export async function registerRoutes(
 
       const allScans = await storage.getScans(orgId);
       const repos = await storage.getRepositories(orgId);
-      const scannedRepoCount = new Set(allScans.map(s => s.repositoryId).filter(Boolean)).size;
+      const scannedRepoCount = new Set(allScans.filter(s => s.targetType === "repository").map(s => s.targetId).filter((id): id is string => Boolean(id))).size;
       const totalRepoCount = Math.max(repos.length, 1);
       const coveragePct = Math.round((scannedRepoCount / totalRepoCount) * 100);
 
@@ -1500,7 +1500,7 @@ export async function registerRoutes(
     const updated = await storage.updateThreatIntelItem(req.params.id, parsed.data, req.user!.organizationId);
     if (!updated) return res.status(404).json({ message: "Item not found" });
     if (parsed.data.status) {
-      await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "threat-intel.status-change", resource: "threat_intel", resourceId: req.params.id, details: { previousStatus: existing?.status, newStatus: parsed.data.status, cveId: updated.cveId } });
+      await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "threat-intel.status-change", resourceType: "threat_intel", resourceId: req.params.id, details: { previousStatus: existing?.status, newStatus: parsed.data.status, cveId: updated.cveId } });
       if (parsed.data.status === "acknowledged") {
         try {
           await storage.createNotification({
@@ -1685,7 +1685,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten().fieldErrors });
     }
     const item = await storage.createIncident({ ...parsed.data, organizationId: orgId });
-    await storage.createAuditLog({ organizationId: orgId, userId: req.user!.userId, action: "incident.create", resource: "incident", resourceId: item.id, details: { title: item.title } });
+    await storage.createAuditLog({ organizationId: orgId, userId: req.user!.userId, action: "incident.create", resourceType: "incident", resourceId: item.id, details: { title: item.title } });
     const isCritical = item.severity === "critical";
     await storage.createNotification({ organizationId: orgId, title: isCritical ? "Critical Incident Created" : "New Incident Created", message: `Incident "${item.title}" has been created with ${item.severity} severity.`, type: "incident", severity: item.severity, resourceType: "incident", resourceId: item.id });
     res.json(item);
@@ -1729,7 +1729,7 @@ export async function registerRoutes(
     const entry = { timestamp: new Date().toISOString(), action: req.body.action, note: req.body.note, user: req.body.user || req.user!.userId };
     const timeline = [...(incident.timeline as any[] || []), entry];
     const updated = await storage.updateIncident(req.params.id, { timeline }, req.user!.organizationId);
-    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.timeline.add", resource: "incident", resourceId: req.params.id, details: { action: entry.action, note: entry.note } });
+    await storage.createAuditLog({ organizationId: req.user!.organizationId, userId: req.user!.userId, action: "incident.timeline.add", resourceType: "incident", resourceId: req.params.id, details: { action: entry.action, note: entry.note } });
     res.json(updated);
   });
 
@@ -2305,7 +2305,13 @@ export async function registerRoutes(
   app.put("/api/security-awareness/training/:id", requireAuth, requireRole("owner", "admin"), async (req: Request, res: Response) => {
     const parsed = trainingUpdateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten().fieldErrors });
-    const r = await storage.updateTrainingRecord(req.params.id, parsed.data);
+    const trainingUpdate = {
+      completed: parsed.data.completed,
+      completedAt: parsed.data.completedAt === undefined ? undefined : parsed.data.completedAt === null ? null : new Date(parsed.data.completedAt),
+      course: parsed.data.courseName,
+      phishingScore: parsed.data.score,
+    };
+    const r = await storage.updateTrainingRecord(req.params.id, trainingUpdate);
     if (!r) return res.status(404).json({ message: "Not found" });
     res.json(r);
   });
@@ -2685,7 +2691,7 @@ export async function registerRoutes(
       critical: cves.filter(c => c.severity === "critical").length,
       high: cves.filter(c => c.severity === "high").length,
       affectedInEnvironment: cves.filter(c => c.affectedInEnvironment).length,
-      avgCvss: parseFloat((cves.reduce((s, c) => s + c.cvssScore, 0) / cves.length).toFixed(1)),
+      avgCvss: cves.length > 0 ? parseFloat((cves.reduce((s, c) => s + (c.cvssScore ?? 0), 0) / cves.length).toFixed(1)) : 0,
     });
   });
 
@@ -3025,7 +3031,7 @@ async function registerMetricsRoutes(app: Express) {
 
       const criticalScans = scans.filter(s => s.criticalCount > 0).length;
       const openIncidents = incidents.filter(i => i.status !== "resolved").length;
-      const criticalRisks = risks.filter(r => r.severity === "critical" && r.status !== "accepted").length;
+      const criticalRisks = risks.filter(r => r.riskScore >= 15 && r.status !== "accepted").length;
       const criticalEvents = events.filter((e: any) => e.severity === "critical").length;
 
       const scanScore = Math.max(0, 100 - criticalScans * 8);

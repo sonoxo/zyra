@@ -128,14 +128,14 @@ export async function runThreatCorrelation(orgId: string): Promise<{ correlation
       if (!cve.affectedInEnvironment) continue;
       const affected = sbomItems.filter(item =>
         cve.affectedPackages.some((pkg: string) =>
-          item.name?.toLowerCase().includes(pkg.toLowerCase())
+          item.packageName?.toLowerCase().includes(pkg.toLowerCase())
         )
       );
       if (affected.length > 0) {
         correlations.push({
           cveId: cve.cveId,
           severity: cve.severity,
-          affectedPackages: affected.map(a => `${a.name}@${a.version}`),
+          affectedPackages: affected.map(a => `${a.packageName}@${a.packageVersion}`),
           cvssScore: cve.cvssScore,
         });
 
@@ -144,7 +144,7 @@ export async function runThreatCorrelation(orgId: string): Promise<{ correlation
           source: "threat_correlation_engine",
           severity: cve.severity === "critical" ? "critical" : "high",
           title: `${cve.cveId} affects ${affected.length} SBOM package(s)`,
-          description: `Vulnerability ${cve.cveId} (CVSS ${cve.cvssScore}) detected in: ${affected.map(a => a.name).join(", ")}`,
+          description: `Vulnerability ${cve.cveId} (CVSS ${cve.cvssScore}) detected in: ${affected.map(a => a.packageName).join(", ")}`,
           metadata: { cveId: cve.cveId, affectedCount: affected.length },
         });
         eventsCreated++;

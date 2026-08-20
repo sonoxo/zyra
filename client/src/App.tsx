@@ -58,13 +58,14 @@ import ResetPasswordPage from "@/pages/reset-password";
 import AcceptInvitePage from "@/pages/accept-invite";
 import AuditLogsPage from "@/pages/audit-logs";
 import ThreatSimulationPage from "@/pages/threat-simulation";
+import BaselineAssurancePage from "@/pages/baseline-assurance";
 import ThreatDetailPage from "@/pages/threat-detail";
 import IncidentDetailPage from "@/pages/incident-detail";
 import Layout from "@/components/Layout";
 import type { AuthUser } from "@/lib/auth";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element | null }) {
-  const { data: user, isLoading, error } = useQuery<AuthUser | null>({
+  const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
@@ -170,6 +171,7 @@ function Router() {
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
       <Route path="/task-center">{() => <ProtectedRoute component={TaskCenterPage} />}</Route>
       <Route path="/threat-simulation">{() => <ProtectedRoute component={ThreatSimulationPage} />}</Route>
+      <Route path="/baseline-assurance">{() => <ProtectedRoute component={BaselineAssurancePage} />}</Route>
       <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
       <Route path="/admin">{() => <ProtectedRoute component={AdminPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
