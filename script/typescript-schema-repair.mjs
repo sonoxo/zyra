@@ -96,7 +96,7 @@ function replaceAllRequired(source, before, after, expectedMinimum, label) {
   const path = "server/intelligence.ts";
   let source = read(path);
   source = replaceAllRequired(source, "v.remediation ||", "v.remediationSteps ||", 1, "vulnerability remediation field");
-  source = replaceAllRequired(source, "a.isPublicFacing", 'a.tags.includes("public-facing")', 3, "public-facing asset label");
+  source = replaceAllRequired(source, "a.isPublicFacing", 'a.tags.includes("public-facing")', 2, "public-facing asset label");
   source = replaceAllRequired(source, "a.operatingSystem", "a.os", 1, "asset OS field");
   write(path, source);
 }
