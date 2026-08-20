@@ -62,6 +62,7 @@ import ThreatDetailPage from "@/pages/threat-detail";
 import IncidentDetailPage from "@/pages/incident-detail";
 import WarRoomPage from "@/pages/war-room";
 import TscPage from "@/pages/tsc";
+import TitanRxPage from "@/pages/titan-rx";
 import Layout from "@/components/Layout";
 import WarRoomLauncher from "@/components/WarRoomLauncher";
 import type { AuthUser } from "@/lib/auth";
@@ -124,6 +125,7 @@ function Router() {
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/war-room">{() => <ProtectedRoute component={WarRoomPage} />}</Route>
       <Route path="/tsc">{() => <ProtectedRoute component={TscPage} />}</Route>
+      <Route path="/titan-rx">{() => <ProtectedRoute component={TitanRxPage} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>
       <Route path="/compliance">{() => <ProtectedRoute component={Compliance} />}</Route>
