@@ -22,7 +22,14 @@ assert.equal(TITAN_RX_PLATFORM_REGISTRY.length > 0, true, "platform registry mus
 const platform = TITAN_RX_PLATFORM_REGISTRY[0];
 assert.equal(platform.safetyInterlockState, "ENFORCED");
 assert.equal(platform.evidenceState, "SIMULATED");
-assert.equal(platform.subsystems.length >= 18, true, "registry must include UAV readiness subsystems");
+assert.equal(platform.assuranceProfile, "TITAN_RX_V2_GOVERNED_SYSTEMS_ASSURANCE");
+assert.equal(platform.softwareBaseline, "TRX-SW-2.0.0-ASSURANCE");
+assert.equal(platform.firmwareBaseline, "TRX-FW-2.0.0-ASSURANCE");
+assert.equal(platform.subsystems.length >= 22, true, "registry must include v2 assurance and UAV readiness subsystems");
+assert.equal(platform.subsystems.some((item) => item.id === "assurance"), true);
+assert.equal(platform.subsystems.some((item) => item.id === "interlock-evidence"), true);
+assert.equal(platform.subsystems.some((item) => item.id === "config-baseline"), true);
+assert.equal(platform.subsystems.some((item) => item.id === "recovery-assurance"), true);
 
 const uav = platform.uavReadinessProfile;
 assert.equal(uav.platformClass, "MULTIROTOR_UAV_READINESS");
@@ -56,6 +63,7 @@ assert.equal(TITAN_RX_CONTROL_BOUNDARY.executionDomain, "READINESS_RECOVERY_ONLY
 
 console.log("TITAN RX readiness digital twin verification: PASS");
 console.log(`platform=${platform.platformId}`);
+console.log(`assuranceProfile=${platform.assuranceProfile}`);
 console.log(`subsystems=${platform.subsystems.length}`);
 console.log(`uavProfile=${uav.platformClass}`);
 console.log(`scenarios=${scenarios.length}`);
