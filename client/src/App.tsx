@@ -61,12 +61,14 @@ import ThreatSimulationPage from "@/pages/threat-simulation";
 import ThreatDetailPage from "@/pages/threat-detail";
 import IncidentDetailPage from "@/pages/incident-detail";
 import WarRoomPage from "@/pages/war-room";
+import TscPage from "@/pages/tsc";
+import TitanRxPage from "@/pages/titan-rx";
 import Layout from "@/components/Layout";
 import WarRoomLauncher from "@/components/WarRoomLauncher";
 import type { AuthUser } from "@/lib/auth";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element | null }) {
-  const { data: user, isLoading, error } = useQuery<AuthUser | null>({
+  const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
@@ -84,9 +86,7 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
     );
   }
 
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
+  if (!user) return <Redirect to="/auth" />;
 
   return (
     <Layout>
@@ -111,10 +111,7 @@ function AuthRoute() {
     );
   }
 
-  if (user) {
-    return <Redirect to="/dashboard" />;
-  }
-
+  if (user) return <Redirect to="/dashboard" />;
   return <AuthPage />;
 }
 
@@ -127,6 +124,8 @@ function Router() {
       <Route path="/accept-invite" component={AcceptInvitePage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/war-room">{() => <ProtectedRoute component={WarRoomPage} />}</Route>
+      <Route path="/tsc">{() => <ProtectedRoute component={TscPage} />}</Route>
+      <Route path="/titan-rx">{() => <ProtectedRoute component={TitanRxPage} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>
       <Route path="/compliance">{() => <ProtectedRoute component={Compliance} />}</Route>
