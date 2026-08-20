@@ -1,25 +1,19 @@
-name: TypeScript Schema Repair
+name: TypeScript Schema Repair Preview
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/cyberpunk-war-room
-    paths:
-      - script/typescript-schema-repair.mjs
-      - .github/workflows/typescript-schema-repair.yml
+      - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  repair-and-verify:
+  repair-preview:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout feature branch
+      - name: Checkout PR merge
         uses: actions/checkout@v4
-        with:
-          ref: feature/cyberpunk-war-room
-          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -27,7 +21,7 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
-      - name: Apply deterministic schema repairs
+      - name: Apply deterministic schema repairs in runner
         run: node script/typescript-schema-repair.mjs
       - name: Verify War Room boundary
         run: npx tsx --test server/war-room.test.ts
@@ -35,15 +29,5 @@ jobs:
         run: npm run check
       - name: Production build
         run: npm run build
-      - name: Commit verified source repairs
-        run: |
-          git diff --check
-          if git diff --quiet -- client server; then
-            echo "No source repair required"
-            exit 0
-          fi
-          git config user.name "zyra-ci-repair"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client server
-          git commit -m "fix: align TypeScript code with current schemas"
-          git push origin HEAD:feature/cyberpunk-war-room
+      - name: Show verified repair diff
+        run: git diff --check && git diff --stat
