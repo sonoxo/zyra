@@ -84,7 +84,7 @@ function isAssetExposed(asset: any): ExposureResult {
   }
 
   return {
-    exposed: level !== "internal" && level !== "none",
+    exposed: level !== "internal",
     exposureLevel: level,
     reasons,
   };

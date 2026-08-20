@@ -27,17 +27,13 @@ async function runScanTask(task: Task): Promise<TaskResult> {
     const repo = repos[0];
     const scan = await storage.createScan({
       organizationId: task.organizationId,
-      repositoryId: repo.id,
-      type: "full",
+      name: `Task scan: ${repo.name}`,
+      scanType: "semgrep",
       status: "running",
-      branch: repo.defaultBranch || "main",
-      commitHash: null,
-      triggeredBy: task.createdById || "system",
-      totalFindings: 0,
-      criticalCount: 0,
-      highCount: 0,
-      mediumCount: 0,
-      lowCount: 0,
+      targetType: "repository",
+      targetId: repo.id,
+      targetName: repo.name,
+      initiatedById: task.createdById || null,
     });
     await storage.updateScan(scan.id, { status: "completed", totalFindings: 0 });
     await logTaskAudit(task, "scan.completed", "scan", scan.id);
@@ -57,6 +53,7 @@ async function runPlaybookTask(task: Task): Promise<TaskResult> {
   const execution = await storage.createSoarExecution({
     organizationId: task.organizationId,
     playbookId: playbook.id,
+    playbookName: playbook.name,
     status: "running",
     triggeredBy: task.createdById || "agent",
     steps: [],
