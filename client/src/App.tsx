@@ -60,7 +60,9 @@ import AuditLogsPage from "@/pages/audit-logs";
 import ThreatSimulationPage from "@/pages/threat-simulation";
 import ThreatDetailPage from "@/pages/threat-detail";
 import IncidentDetailPage from "@/pages/incident-detail";
+import WarRoomPage from "@/pages/war-room";
 import Layout from "@/components/Layout";
+import WarRoomLauncher from "@/components/WarRoomLauncher";
 import type { AuthUser } from "@/lib/auth";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element | null }) {
@@ -124,6 +126,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/accept-invite" component={AcceptInvitePage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/war-room">{() => <ProtectedRoute component={WarRoomPage} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>
       <Route path="/compliance">{() => <ProtectedRoute component={Compliance} />}</Route>
@@ -190,6 +193,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <WarRoomLauncher />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
