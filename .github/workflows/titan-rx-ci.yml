@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - "shared/titan-rx-readiness.ts"
+      - "shared/titan-rx-assurance.ts"
       - "client/src/pages/titan-rx.tsx"
       - "script/titan-rx-verify.ts"
+      - "script/titan-rx-assurance-verify.ts"
       - "client/src/App.tsx"
       - ".github/workflows/titan-rx-ci.yml"
   push:
@@ -28,6 +30,8 @@ jobs:
         run: npm ci
       - name: Verify readiness model
         run: npx tsx script/titan-rx-verify.ts
+      - name: Verify governed systems assurance
+        run: npx tsx script/titan-rx-assurance-verify.ts
       - name: TypeScript check
         run: npm run check
       - name: Production build
