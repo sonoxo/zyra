@@ -211,7 +211,7 @@ export default function ThreatDetailPage() {
                     <Server className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">No matching assets found in inventory.</p>
                     <Link href="/assets">
-                      <Button variant="link" size="sm" className="mt-1" data-testid="link-view-assets">View Asset Inventory</Button>
+                      <Button variant="ghost" size="sm" className="mt-1 underline" data-testid="link-view-assets">View Asset Inventory</Button>
                     </Link>
                   </div>
                 );

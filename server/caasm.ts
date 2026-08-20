@@ -55,12 +55,12 @@ export async function buildCorrelatedAssets(orgId: string) {
   return assets.map(asset => {
     const riskScore = calcAssetRiskScore(asset);
     const linkedVulns = vulnerabilities.filter(v =>
-      v.assetId === asset.id ||
+      v.affectedComponent?.toLowerCase().includes(asset.hostname.toLowerCase()) ||
       (v.title?.toLowerCase().includes(asset.hostname.toLowerCase()))
     );
     const linkedIncidents = incidents.filter(i =>
-      i.affectedAssets?.includes(asset.id) ||
-      i.affectedAssets?.includes(asset.hostname)
+      i.affectedSystems?.includes(asset.id) ||
+      i.affectedSystems?.includes(asset.hostname)
     );
     const linkedRisks = risks.filter(r =>
       r.description?.toLowerCase().includes(asset.hostname.toLowerCase())
