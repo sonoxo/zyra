@@ -3,7 +3,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Bot,
-  BriefcaseBusiness,
+  Briefcase,
   CheckCircle2,
   Cloud,
   Code2,
@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
-  TerminalSquare,
+  Terminal,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -82,7 +82,7 @@ const roleTracks = [
   },
   {
     title: "Platform Engineer",
-    icon: TerminalSquare,
+    icon: Terminal,
     fit: "Growing",
     focus: ["Reliability", "Developer experience", "Deployment", "Operational runbooks"],
   },
@@ -123,7 +123,7 @@ export default function JobReadinessPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className="gap-1">
-              <BriefcaseBusiness className="w-3.5 h-3.5" /> Career Launch
+              <Briefcase className="w-3.5 h-3.5" /> Career Launch
             </Badge>
             <Badge variant="secondary">Employer-facing</Badge>
           </div>
@@ -215,7 +215,7 @@ export default function JobReadinessPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BriefcaseBusiness className="w-5 h-5 text-primary" /> Portfolio proof inside Zyra
+            <Briefcase className="w-5 h-5 text-primary" /> Portfolio proof inside Zyra
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Every tile points to an existing product area that can become interview evidence, screenshots, demo material, or a case study.
