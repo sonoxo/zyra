@@ -25,39 +25,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const readinessPillars = [
   {
     label: "Production engineering",
-    score: 88,
     icon: Code2,
     evidence: "TypeScript, React, Express, API design, PostgreSQL, Drizzle, CI/CD",
+    next: "Package one end-to-end feature as a concise architecture case study.",
   },
   {
     label: "Cloud & DevSecOps",
-    score: 91,
     icon: Cloud,
     evidence: "Cloud security, containers, supply chain, CodeQL, deployment workflows",
+    next: "Show a green deployment path plus rollback and operational notes.",
   },
   {
     label: "AI engineering",
-    score: 86,
     icon: Bot,
     evidence: "ZyraCopilot, agent workflows, model integration, evaluation and automation",
+    next: "Document model boundaries, evaluation criteria, and one working AI workflow.",
   },
   {
     label: "Cybersecurity",
-    score: 94,
     icon: ShieldCheck,
     evidence: "Threat intel, incident response, vulnerability management, attack surface",
+    next: "Convert one security workflow into a problem-to-remediation case study.",
   },
   {
     label: "Portfolio proof",
-    score: 82,
     icon: GitBranch,
     evidence: "Public repository, architecture docs, security controls, deployable product surface",
+    next: "Pin the strongest demo, architecture document, and pull request evidence.",
   },
   {
     label: "Interview readiness",
-    score: 72,
     icon: Users,
-    evidence: "Translate Zyra architecture into concise system-design and behavioral stories",
+    evidence: "Zyra contains material for system-design, debugging, security, and ownership stories",
+    next: "Turn verified project history into short STAR and system-design explanations.",
   },
 ];
 
@@ -65,25 +65,21 @@ const roleTracks = [
   {
     title: "AI / Software Engineer",
     icon: Sparkles,
-    fit: "Strong",
     focus: ["TypeScript + React", "API architecture", "LLM/agent integration", "Testing + evaluation"],
   },
   {
     title: "Cloud / DevSecOps Engineer",
     icon: Network,
-    fit: "Strong",
     focus: ["CI/CD", "Cloud controls", "Containers", "Observability + incident response"],
   },
   {
     title: "Cybersecurity Engineer",
     icon: ShieldCheck,
-    fit: "Strong",
     focus: ["Vulnerability management", "Threat intelligence", "Security automation", "Risk + compliance"],
   },
   {
     title: "Platform Engineer",
     icon: Terminal,
-    fit: "Growing",
     focus: ["Reliability", "Developer experience", "Deployment", "Operational runbooks"],
   },
 ];
@@ -106,17 +102,7 @@ const hiringChecklist = [
   "Keep secrets, credentials, customer data, and unverifiable claims out of public portfolio material.",
 ];
 
-function ScoreBar({ score }: { score: number }) {
-  return (
-    <div className="h-2 rounded-full bg-muted overflow-hidden" aria-label={`${score}% readiness`}>
-      <div className="h-full rounded-full bg-primary" style={{ width: `${score}%` }} />
-    </div>
-  );
-}
-
 export default function JobReadinessPage() {
-  const overall = Math.round(readinessPillars.reduce((sum, item) => sum + item.score, 0) / readinessPillars.length);
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto" data-testid="job-readiness-page">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -133,18 +119,15 @@ export default function JobReadinessPage() {
             platform, and cybersecurity roles. The goal is not just to claim skills—it is to point to working proof.
           </p>
         </div>
-        <div className="rounded-xl border bg-card px-5 py-4 min-w-48">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Current readiness</div>
-          <div className="flex items-end gap-2 mt-1">
-            <span className="text-4xl font-bold">{overall}</span>
-            <span className="text-sm text-muted-foreground mb-1">/ 100</span>
-          </div>
-          <ScoreBar score={overall} />
+        <div className="rounded-xl border bg-card px-5 py-4 min-w-56">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Readiness model</div>
+          <div className="text-2xl font-bold mt-1">{readinessPillars.length} evidence tracks</div>
+          <p className="text-xs text-muted-foreground mt-1">Proof-based, not self-scored.</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {readinessPillars.map(({ label, score, icon: Icon, evidence }) => (
+        {readinessPillars.map(({ label, icon: Icon, evidence, next }) => (
           <Card key={label}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-3">
@@ -154,12 +137,15 @@ export default function JobReadinessPage() {
                   </div>
                   <CardTitle className="text-base">{label}</CardTitle>
                 </div>
-                <span className="text-sm font-semibold">{score}%</span>
+                <Badge variant="outline">Evidence track</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ScoreBar score={score} />
               <p className="text-xs text-muted-foreground leading-relaxed">{evidence}</p>
+              <div className="rounded-lg bg-muted/40 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Next proof</div>
+                <p className="text-xs mt-1 leading-relaxed">{next}</p>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -173,19 +159,19 @@ export default function JobReadinessPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-primary" /> Target roles
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">Map the existing platform to real engineering job families.</p>
+                <p className="text-sm text-muted-foreground mt-1">Map existing product evidence to real engineering job families.</p>
               </div>
               <Badge variant="outline">4 tracks</Badge>
             </div>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            {roleTracks.map(({ title, icon: Icon, fit, focus }) => (
+            {roleTracks.map(({ title, icon: Icon, focus }) => (
               <div key={title} className="rounded-xl border p-4 bg-muted/20">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 font-semibold text-sm">
                     <Icon className="w-4 h-4 text-primary" /> {title}
                   </div>
-                  <Badge variant={fit === "Strong" ? "default" : "secondary"}>{fit}</Badge>
+                  <Badge variant="secondary">Evidence mapped</Badge>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {focus.map(item => <Badge key={item} variant="outline" className="font-normal">{item}</Badge>)}
