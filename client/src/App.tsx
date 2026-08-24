@@ -53,6 +53,7 @@ import TeamPage from "@/pages/team";
 import TaskCenterPage from "@/pages/task-center";
 import AdminPage from "@/pages/admin";
 import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
+import JobReadinessPage from "@/pages/job-readiness";
 import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
 import AcceptInvitePage from "@/pages/accept-invite";
@@ -176,6 +177,8 @@ function Router() {
       <Route path="/admin">{() => <ProtectedRoute component={AdminPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
       <Route path="/enterprise-readiness">{() => <ProtectedRoute component={EnterpriseReadinessPage} />}</Route>
+      <Route path="/job-readiness">{() => <ProtectedRoute component={JobReadinessPage} />}</Route>
+      <Route path="/career">{() => <Redirect to="/job-readiness" />}</Route>
       <Route path="/team-activity">{() => <Redirect to="/team" />}</Route>
       <Route path="/oncall-schedule">{() => <Redirect to="/team" />}</Route>
       <Route path="/approvals">{() => <Redirect to="/team" />}</Route>
