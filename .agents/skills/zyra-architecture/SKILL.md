@@ -19,6 +19,7 @@ description: Zyra platform architecture, module map, and conventions. Use when m
 | `auth.ts` | JWT middleware: `requireAuth`, `requireRole`, token gen/verify |
 | `storage.ts` | `DatabaseStorage` implementing `IStorage` — all DB operations |
 | `intelligence.ts` | ZyraCopilot engine, CVE database, threat correlation |
+| `engineering-context.ts` | Clean-room data/application engineering stack, fleet roles, decision loop, and LLM system context |
 | `metrics.ts` | Prometheus-style counters/histograms, request middleware |
 | `caasm.ts` | CAASM risk scoring, identity correlation, API routes |
 | `enterprise.ts` | SIEM configs, retention policies, workspaces |
@@ -28,6 +29,16 @@ description: Zyra platform architecture, module map, and conventions. Use when m
 | `stripe.ts` | Stripe Checkout sessions, graceful degradation |
 | `soar.ts` | SOAR playbook execution engine |
 
+## Engineering Stack
+
+For data engineering, ontology, application development, AIP/LLM work, deployment, and cross-stack architecture, apply `.agents/skills/zyra-engineering-fleet/SKILL.md` and `server/engineering-context.ts`.
+
+Architecture path:
+
+`SOURCE/INTAKE -> PIPELINE -> QUALITY -> ONTOLOGY -> APPLICATION -> AIP/LLM -> SECURITY -> RELEASE -> AUDIT`
+
+Use the smallest useful bounded role set from intake, pipeline, quality, ontology, application, security, release, and observer. Model dependencies before parallel execution. Treat schemas, datasets, ontology objects, actions, APIs, tools, variables, events, and UI state as explicit contracts. Keep consequential writes and production promotion inside approval policy, rollback, and evidence gates.
+
 ## Adding a New Feature
 1. Add table(s) to `shared/schema.ts` with insert schema + types
 2. Add CRUD methods to `IStorage` interface and `DatabaseStorage` in `server/storage.ts`
@@ -36,6 +47,8 @@ description: Zyra platform architecture, module map, and conventions. Use when m
 5. Add sidebar entry in `client/src/components/layout/sidebar.tsx`
 6. Use TanStack Query v5 (object form only) for data fetching
 7. Add `data-testid` attributes to all interactive and display elements
+8. For LLM-facing features, use `buildEngineeringSystemContext()` rather than duplicating engineering policy text
+9. Run `npm test`, `npm run check`, dependency audit, and production build before promotion
 
 ## Critical Conventions
 - `apiRequest(method, url, data?)` returns `Response` — call `.json()` to parse
