@@ -1,3 +1,4 @@
+import { buildEngineeringSystemContext } from "./engineering-context";
 import { storage } from "./storage";
 
 export async function fetchCveDatabase(orgId: string) {
@@ -120,9 +121,13 @@ export async function analyzeSecurityImage(imageBase64: string, mimeType: string
       model: "google/gemma-3-27b-it",
       messages: [
         {
+          role: "system",
+          content: `You are ZyraCopilot, an expert cybersecurity AI analyst. ${buildEngineeringSystemContext("cybersecurity vision analysis")}`,
+        },
+        {
           role: "user",
           content: [
-            { type: "text", text: `You are ZyraCopilot, an expert cybersecurity AI analyst. ${prompt}` },
+            { type: "text", text: prompt },
             { type: "image_url", image_url: { url: dataUrl } },
           ],
         },
