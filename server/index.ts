@@ -3,6 +3,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { registerBaselineAssuranceRoutes } from "./baseline-assurance";
+import { registerZyraShieldRoutes } from "./zyra-shield";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -158,6 +159,7 @@ app.use((req, res, next) => {
 
 (async () => {
   registerBaselineAssuranceRoutes(app);
+  registerZyraShieldRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -197,6 +199,7 @@ app.use((req, res, next) => {
         process.env.BOOTSTRAP_SECRET ? "bootstrap" : null,
         process.env.HF_TOKEN ? "vision-ai" : null,
         "bas-detection-assurance",
+        "zyra-shield",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);

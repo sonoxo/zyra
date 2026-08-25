@@ -32,6 +32,22 @@ jobs:
         run: npx tsc --noEmit
         continue-on-error: true
 
+  shield-policy:
+    name: Zyra Shield Policy Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run deny-by-default policy tests
+        run: npm test
+
   build:
     name: Build
     runs-on: ubuntu-latest
