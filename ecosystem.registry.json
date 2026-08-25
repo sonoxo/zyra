@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "service": "zyra",
+  "registry": {
+    "repository": "sonoxo/aip-community-registry-zyra",
+    "workflow": ".github/workflows/node-quality-gate.yml",
+    "commit": "839a3f5e20e62603b571eee283948a7241cd18ab"
+  },
+  "patterns": [
+    "aip-evals-feedback-loop",
+    "devops-release-management",
+    "platform-governance",
+    "push-based-events"
+  ],
+  "directions": {
+    "inside": ["zyra-shield", "application-modules", "audit", "policy"],
+    "outside": ["authenticated-apis", "events", "deployment-environments", "registry-contracts"],
+    "upside": ["dependencies", "registry-patterns", "feedback", "policy-inputs", "source-events"],
+    "downside": ["verified-builds", "deployment-candidates", "audit-evidence", "telemetry", "evaluation-cases"]
+  },
+  "requiredCheck": "Security Gate",
+  "security": {
+    "failClosed": true,
+    "highSeverityDependencyAudit": true,
+    "movingWorkflowRefsAllowed": false
+  }
+}
