@@ -45,9 +45,16 @@ const APP_TERMS = ["app", "application", "frontend", "backend", "ui", "widget", 
 const ONTOLOGY_TERMS = ["ontology", "object", "objects", "link", "links", "semantic", "action"];
 const HIGH_IMPACT_TERMS = ["production", "deploy", "release", "delete", "migrate", "payment", "credential", "external action"];
 
+function escapeRegex(term: string): string {
+  return term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function includesAny(input: string, terms: readonly string[]): boolean {
   const lower = input.toLowerCase();
-  return terms.some(term => lower.includes(term));
+  return terms.some(term => {
+    if (term.includes(" ")) return lower.includes(term);
+    return new RegExp(`(?<![a-z0-9])${escapeRegex(term)}(?![a-z0-9])`).test(lower);
+  });
 }
 
 export function selectEngineeringFleet(objective: string) {
