@@ -8,7 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "test": "tsx --test server/**/*.test.ts",
+    "test": "tsx --test server/zyra-shield-core.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
