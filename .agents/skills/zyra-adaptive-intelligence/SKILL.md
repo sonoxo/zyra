@@ -25,6 +25,16 @@ Use a bounded five-phase loop:
 - For security work: stay within authorized defensive analysis and do not bypass access controls or obtain restricted information.
 - When evidence is incomplete, say what is unknown and identify the next verification step.
 
+## Engineering Fleet Bridge
+
+For data engineering, ontology, application development, AIP/LLM integration, deployment, or cross-stack architecture, combine this adaptive loop with `.agents/skills/zyra-engineering-fleet/SKILL.md` and `server/engineering-context.ts`.
+
+Map adaptive phases into the engineering decision loop:
+
+`ABSORB/INDEX -> INSPECT/MODEL -> IDEATE -> PLAN/DECOMPOSE -> VERIFY -> VALIDATE/OBSERVE -> REFLECT -> REPAIR/AUDIT`
+
+Use the smallest useful bounded fleet from intake, pipeline, quality, ontology, application, security, release, and observer roles. Parallel work is allowed only when dependencies are explicit. The runtime owns tools and permissions; consequential writes and releases remain approval-gated.
+
 ## Adaptive Strategy Selection
 
 Maintain lightweight strategy outcomes such as:
