@@ -17,9 +17,10 @@ permissions:
 jobs:
   preflight:
     name: Production Preflight
-    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@839a3f5e20e62603b571eee283948a7241cd18ab
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
     with:
       node-version: "20"
+      checkout-ref: ${{ github.event.inputs.version || github.event.release.tag_name }}
       run-tests: true
       run-typecheck: true
       run-audit: true
