@@ -10,32 +10,31 @@ permissions:
   deployments: write
 
 jobs:
+  preflight:
+    name: Staging Preflight
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@839a3f5e20e62603b571eee283948a7241cd18ab
+    with:
+      node-version: "20"
+      run-tests: true
+      run-typecheck: true
+      run-audit: true
+      audit-level: "high"
+      run-build: true
+
   deploy:
     name: Deploy Staging
+    needs: preflight
     runs-on: ubuntu-latest
     environment:
       name: staging
       url: ${{ vars.STAGING_URL }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
-
       - name: Deploy to staging
         run: |
+          echo "Registry preflight passed."
           echo "Deploying to staging environment..."
           echo "Primary deployment is managed by Replit."
-          echo "For self-hosted staging, configure deployment target in this step."
+          echo "For self-hosted staging, configure the authorized deployment target in this step."
         env:
           STAGING_URL: ${{ vars.STAGING_URL }}
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
