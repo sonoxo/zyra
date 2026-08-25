@@ -15,34 +15,32 @@ permissions:
   deployments: write
 
 jobs:
+  preflight:
+    name: Production Preflight
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      checkout-ref: ${{ github.event.inputs.version || github.event.release.tag_name }}
+      run-tests: true
+      run-typecheck: true
+      run-audit: true
+      audit-level: "high"
+      run-build: true
+
   deploy:
     name: Deploy Production
+    needs: preflight
     runs-on: ubuntu-latest
     environment:
       name: production
       url: ${{ vars.PRODUCTION_URL }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.version || github.event.release.tag_name }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
-
       - name: Deploy to production
         run: |
-          echo "Deploying to production environment..."
+          echo "Registry preflight passed."
+          echo "Deploying version: ${{ github.event.inputs.version || github.event.release.tag_name }}"
           echo "Primary deployment is managed by Replit Deployments."
-          echo "For self-hosted production, configure deployment target in this step."
+          echo "For self-hosted production, configure the authorized deployment target in this step."
         env:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}

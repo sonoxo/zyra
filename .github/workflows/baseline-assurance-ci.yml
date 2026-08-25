@@ -13,27 +13,17 @@ on:
     branches:
       - feature/bas-detection-assurance
 
+permissions:
+  contents: read
+
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Verify defensive BAS contract
-        run: npx tsx script/baseline-assurance-verify.ts
-
-      - name: TypeScript check
-        run: npm run check
-
-      - name: Production build
-        run: npm run build
+    name: Baseline Assurance Contract
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      run-tests: false
+      verify-command: "npx tsx script/baseline-assurance-verify.ts"
+      run-typecheck: false
+      run-audit: false
+      run-build: false

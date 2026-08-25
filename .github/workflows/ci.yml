@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, "feature/**"]
   pull_request:
     branches: [main, develop]
 
@@ -14,76 +14,29 @@ permissions:
   contents: read
 
 jobs:
-  typecheck:
-    name: Type Check (informational)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
+  registry-quality:
+    name: Registry Quality
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      run-tests: true
+      test-command: "npm test"
+      run-typecheck: true
+      typecheck-command: "npm run check"
+      run-audit: true
+      audit-level: "high"
+      run-build: true
+      build-command: "npm run build"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Type check
-        run: npx tsc --noEmit
-        continue-on-error: true
-
-  shield-policy:
-    name: Zyra Shield Policy Tests
+  security-gate:
+    name: Security Gate
+    needs: registry-quality
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Run deny-by-default policy tests
-        run: npm test
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: dist/
-          retention-days: 7
-
-  security:
-    name: Dependency Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-        continue-on-error: true
+      - name: Enforce registry quality result
+        env:
+          QUALITY_RESULT: ${{ needs.registry-quality.result }}
+        run: |
+          echo "Registry quality result: ${QUALITY_RESULT}"
+          test "${QUALITY_RESULT}" = "success"

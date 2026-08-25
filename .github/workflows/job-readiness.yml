@@ -11,32 +11,12 @@ permissions:
 
 jobs:
   verify:
-    name: clean install, typecheck, build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install from lockfile
-        run: npm ci
-
-      - name: TypeScript check
-        run: npm run check
-
-      - name: Production build
-        run: npm run build
-
-      - name: Verify career surface
-        shell: bash
-        run: |
-          test -f client/src/pages/job-readiness.tsx
-          test -f docs/JOB_READINESS.md
-          grep -q 'path="/job-readiness"' client/src/App.tsx
-          grep -q 'Zyra Job Readiness' client/src/pages/job-readiness.tsx
+    name: Job Readiness Contract
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      run-tests: false
+      verify-command: "test -f client/src/pages/job-readiness.tsx && test -f docs/JOB_READINESS.md && grep -q 'path=\"/job-readiness\"' client/src/App.tsx && grep -q 'Zyra Job Readiness' client/src/pages/job-readiness.tsx"
+      run-typecheck: false
+      run-audit: false
+      run-build: false
