@@ -1,6 +1,6 @@
 # Zyra Ecosystem
 
-Zyra consumes reusable engineering patterns from `sonoxo/aip-community-registry-zyra` while keeping its own application, policy, data, and deployment boundaries. The CI caller is pinned to registry commit `839a3f5e20e62603b571eee283948a7241cd18ab` so a moving registry branch cannot silently change Zyra's required gate.
+Zyra consumes reusable engineering patterns from `sonoxo/aip-community-registry-zyra` while keeping its own application, policy, data, and deployment boundaries. The CI caller is pinned to registry commit `82de1196b406d35166e1bb94f2c44e4e4709a235` so a moving registry branch cannot silently change Zyra's required gate.
 
 ## Inside
 
