@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const ZYRA_SHIELD_POLICY_VERSION = "zyra-shield/1.0.0";
+export const ZYRA_SHIELD_POLICY_VERSION = "zyra-shield/1.1.0";
 
 export const SHIELD_CAPABILITIES = [
   "read_only",
@@ -46,7 +46,7 @@ export interface ShieldRequest {
   requestedScopes: string[];
   dataClass?: ShieldDataClass;
   networkDestinations?: string[];
-  egressApproved?: boolean;
+  egressApproval?: ShieldHumanApproval;
   humanApproval?: ShieldHumanApproval;
 }
 
@@ -170,7 +170,7 @@ export function evaluateShieldRequest(
   if (
     request.dataClass === "restricted" &&
     (request.networkDestinations?.length ?? 0) > 0 &&
-    !request.egressApproved
+    !request.egressApproval
   ) {
     reasons.push("Restricted data cannot leave the trust boundary without explicit egress approval.");
   }
