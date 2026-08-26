@@ -1,0 +1,33 @@
+name: VZN 8088 Repository Overlay
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_owner:
+        description: GitHub owner whose repositories receive the visual overlay
+        required: true
+        default: Ali-hey-0
+      dry_run:
+        description: Plan only; do not create branches or pull requests
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  vision-virginia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: VZN 8088 overlay
+        env:
+          VZN_GITHUB_TOKEN: ${{ secrets.VZN_GITHUB_TOKEN }}
+          VZN_TARGET_OWNER: ${{ inputs.target_owner }}
+          VZN_DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/vzn-8088-overlay.mjs

@@ -1,0 +1,36 @@
+name: Zyra Live Implement
+
+on:
+  push:
+    branches:
+      - feature/virginia-aip-live-implement
+      - feature/va3lm-geovision
+    paths:
+      - 'apps/zyra-live-implement/**'
+      - 'docs/assets/**'
+      - '.github/workflows/zyra-live-implement.yml'
+  pull_request:
+    paths:
+      - 'apps/zyra-live-implement/**'
+      - 'docs/assets/**'
+      - '.github/workflows/zyra-live-implement.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/zyra-live-implement
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run check
