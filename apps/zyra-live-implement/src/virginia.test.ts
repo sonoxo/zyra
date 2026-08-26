@@ -16,6 +16,26 @@ test("parses action parameters", () => {
   assert.deepEqual(mission.steps[0]?.parameters, { id: 80060, newName: "Anna" });
 });
 
+test("parses short VA3LM geovision command", () => {
+  const mission = parseVirginia(`/VA3LM`);
+  assert.equal(mission.mode, "VA3LM");
+  assert.match(mission.profile || "", /PALANTIRVABRAIN3LM/);
+  assert.deepEqual(mission.steps.map((s) => s.op), ["GEOVISION_STATUS"]);
+});
+
+test("parses canonical VA3LM ecosystem signature", () => {
+  const mission = parseVirginia(`/VA3LM-PALANTIRVABRAIN3LM-GPT-DOUG-LLM-ZYRA-XUNA-SONOXO-ECOSYSTEM`);
+  assert.equal(mission.mode, "VA3LM");
+  assert.equal(mission.steps[0]?.op, "GEOVISION_STATUS");
+});
+
+test("parses explicit GeoVision camera and detection reads", () => {
+  const mission = parseVirginia(`/VA3LM\nGEOVISION CAMERAS eyeris\nGEOVISION DETECTIONS eyeris\nSTOP WHEN evidence-returned`);
+  assert.deepEqual(mission.steps.map((s) => s.op), ["GEOVISION_STATUS", "GEOVISION_CAMERAS", "GEOVISION_DETECTIONS"]);
+  assert.equal(mission.steps[1]?.ontology, "eyeris");
+  assert.equal(mission.stopWhen, "evidence-returned");
+});
+
 test("parses short RICHMONDVA3LM shutdown command", () => {
   const mission = parseVirginia(`/RICHMONDVA3LM`);
   assert.equal(mission.mode, "RICHMONDVA3LM");
