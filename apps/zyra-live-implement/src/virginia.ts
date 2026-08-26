@@ -1,5 +1,5 @@
 export type VirginiaStep = {
-  op: "LIST_ONTOLOGIES" | "LIST_OBJECT_TYPES" | "LIST_OBJECTS" | "APPLY_ACTION" | "NOTE";
+  op: "LIST_ONTOLOGIES" | "LIST_OBJECT_TYPES" | "LIST_OBJECTS" | "APPLY_ACTION" | "SHUTDOWN_ZYRA" | "NOTE";
   ontology?: string;
   objectType?: string;
   action?: string;
@@ -8,11 +8,13 @@ export type VirginiaStep = {
 };
 
 export type VirginiaMission = {
-  mode: "VIRGINIA" | "VAL3M";
+  mode: "VIRGINIA" | "VAL3M" | "RICHMONDVA3LM";
   agents: number;
   stopWhen: string;
   steps: VirginiaStep[];
 };
+
+const RICHMONDVA3LM = /^\/RICHMONDVA3LM(?:\s*-\s*GPT\s*-\s*DOUG\s*-\s*3LM\s*-\s*XUNIABOT\s*-\s*ZYRA\s*-\s*PALANTIR)?$/i;
 
 export function parseVirginia(input: string): VirginiaMission {
   const lines = input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -22,6 +24,17 @@ export function parseVirginia(input: string): VirginiaMission {
   const steps: VirginiaStep[] = [];
 
   for (const line of lines) {
+    if (RICHMONDVA3LM.test(line)) {
+      return {
+        mode: "RICHMONDVA3LM",
+        agents: 0,
+        stopWhen: "offline",
+        steps: [{
+          op: "SHUTDOWN_ZYRA",
+          text: "GPT-DOUG-3LM / XUNIABOT / ZYRA / PALANTIR BRIDGE",
+        }],
+      };
+    }
     if (/^\/VAL3M$/i.test(line) || /^VAL3M:?$/i.test(line)) {
       mode = "VAL3M";
       continue;
