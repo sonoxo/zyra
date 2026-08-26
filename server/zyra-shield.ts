@@ -7,6 +7,7 @@ import {
   ZYRA_SHIELD_POLICY_VERSION,
   createEvidenceHash,
   createHumanApproval,
+  createManifestEvidence,
   evaluateShieldRequest,
   scanAgentManifest,
 } from "./zyra-shield-core";
@@ -148,12 +149,11 @@ export function registerZyraShieldRoutes(app: Express): void {
         }
 
         const result = scanAgentManifest(parsed.data.manifest);
-        const manifestHash = createEvidenceHash(parsed.data.manifest);
-        const evidenceHash = createEvidenceHash({
-          source: parsed.data.source,
-          manifestHash,
+        const { manifestHash, evidenceHash } = createManifestEvidence(
+          parsed.data.source,
+          parsed.data.manifest,
           result,
-        });
+        );
 
         await storage.createAuditLog({
           organizationId: req.user!.organizationId,
