@@ -1,5 +1,14 @@
 export type VirginiaStep = {
-  op: "LIST_ONTOLOGIES" | "LIST_OBJECT_TYPES" | "LIST_OBJECTS" | "APPLY_ACTION" | "SHUTDOWN_ZYRA" | "NOTE";
+  op:
+    | "LIST_ONTOLOGIES"
+    | "LIST_OBJECT_TYPES"
+    | "LIST_OBJECTS"
+    | "APPLY_ACTION"
+    | "GEOVISION_STATUS"
+    | "GEOVISION_CAMERAS"
+    | "GEOVISION_DETECTIONS"
+    | "SHUTDOWN_ZYRA"
+    | "NOTE";
   ontology?: string;
   objectType?: string;
   action?: string;
@@ -8,19 +17,23 @@ export type VirginiaStep = {
 };
 
 export type VirginiaMission = {
-  mode: "VIRGINIA" | "VAL3M" | "RICHMONDVA3LM";
+  mode: "VIRGINIA" | "VAL3M" | "VA3LM" | "RICHMONDVA3LM";
   agents: number;
   stopWhen: string;
+  profile?: string;
   steps: VirginiaStep[];
 };
 
 const RICHMONDVA3LM = /^\/RICHMONDVA3LM(?:\s*-\s*GPT\s*-\s*DOUG\s*-\s*3LM\s*-\s*XUNIABOT\s*-\s*ZYRA\s*-\s*PALANTIR)?$/i;
+const VA3LM = /^\/VA3LM(?:\s*-\s*PALANTIRVABRAIN3LM\s*-\s*GPT\s*-\s*DOUG\s*-\s*LLM\s*-\s*ZYRA\s*-\s*XUNA\s*-\s*SONOXO\s*-\s*ECOSYSTEM)?$/i;
+const VA3LM_PROFILE = "PALANTIRVABRAIN3LM / GPT-DOUG-LLM / ZYRA / XUNA / SONOXO ECOSYSTEM";
 
 export function parseVirginia(input: string): VirginiaMission {
   const lines = input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   let mode: VirginiaMission["mode"] = "VIRGINIA";
   let agents = 24;
   let stopWhen = "green";
+  let profile: string | undefined;
   const steps: VirginiaStep[] = [];
 
   for (const line of lines) {
@@ -29,11 +42,18 @@ export function parseVirginia(input: string): VirginiaMission {
         mode: "RICHMONDVA3LM",
         agents: 0,
         stopWhen: "offline",
+        profile: "GPT-DOUG-3LM / XUNIABOT / ZYRA / PALANTIR BRIDGE",
         steps: [{
           op: "SHUTDOWN_ZYRA",
           text: "GPT-DOUG-3LM / XUNIABOT / ZYRA / PALANTIR BRIDGE",
         }],
       };
+    }
+    if (VA3LM.test(line)) {
+      mode = "VA3LM";
+      profile = VA3LM_PROFILE;
+      steps.push({ op: "GEOVISION_STATUS", text: "EYERIS non-identifying geospatial object/scene recognition" });
+      continue;
     }
     if (/^\/VAL3M$/i.test(line) || /^VAL3M:?$/i.test(line)) {
       mode = "VAL3M";
@@ -47,6 +67,20 @@ export function parseVirginia(input: string): VirginiaMission {
     const stopMatch = line.match(/^STOP\s+WHEN\s+(.+)$/i);
     if (stopMatch) {
       stopWhen = stopMatch[1].trim();
+      continue;
+    }
+    if (/^GEOVISION\s+STATUS$/i.test(line)) {
+      steps.push({ op: "GEOVISION_STATUS" });
+      continue;
+    }
+    const cameras = line.match(/^GEOVISION\s+CAMERAS(?:\s+(\S+))?$/i);
+    if (cameras) {
+      steps.push({ op: "GEOVISION_CAMERAS", ontology: cameras[1] });
+      continue;
+    }
+    const detections = line.match(/^GEOVISION\s+DETECTIONS(?:\s+(\S+))?$/i);
+    if (detections) {
+      steps.push({ op: "GEOVISION_DETECTIONS", ontology: detections[1] });
       continue;
     }
     if (/^LIST\s+ONTOLOGIES$/i.test(line)) {
@@ -73,5 +107,5 @@ export function parseVirginia(input: string): VirginiaMission {
     if (!/^VIRGINIA:?$/i.test(line)) steps.push({ op: "NOTE", text: line });
   }
 
-  return { mode, agents, stopWhen, steps };
+  return { mode, agents, stopWhen, profile, steps };
 }
