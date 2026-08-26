@@ -35,6 +35,36 @@ In normal English, that means:
 
 Zyra then turns those words into structured steps, runs the supported operation through the server, and returns the result to the browser.
 
+## The complete Zyra stop command
+
+When you want to stop the **Zyra Live Implement runtime**, type:
+
+```text
+/RICHMONDVA3LM
+```
+
+The full stack signature is also recognized:
+
+```text
+/RICHMONDVA3LM - GPT - DOUG - 3LM - XUNIABOT - ZYRA - PALANTIR
+```
+
+Beginner meaning:
+
+**RICHMONDVA3LM = send the final result, then turn this Zyra runtime off.**
+
+What happens:
+
+1. Zyra recognizes the shutdown mission before any normal mission steps are run.
+2. The shutdown mission becomes one `SHUTDOWN_ZYRA` step.
+3. Zyra sends a final shutdown result to the browser.
+4. After that response is delivered, the HTTP server closes.
+5. The Foundry gateway inside this Zyra process goes offline with it.
+
+This command stops **the Zyra process controlled by this app and its bridge connection**. It does not power off Palantir's external platform or unrelated external services.
+
+The browser includes a **LOAD SHUTDOWN COMMAND** button. It only loads `/RICHMONDVA3LM` into the mission box so a beginner can review it first; the user still presses **RUN THE MISSION** to execute the stop.
+
 ## What happens after you press the button?
 
 <p align="center">
@@ -47,7 +77,7 @@ Zyra then turns those words into structured steps, runs the supported operation 
 4. **Zyra connects to Foundry.** The server-side `foundry()` function makes the authenticated request.
 5. **Foundry performs the requested Ontology operation.** The current code can list Ontologies, list object types, list objects, and apply configured Ontology actions.
 6. **You see the result.** Zyra returns structured JSON to the evidence panel in the browser.
-7. **The health check tells you whether the runtime is ready.** `GET /api/health` reports whether Foundry configuration is present.
+7. **The health check tells you whether the runtime is ready.** `GET /api/health` reports whether Foundry configuration is present and whether Zyra is shutting down.
 
 ### The whole path in one line
 
@@ -65,12 +95,25 @@ Foundry Ontology API
 RESULT / EVIDENCE
 ```
 
+For shutdown, the path is even simpler:
+
+```text
+/RICHMONDVA3LM
+  ↓
+SHUTDOWN_ZYRA
+  ↓
+FINAL RESULT
+  ↓
+ZYRA SERVER OFFLINE
+```
+
 ## What are these words?
 
 | Word | Beginner meaning |
 |---|---|
 | **VIRGINIA** | The simple command language you type into Zyra. |
 | **VAL3M** | A Zyra execution mode selected with `/VAL3M`. |
+| **RICHMONDVA3LM** | The dedicated command for stopping this Zyra Live Implement runtime. |
 | **Mission** | The instructions you give Zyra. |
 | **Parser** | The part that translates your typed instructions into structured steps. |
 | **API** | A doorway one piece of software uses to talk to another. |
@@ -90,6 +133,7 @@ The checked-in `zyra-live-implement` code currently supports these VIRGINIA oper
 | See the types of things in an Ontology | `LIST OBJECT_TYPES <ontology>` | `GET /api/v2/ontologies/{ontology}/objectTypes` |
 | Read objects of a specific type | `LIST OBJECTS <ontology> <objectType>` | `GET /api/v2/ontologies/{ontology}/objects/{objectType}` |
 | Run a configured Ontology action | `APPLY <ontology> <action> <parameters>` | `POST /api/v2/ontologies/{ontology}/actions/{action}/apply` |
+| Stop this Zyra runtime | `/RICHMONDVA3LM` | returns a shutdown result, then closes the Zyra HTTP server |
 | Keep a plain instruction in the mission | any unmatched line | stores it as a `NOTE` step |
 
 Planning and execution are available through:
@@ -108,7 +152,7 @@ Think of the repository like a building:
 | `client/src/` | The front desk | Main React interface, pages and browser components |
 | `server/` | The back office | Main Express API, routes and backend services |
 | `shared/` | The rule book | Types and schemas shared by frontend and backend |
-| `apps/zyra-live-implement/` | The VIRGINIA control room | Mission terminal, parser, Foundry gateway and evidence UI |
+| `apps/zyra-live-implement/` | The VIRGINIA control room | Mission terminal, parser, Foundry gateway, shutdown control and evidence UI |
 | `docs/` | The instruction room | Architecture, deployment and visual explanations |
 | `.github/` | The quality inspector | Automated repository checks and workflows |
 
@@ -121,12 +165,13 @@ apps/zyra-live-implement/
 │   └── The screen you use: type a mission, plan it, execute it, see results.
 │
 ├── src/virginia.ts
-│   └── The translator: turns your mission into structured steps.
+│   └── The translator: turns your mission into structured steps and recognizes /RICHMONDVA3LM.
 │
 └── server.ts
     ├── /api/health              → tells you whether the app is ready
     ├── /api/virginia/plan       → shows what Zyra thinks your mission means
     ├── /api/virginia/execute    → runs the mission
+    ├── SHUTDOWN_ZYRA            → returns final evidence, then closes the server
     └── Foundry routes           → talk to Palantir Ontology API v2
 ```
 
@@ -174,6 +219,7 @@ This section is the technical version of the beginner graphics above.
 | Mission execution | `POST /api/virginia/execute` in `apps/zyra-live-implement/server.ts` |
 | VIRGINIA parser | `parseVirginia()` in `apps/zyra-live-implement/src/virginia.ts` |
 | Execution switch | `executeStep()` in `apps/zyra-live-implement/server.ts` |
+| Complete Zyra stop | `/RICHMONDVA3LM` → `SHUTDOWN_ZYRA` → `beginShutdown()` |
 | Foundry gateway | `foundry()` in `apps/zyra-live-implement/server.ts` |
 | Ontology discovery | `GET /api/v2/ontologies` |
 | Object-type discovery | `GET /api/v2/ontologies/{ontology}/objectTypes` |
@@ -186,11 +232,15 @@ This section is the technical version of the beginner graphics above.
 flowchart TD
     A["You type a VIRGINIA mission"] --> B["POST /api/virginia/plan or /execute"]
     B --> C["parseVirginia() translates it"]
-    C --> D["executeStep() chooses the operation"]
-    D --> E["foundry() makes the authenticated request"]
-    E --> F["Palantir Foundry Ontology API v2"]
-    F --> G["JSON result"]
-    G --> H["Browser evidence panel"]
+    C --> D{"Mission type"}
+    D -->|Normal mission| E["executeStep() chooses the operation"]
+    E --> F["foundry() makes the authenticated request"]
+    F --> G["Palantir Foundry Ontology API v2"]
+    G --> H["JSON result"]
+    H --> I["Browser evidence panel"]
+    D -->|RICHMONDVA3LM| J["SHUTDOWN_ZYRA"]
+    J --> K["Return final shutdown result"]
+    K --> L["beginShutdown() closes Zyra server"]
 ```
 
 ## Verification language
