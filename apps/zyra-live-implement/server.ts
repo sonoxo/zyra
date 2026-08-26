@@ -91,7 +91,7 @@ app.post("/api/virginia/execute", async (req, res) => {
   }
 });
 
-app.get("*", (_req, res) => res.sendFile(path.join(publicDir, "index.html")));
+app.use((_req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 const port = Number(process.env.PORT || 5050);
 app.listen(port, () => console.log(`Zyra Live Implement listening on :${port}`));
