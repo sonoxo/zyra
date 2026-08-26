@@ -1,50 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
-<title id="title">Zyra VZN 8088 executable repository function map</title>
-<desc id="desc">A function-first architecture diagram of the checked-in Zyra Live Implement application showing VIRGINIA mission input, parser, API routes, execution engine, Foundry Ontology API calls, evidence response, health state, repository layers, and verification.</desc>
+<title id="title">Zyra beginner friendly function map</title>
+<desc id="desc">A plain-language diagram showing what happens when a beginner uses Zyra Live Implement: type a mission, Zyra reads it, chooses an operation, connects to Foundry, performs the requested Ontology operation, and shows the result.</desc>
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#02040b"/><stop offset=".5" stop-color="#09122a"/><stop offset="1" stop-color="#1e0b36"/></linearGradient>
-  <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#42f5ff"/><stop offset="1" stop-color="#8d6bff"/></linearGradient>
-  <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8d6bff"/><stop offset="1" stop-color="#ff4fd8"/></linearGradient>
-  <linearGradient id="green" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#42f5ff"/><stop offset="1" stop-color="#9cff57"/></linearGradient>
-  <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0H0V34" fill="none" stroke="#83a4ff" stroke-opacity=".06"/></pattern>
-  <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#62efff"/></marker>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#02040b"/><stop offset=".52" stop-color="#09152d"/><stop offset="1" stop-color="#1e0b36"/></linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#42f5ff"/><stop offset="1" stop-color="#8d6bff"/></linearGradient>
+  <linearGradient id="good" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#42f5ff"/><stop offset="1" stop-color="#9cff57"/></linearGradient>
+  <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" fill="none" stroke="#83a4ff" stroke-opacity=".055"/></pattern>
+  <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto"><path d="M0 0L0 8L10 4Z" fill="#62efff"/></marker>
   <style>
-    text{font-family:Inter,Segoe UI,Arial,sans-serif}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.kicker{font-size:14px;fill:#5af2ff;font-weight:800;letter-spacing:5px}.hero{font-size:54px;fill:#fff;font-weight:900}.sub{font-size:17px;fill:#9aabd0}.label{font-size:12px;fill:#6ff6ff;font-weight:800;letter-spacing:2px}.title{font-size:22px;fill:#fff;font-weight:850}.body{font-size:13px;fill:#b6c3df}.code{font-size:12px;fill:#a8ff60}.small{font-size:11px;fill:#8999bc}.panel{fill:#081022;stroke:#36547f;stroke-width:1.5}.hot{fill:#0a1428;stroke:url(#cyan);stroke-width:2}.action{fill:#100d28;stroke:url(#violet);stroke-width:2}.output{fill:#07191a;stroke:url(#green);stroke-width:2}.wire{fill:none;stroke:#62efff;stroke-width:2;stroke-opacity:.78;marker-end:url(#arrow)}.wire2{fill:none;stroke:#a27bff;stroke-width:2;stroke-opacity:.72;marker-end:url(#arrow)}
+    text{font-family:Inter,Segoe UI,Arial,sans-serif}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.kicker{font-size:14px;fill:#5af2ff;font-weight:800;letter-spacing:4px}.hero{font-size:58px;fill:#fff;font-weight:900}.sub{font-size:20px;fill:#aab8d5}.num{font-size:15px;fill:#62efff;font-weight:900}.title{font-size:27px;fill:#fff;font-weight:900}.plain{font-size:17px;fill:#d7e2f5}.code{font-size:12px;fill:#a8ff60}.tiny{font-size:11px;fill:#8fa1c4}.card{fill:#081226;stroke:#36547f;stroke-width:1.5}.hot{fill:#0a1428;stroke:url(#accent);stroke-width:2}.good{fill:#07191a;stroke:url(#good);stroke-width:2}.wire{fill:none;stroke:#62efff;stroke-width:3;stroke-opacity:.82;marker-end:url(#arrow)}
   </style>
 </defs>
 <rect width="1600" height="980" rx="34" fill="url(#bg)"/><rect width="1600" height="980" rx="34" fill="url(#grid)"/>
-<text x="70" y="70" class="kicker">VZN // VISION VIRGINIA // FUNCTION-FIRST</text>
-<text x="70" y="126" class="hero">ZYRA LIVE IMPLEMENT — WHAT THIS REPO ACTUALLY DOES</text>
-<text x="70" y="160" class="sub">Every primary node below maps to checked-in files, routes, operations, or verification layers on feature/virginia-aip-live-implement.</text>
+<text x="70" y="68" class="kicker">VZN // ZYRA LIVE IMPLEMENT // BEGINNER VIEW</text>
+<text x="70" y="132" class="hero">WHAT HAPPENS WHEN YOU USE ZYRA?</text>
+<text x="70" y="172" class="sub">You type what you want. Zyra translates it into a real operation, runs it through the checked-in code, and shows you the result.</text>
 
-<!-- 1 INPUT -->
-<g transform="translate(70 220)"><rect width="270" height="176" rx="18" class="hot"/><text x="20" y="30" class="label">01 // BROWSER UI</text><text x="20" y="62" class="title">VIRGINIA MISSION</text><text x="20" y="88" class="body">apps/zyra-live-implement/public/index.html</text><text x="20" y="116" class="code mono">/VAL3M</text><text x="20" y="136" class="code mono">AGENTS 24</text><text x="20" y="156" class="code mono">LIST ONTOLOGIES</text></g>
+<g transform="translate(70 235)"><rect width="430" height="180" rx="22" class="hot"/><text x="24" y="34" class="num">STEP 1</text><text x="24" y="76" class="title">YOU TYPE A MISSION</text><text x="24" y="108" class="plain">Example: “show me the available ontologies.”</text><text x="24" y="138" class="code mono">/VAL3M  •  LIST ONTOLOGIES</text><text x="24" y="161" class="tiny mono">real file: apps/zyra-live-implement/public/index.html</text></g>
 
-<!-- 2 API -->
-<g transform="translate(400 220)"><rect width="295" height="176" rx="18" class="panel"/><text x="20" y="30" class="label">02 // EXPRESS ROUTES</text><text x="20" y="62" class="title">PLAN OR EXECUTE</text><text x="20" y="88" class="code mono">POST /api/virginia/plan</text><text x="20" y="110" class="code mono">POST /api/virginia/execute</text><text x="20" y="137" class="body">server.ts accepts mission JSON</text><text x="20" y="157" class="body">and returns structured JSON.</text></g>
+<g transform="translate(585 235)"><rect width="430" height="180" rx="22" class="card"/><text x="24" y="34" class="num">STEP 2</text><text x="24" y="76" class="title">ZYRA READS YOUR WORDS</text><text x="24" y="108" class="plain">It turns the mission into simple structured steps.</text><text x="24" y="138" class="code mono">parseVirginia() → mode + agents + steps[]</text><text x="24" y="161" class="tiny mono">real file: apps/zyra-live-implement/src/virginia.ts</text></g>
 
-<!-- 3 PARSER -->
-<g transform="translate(755 220)"><rect width="350" height="176" rx="18" class="hot"/><text x="20" y="30" class="label">03 // PARSER</text><text x="20" y="62" class="title">parseVirginia()</text><text x="20" y="88" class="body">apps/zyra-live-implement/src/virginia.ts</text><text x="20" y="116" class="code mono">mode • agents • stopWhen • steps[]</text><text x="20" y="142" class="body">Converts the mission into bounded operations.</text></g>
+<g transform="translate(1100 235)"><rect width="430" height="180" rx="22" class="hot"/><text x="24" y="34" class="num">STEP 3</text><text x="24" y="76" class="title">ZYRA PICKS THE JOB</text><text x="24" y="108" class="plain">It matches your request to a supported operation.</text><text x="24" y="136" class="code mono">LIST • READ • APPLY ACTION • NOTE</text><text x="24" y="161" class="tiny mono">real function: executeStep() in server.ts</text></g>
 
-<!-- 4 ENGINE -->
-<g transform="translate(1165 220)"><rect width="365" height="176" rx="18" class="action"/><text x="20" y="30" class="label">04 // EXECUTION ENGINE</text><text x="20" y="62" class="title">executeStep()</text><text x="20" y="92" class="code mono">LIST_ONTOLOGIES</text><text x="20" y="112" class="code mono">LIST_OBJECT_TYPES</text><text x="20" y="132" class="code mono">LIST_OBJECTS</text><text x="20" y="152" class="code mono">APPLY_ACTION • NOTE</text></g>
+<path class="wire" d="M500 325H570"/><path class="wire" d="M1015 325H1085"/>
 
-<path class="wire" d="M340 308H392"/><path class="wire" d="M695 308H747"/><path class="wire2" d="M1105 308H1157"/>
+<g transform="translate(70 505)"><rect width="430" height="195" rx="22" class="card"/><text x="24" y="34" class="num">STEP 4</text><text x="24" y="76" class="title">ZYRA CONNECTS SECURELY</text><text x="24" y="108" class="plain">The server connects to Palantir Foundry for you.</text><text x="24" y="138" class="code mono">foundry() + Bearer token</text><text x="24" y="162" class="tiny">Your Foundry token stays on the server, not in the browser.</text><text x="24" y="181" class="tiny mono">server env: FOUNDRY_BASE_URL + FOUNDRY_TOKEN</text></g>
 
-<!-- FOUNDARY GATEWAY -->
-<g transform="translate(245 470)"><rect width="455" height="250" rx="20" class="panel"/><text x="22" y="32" class="label">05 // SERVER-SIDE FOUNDRY GATEWAY</text><text x="22" y="68" class="title">Bearer-authenticated Ontology API v2</text><text x="22" y="98" class="body">Secrets stay server-side:</text><text x="22" y="122" class="code mono">FOUNDRY_BASE_URL</text><text x="22" y="144" class="code mono">FOUNDRY_TOKEN</text><text x="22" y="178" class="body">GET and POST requests flow through foundry().</text><text x="22" y="207" class="small">If environment configuration is missing, the gateway fails with an explicit error.</text></g>
+<g transform="translate(585 505)"><rect width="430" height="195" rx="22" class="card"/><text x="24" y="34" class="num">STEP 5</text><text x="24" y="76" class="title">THE REAL WORK HAPPENS</text><text x="24" y="108" class="plain">Zyra can list Ontologies, object types, objects,</text><text x="24" y="132" class="plain">or apply an approved Ontology action.</text><text x="24" y="160" class="code mono">GET /api/v2/ontologies  •  POST .../apply</text><text x="24" y="181" class="tiny mono">real routes are wired in apps/zyra-live-implement/server.ts</text></g>
 
-<!-- ENDPOINTS -->
-<g transform="translate(760 450)"><rect width="770" height="290" rx="20" class="action"/><text x="22" y="32" class="label">06 // PALANTIR FOUNDRY / ONTOLOGY API</text><text x="22" y="68" class="title">Operations currently wired by the repository</text><text x="22" y="108" class="code mono">GET  /api/v2/ontologies</text><text x="22" y="140" class="code mono">GET  /api/v2/ontologies/{ontology}/objectTypes</text><text x="22" y="172" class="code mono">GET  /api/v2/ontologies/{ontology}/objects/{objectType}</text><text x="22" y="204" class="code mono">POST /api/v2/ontologies/{ontology}/actions/{action}/apply</text><text x="22" y="242" class="body">APPLY_ACTION sends: { parameters: ... }</text><text x="22" y="268" class="small">Tenant credentials/configuration are required for live Foundry execution.</text></g>
-<path class="wire2" d="M1348 396V432H630V462"/><path class="wire" d="M700 595H752"/>
+<g transform="translate(1100 505)"><rect width="430" height="195" rx="22" class="good"/><text x="24" y="34" class="num">STEP 6</text><text x="24" y="76" class="title">YOU SEE THE RESULT</text><text x="24" y="108" class="plain">The browser shows what Zyra received back.</text><text x="24" y="138" class="code mono">mission + results + completed + stopWhen</text><text x="24" y="162" class="plain">No guessing: the output is visible as JSON evidence.</text><text x="24" y="181" class="tiny mono">health check: GET /api/health</text></g>
 
-<!-- EVIDENCE + HEALTH -->
-<g transform="translate(70 790)"><rect width="470" height="130" rx="18" class="output"/><text x="20" y="30" class="label">07 // RESULT / EVIDENCE</text><text x="20" y="61" class="title">Structured JSON back to the console</text><text x="20" y="88" class="code mono">{ mission, results, completed, stopWhen }</text><text x="20" y="110" class="body">The UI renders the returned execution evidence.</text></g>
-<g transform="translate(585 790)"><rect width="390" height="130" rx="18" class="panel"/><text x="20" y="30" class="label">08 // HEALTH</text><text x="20" y="61" class="title">GET /api/health</text><text x="20" y="88" class="code mono">ok • app • mode • foundryConfigured</text><text x="20" y="110" class="body">The browser surfaces runtime/config state.</text></g>
-<g transform="translate(1020 790)"><rect width="510" height="130" rx="18" class="hot"/><text x="20" y="30" class="label">09 // REPOSITORY VERIFICATION</text><text x="20" y="61" class="title">GitHub Actions + code checks</text><text x="20" y="88" class="body">.github/ workflows validate build/readiness for committed changes.</text><text x="20" y="110" class="code mono">IMPLEMENT → TEST → VERIFY → EVIDENCE</text></g>
-<path class="wire" d="M1145 740V768H305V782"/>
+<path class="wire" d="M1315 415V463H285V490"/><path class="wire" d="M500 602H570"/><path class="wire" d="M1015 602H1085"/>
 
-<!-- BASE REPO STRIP -->
-<g transform="translate(70 944)"><text class="small mono" x="0" y="0">BASE ZYRA LAYERS: client/src = React UI  //  server = Express API  //  shared = contracts/schema  //  PostgreSQL + Drizzle = data  //  apps/zyra-live-implement = VIRGINIA + Foundry implementation console</text></g>
+<g transform="translate(70 770)"><rect width="1460" height="145" rx="22" fill="#07101f" stroke="#36547f"/><text x="26" y="38" class="num">THE WHOLE THING IN ONE LINE</text><text x="26" y="78" class="title">YOU ASK → ZYRA UNDERSTANDS → ZYRA CHOOSES → FOUNDRY RUNS → YOU GET THE RESULT</text><text x="26" y="112" class="plain">Under the hood: browser → /api/virginia/execute → parseVirginia() → executeStep() → foundry() → Ontology API → evidence panel.</text><text x="26" y="134" class="tiny">This graphic describes functions that are actually present on feature/virginia-aip-live-implement. It is not a decorative capability claim.</text></g>
+
+<text x="70" y="954" class="tiny mono">BEGINNER RULE: big text explains WHAT happens. small green text shows WHERE it happens in the repo.</text>
 </svg>
