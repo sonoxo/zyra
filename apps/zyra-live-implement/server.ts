@@ -12,6 +12,28 @@ app.use(express.static(publicDir));
 
 const baseUrl = () => (process.env.FOUNDRY_BASE_URL || "").replace(/\/$/, "");
 const token = () => process.env.FOUNDRY_TOKEN || "";
+let shuttingDown = false;
+let server: ReturnType<typeof app.listen>;
+
+function beginShutdown(reason: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[RICHMONDVA3LM] Zyra shutdown started: ${reason}`);
+
+  server.close((error) => {
+    if (error) {
+      console.error("[RICHMONDVA3LM] HTTP shutdown error", error);
+      process.exitCode = 1;
+      return;
+    }
+    console.log("[RICHMONDVA3LM] Zyra HTTP server stopped. Foundry gateway is offline with this process.");
+  });
+
+  const forceClose = setTimeout(() => {
+    server.closeAllConnections?.();
+  }, 5000);
+  forceClose.unref();
+}
 
 async function foundry(pathname: string, init: RequestInit = {}) {
   if (!baseUrl() || !token()) throw new Error("FOUNDRY_BASE_URL and FOUNDRY_TOKEN are required");
@@ -43,13 +65,26 @@ async function executeStep(step: VirginiaStep) {
         method: "POST",
         body: JSON.stringify({ parameters: step.parameters || {} }),
       });
+    case "SHUTDOWN_ZYRA":
+      return {
+        command: "/RICHMONDVA3LM",
+        state: "shutdown-requested",
+        profile: "GPT-DOUG-3LM / XUNIABOT / ZYRA / PALANTIR BRIDGE",
+        effect: "Stop this Zyra Live Implement process after the response is delivered. Its Foundry gateway closes with it.",
+      };
     default:
       return { note: step.text || "" };
   }
 }
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, app: "zyra-live-implement", mode: "VAL3M", foundryConfigured: Boolean(baseUrl() && token()) });
+  res.json({
+    ok: !shuttingDown,
+    status: shuttingDown ? "SHUTTING_DOWN" : "ONLINE",
+    app: "zyra-live-implement",
+    mode: "VAL3M",
+    foundryConfigured: Boolean(baseUrl() && token()),
+  });
 });
 
 app.get("/api/foundry/ontologies", async (_req, res) => {
@@ -84,8 +119,15 @@ app.post("/api/virginia/execute", async (req, res) => {
   try {
     const mission = parseVirginia(String(req.body?.mission || ""));
     const results = [] as unknown[];
-    for (const step of mission.steps) results.push({ step, result: await executeStep(step) });
+    let shutdownRequested = false;
+
+    for (const step of mission.steps) {
+      results.push({ step, result: await executeStep(step) });
+      if (step.op === "SHUTDOWN_ZYRA") shutdownRequested = true;
+    }
+
     res.json({ mission, results, completed: true, stopWhen: mission.stopWhen });
+    if (shutdownRequested) res.once("finish", () => beginShutdown("/RICHMONDVA3LM"));
   } catch (error) {
     res.status(502).json({ completed: false, error: String(error) });
   }
@@ -94,4 +136,7 @@ app.post("/api/virginia/execute", async (req, res) => {
 app.use((_req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 const port = Number(process.env.PORT || 5050);
-app.listen(port, () => console.log(`Zyra Live Implement listening on :${port}`));
+server = app.listen(port, () => console.log(`Zyra Live Implement listening on :${port}`));
+
+process.once("SIGTERM", () => beginShutdown("SIGTERM"));
+process.once("SIGINT", () => beginShutdown("SIGINT"));
