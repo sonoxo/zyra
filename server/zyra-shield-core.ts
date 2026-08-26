@@ -44,6 +44,7 @@ export interface ShieldRequest {
   purpose: string;
   declaredScopes: string[];
   requestedScopes: string[];
+  agentRegistered?: boolean;
   dataClass?: ShieldDataClass;
   networkDestinations?: string[];
   egressApproved?: boolean;
@@ -157,6 +158,10 @@ export function evaluateShieldRequest(
 
   if (!registeredCapabilities.has(request.capability)) {
     reasons.push("Capability is not registered in the Zyra Shield policy.");
+  }
+
+  if (request.agentRegistered === false) {
+    reasons.push("Agent is not registered in the organization-scoped trusted registry.");
   }
 
   if (prohibitedPhysicalForcePatterns.some((pattern) => pattern.test(combinedIntent))) {
