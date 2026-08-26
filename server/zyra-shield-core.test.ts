@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   createEvidenceHash,
   createHumanApproval,
+  createManifestEvidence,
   evaluateShieldRequest,
   scanAgentManifest,
   type ShieldRequest,
@@ -95,4 +96,38 @@ test("evidence hashes are stable across object key order", () => {
     createEvidenceHash({ b: 2, a: 1 }),
     createEvidenceHash({ a: 1, b: 2 }),
   );
+});
+
+
+test("denies restricted-data egress without authenticated approval", () => {
+  const decision = evaluateShieldRequest({
+    ...baseRequest,
+    dataClass: "restricted",
+    networkDestinations: ["https://outside.example"],
+  });
+  assert.equal(decision.action, "deny");
+  assert.match(decision.reasons.join(" "), /explicit egress approval/);
+});
+
+test("accepts restricted-data egress only with a trusted owner approval", () => {
+  const decision = evaluateShieldRequest({
+    ...baseRequest,
+    dataClass: "restricted",
+    networkDestinations: ["https://approved.example"],
+    egressApproval: createHumanApproval(
+      true,
+      "owner-1",
+      "owner",
+      new Date("2026-08-25T00:00:00.000Z"),
+    ),
+  });
+  assert.equal(decision.action, "allow");
+});
+
+test("manifest evidence changes when scanned content changes", () => {
+  const result = scanAgentManifest("name: safe-agent");
+  const first = createManifestEvidence("inline", "name: safe-agent", result);
+  const second = createManifestEvidence("inline", "name: another-safe-agent", result);
+  assert.notEqual(first.manifestHash, second.manifestHash);
+  assert.notEqual(first.evidenceHash, second.evidenceHash);
 });
