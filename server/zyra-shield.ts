@@ -16,11 +16,10 @@ const evaluationSchema = z.object({
   action: z.string().min(1).max(240),
   capability: z.enum(SHIELD_CAPABILITIES),
   purpose: z.string().min(1).max(1000),
-  declaredScopes: z.array(z.string().min(1).max(240)).max(100),
   requestedScopes: z.array(z.string().min(1).max(240)).max(100),
   dataClass: z.enum(["public", "internal", "confidential", "restricted"]).default("internal"),
   networkDestinations: z.array(z.string().url().max(2048)).max(25).default([]),
-  egressApproved: z.boolean().default(false),
+  confirmRestrictedEgress: z.boolean().default(false),
   confirmHighImpact: z.boolean().default(false),
 });
 
@@ -28,6 +27,33 @@ const scanSchema = z.object({
   manifest: z.string().min(1).max(1_000_000),
   source: z.string().min(1).max(500).default("inline"),
 });
+
+interface TrustedAgentGrant {
+  organizationId: string;
+  agentId: string;
+  scopes: string[];
+}
+
+function resolveTrustedAgentScopes(
+  organizationId: string,
+  agentId: string,
+): string[] | undefined {
+  try {
+    const parsed: unknown = JSON.parse(process.env.ZYRA_SHIELD_AGENT_GRANTS ?? "[]");
+    if (!Array.isArray(parsed)) return undefined;
+    const grant = parsed.find((entry): entry is TrustedAgentGrant => {
+      if (!entry || typeof entry !== "object") return false;
+      const candidate = entry as Record<string, unknown>;
+      return candidate.organizationId === organizationId
+        && candidate.agentId === agentId
+        && Array.isArray(candidate.scopes)
+        && candidate.scopes.every((scope) => typeof scope === "string");
+    });
+    return grant ? [...new Set(grant.scopes)] : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function registerZyraShieldRoutes(app: Express): void {
   app.get("/api/shield/status", requireAuth, (_req, res) => {
@@ -51,9 +77,24 @@ export function registerZyraShieldRoutes(app: Express): void {
         });
       }
 
-      const { confirmHighImpact, ...request } = parsed.data;
+      const {
+        confirmHighImpact,
+        confirmRestrictedEgress,
+        ...request
+      } = parsed.data;
+      const declaredScopes = resolveTrustedAgentScopes(
+        req.user!.organizationId,
+        request.agentId,
+      );
       const evaluatedRequest = {
         ...request,
+        declaredScopes: declaredScopes ?? [],
+        agentRegistered: declaredScopes !== undefined,
+        egressApproved: Boolean(createHumanApproval(
+          confirmRestrictedEgress,
+          req.user!.userId,
+          req.user!.role,
+        )),
         humanApproval: createHumanApproval(
           confirmHighImpact,
           req.user!.userId,
@@ -101,7 +142,12 @@ export function registerZyraShieldRoutes(app: Express): void {
         }
 
         const result = scanAgentManifest(parsed.data.manifest);
-        const evidenceHash = createEvidenceHash({ source: parsed.data.source, result });
+        const manifestHash = createEvidenceHash(parsed.data.manifest);
+        const evidenceHash = createEvidenceHash({
+          source: parsed.data.source,
+          manifestHash,
+          result,
+        });
 
         await storage.createAuditLog({
           organizationId: req.user!.organizationId,
@@ -112,6 +158,7 @@ export function registerZyraShieldRoutes(app: Express): void {
           ipAddress: req.ip,
           details: {
             source: parsed.data.source,
+            manifestHash,
             findingCount: result.findings.length,
             maximumSeverity: result.maximumSeverity,
             integrity: { algorithm: "sha256", evidenceHash },
