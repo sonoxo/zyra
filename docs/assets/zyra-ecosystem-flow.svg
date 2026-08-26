@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+<title id="title">How the Zyra ecosystem works</title>
+<desc id="desc">An animated five-step flow from a user request through Zyra, specialist agents, protected data and tools, verification, and a useful result.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#09051a"/><stop offset="1" stop-color="#160a35"/></linearGradient>
+  <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+  <style>
+    .card{fill:#130d2c;stroke:#6d5ce7;stroke-width:2}.label{fill:#fff;font:700 20px system-ui,sans-serif}.small{fill:#cbd5e1;font:15px system-ui,sans-serif}.step{fill:#22d3ee;font:700 13px system-ui,sans-serif}.line{stroke:url(#glow);stroke-width:5;stroke-linecap:round;stroke-dasharray:12 12;animation:move 1.4s linear infinite}.pulse{fill:#22d3ee;opacity:.35;animation:pulse 2s ease-in-out infinite}.orbit{fill:none;stroke:#a855f7;stroke-width:2;stroke-dasharray:5 7;transform-origin:600px 255px;animation:spin 8s linear infinite}.dot{fill:#fff;animation:blink 1.4s ease-in-out infinite}.delay1{animation-delay:.25s}.delay2{animation-delay:.5s}.delay3{animation-delay:.75s}@keyframes move{to{stroke-dashoffset:-24}}@keyframes pulse{50%{opacity:.08;transform:scale(1.08)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes blink{50%{opacity:.25}}
+    @media(prefers-reduced-motion:reduce){.line,.pulse,.orbit,.dot{animation:none}}
+  </style>
+</defs>
+<rect width="1200" height="520" rx="28" fill="url(#bg)"/>
+<text x="600" y="52" text-anchor="middle" class="label" font-size="28">ONE REQUEST → A VERIFIED RESULT</text>
+<circle class="pulse" cx="360" cy="255" r="50"/><circle class="pulse" cx="600" cy="255" r="62"/><circle class="pulse" cx="840" cy="255" r="50"/>
+<path class="line" d="M215 255H305M415 255H525M675 255H785M895 255H985"/>
+<circle class="orbit" cx="600" cy="255" r="84"/>
+<rect class="card" x="45" y="180" width="170" height="150" rx="18"/><text x="65" y="210" class="step">1 · ASK</text><text x="130" y="255" text-anchor="middle" class="label">You</text><text x="130" y="282" text-anchor="middle" class="small">Give Zyra a goal</text>
+<rect class="card" x="305" y="180" width="110" height="150" rx="55"/><text x="360" y="210" text-anchor="middle" class="step">2 · ROUTE</text><text x="360" y="256" text-anchor="middle" class="label">ZYRA</text><text x="360" y="282" text-anchor="middle" class="small">Coordinates</text>
+<rect class="card" x="525" y="165" width="150" height="180" rx="22"/><text x="600" y="196" text-anchor="middle" class="step">3 · WORK</text><text x="600" y="238" text-anchor="middle" class="label">Agents</text><text x="600" y="265" text-anchor="middle" class="small">Plan · build</text><text x="600" y="288" text-anchor="middle" class="small">check · explain</text><circle class="dot" cx="566" cy="315" r="5"/><circle class="dot delay1" cx="588" cy="315" r="5"/><circle class="dot delay2" cx="610" cy="315" r="5"/><circle class="dot delay3" cx="632" cy="315" r="5"/>
+<rect class="card" x="785" y="180" width="110" height="150" rx="55"/><text x="840" y="210" text-anchor="middle" class="step">4 · VERIFY</text><text x="840" y="254" text-anchor="middle" class="label">Shield</text><text x="840" y="281" text-anchor="middle" class="small">Tests + audit</text>
+<rect class="card" x="985" y="180" width="170" height="150" rx="18"/><text x="1005" y="210" class="step">5 · DELIVER</text><text x="1070" y="255" text-anchor="middle" class="label">Result</text><text x="1070" y="282" text-anchor="middle" class="small">Clear + traceable</text>
+<text x="600" y="410" text-anchor="middle" class="small">Apps and dashboards ↔ API and workflows ↔ PostgreSQL and approved services</text>
+<text x="600" y="447" text-anchor="middle" fill="#a5f3fc" font-family="system-ui,sans-serif" font-size="15">Every step keeps organization boundaries, permissions and audit evidence.</text>
+</svg>
