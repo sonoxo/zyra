@@ -232,6 +232,18 @@ export function scanAgentManifest(content: string): ShieldScanResult {
   };
 }
 
+export function createManifestEvidence(
+  source: string,
+  manifest: string,
+  result: ShieldScanResult,
+): { manifestHash: string; evidenceHash: string } {
+  const manifestHash = createEvidenceHash(manifest);
+  return {
+    manifestHash,
+    evidenceHash: createEvidenceHash({ source, manifestHash, result }),
+  };
+}
+
 export function createEvidenceHash(value: unknown): string {
   return createHash("sha256").update(stableSerialize(value)).digest("hex");
 }
