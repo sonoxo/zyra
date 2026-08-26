@@ -1,40 +1,54 @@
 <p align="center"><img src="../../docs/assets/zyra-8088-computational-mind.svg" width="100%" alt="Zyra 8088 Computational Mind" /></p>
 
-# Zyra Live Implement // VIRGINIA /VAL3M
+# Zyra Live Implement // VIRGINIA /VAL3M /VA3LM
 
 **Ontology-first live implementation for the VZN // Vision Virginia ecosystem.**
 
-The browser sends VIRGINIA missions to a server-side gateway. Foundry credentials remain server-side. `/VAL3M` converts the mission into bounded Ontology reads/actions and returns JSON evidence.
+The browser sends VIRGINIA missions to a server-side gateway. Foundry credentials remain server-side. `/VAL3M` converts missions into bounded Ontology reads/actions. `/VA3LM` activates the EYERIS geospatial object/scene-recognition control plane and returns reviewable JSON evidence.
 
 ## Beginner version
 
-Think of this app like a control room:
+**You type a job → Zyra reads it → Zyra chooses a supported Foundry/EYERIS operation → you see the evidence.**
 
-**You type a job → Zyra reads it → Zyra runs the supported operation → you see the result.**
-
-If you want to stop the Zyra Live Implement runtime, use:
+GeoVision activation:
 
 ```text
-/RICHMONDVA3LM
+/VA3LM
 ```
 
-The canonical stack signature is also accepted:
+Canonical ecosystem signature:
 
 ```text
-/RICHMONDVA3LM - GPT - DOUG - 3LM - XUNIABOT - ZYRA - PALANTIR
+/VA3LM-PALANTIRVABRAIN3LM-GPT-DOUG-LLM-ZYRA-XUNA-SONOXO-ECOSYSTEM
 ```
 
-### What `/RICHMONDVA3LM` does
+That activation returns GeoVision status and uses the hard-coded profile:
 
-1. Zyra recognizes a dedicated shutdown mission.
-2. No Ontology action is run as part of that shutdown mission.
-3. Zyra returns a final shutdown result to the browser.
-4. After that response finishes, the Zyra HTTP server stops accepting requests.
-5. The Foundry gateway in this process goes offline with Zyra.
+```text
+PALANTIRVABRAIN3LM / GPT-DOUG-LLM / ZYRA / XUNA / SONOXO ECOSYSTEM
+```
 
-It stops **this Zyra runtime and its bridge connections**. It does **not** shut down Palantir's external platform or unrelated external services.
+### GeoVision commands
 
-## Live command surface
+```text
+/VA3LM
+GEOVISION STATUS
+GEOVISION CAMERAS <ontology>
+GEOVISION DETECTIONS <ontology>
+STOP WHEN evidence-returned
+```
+
+`GEOVISION CAMERAS` reads Foundry `Camera` Ontology objects. `GEOVISION DETECTIONS` reads `Detection` objects. If the ontology name is omitted, Zyra uses `EYERIS_ONTOLOGY`.
+
+The status endpoint is also available directly:
+
+```text
+GET /api/va3lm/geovision/status
+```
+
+It reports Foundry configuration, optional EYERIS model-service reachability, the WGS84 evidence pipeline, and the non-identifying privacy boundary.
+
+## VAL3M command surface
 
 ```text
 /VAL3M
@@ -44,9 +58,21 @@ LIST OBJECT_TYPES <ontology>
 LIST OBJECTS <ontology> <objectType>
 APPLY <ontology> <action> {"parameter":"value"}
 STOP WHEN green
+```
 
+## Shutdown
+
+```text
 /RICHMONDVA3LM
 ```
+
+Canonical shutdown signature:
+
+```text
+/RICHMONDVA3LM - GPT - DOUG - 3LM - XUNIABOT - ZYRA - PALANTIR
+```
+
+The shutdown mission returns final evidence, then stops this Zyra HTTP process and its local Foundry gateway. It does not shut down Palantir or unrelated services.
 
 ## Palantir AIP / Ontology path
 
@@ -55,7 +81,16 @@ STOP WHEN green
 - `GET /api/v2/ontologies/{ontology}/objects/{objectType}`
 - `POST /api/v2/ontologies/{ontology}/actions/{action}/apply`
 
-Set `FOUNDRY_BASE_URL` and `FOUNDRY_TOKEN` in the runtime environment. Never place the token in browser code or commit it.
+## Environment
+
+```text
+FOUNDRY_BASE_URL=https://<your-foundry-host>
+FOUNDRY_TOKEN=<server-side-token>
+EYERIS_ONTOLOGY=<ontology-api-name>
+EYERIS_BASE_URL=http://localhost:8080
+```
+
+Never place tokens in browser code or commit them.
 
 ## Run
 
@@ -74,15 +109,20 @@ Open port `5050`.
 ```mermaid
 flowchart LR
   V[VIRGINIA intent] --> M[/VAL3M planner]
-  M --> O[Palantir Ontology API]
+  V --> G[/VA3LM GeoVision]
+  G --> E[EYERIS detector health]
+  G --> O[Palantir Camera + Detection objects]
+  M --> O
   O --> R[Objects / Actions]
-  R --> E[Evidence JSON]
-  E --> G{STOP WHEN green}
-  G -->|continue| M
-  G -->|verified| D[Deliver]
+  R --> J[Evidence JSON]
+  J --> D[Deliver]
   V --> S[/RICHMONDVA3LM]
   S --> X[Return shutdown result]
   X --> Y[Close Zyra runtime + Foundry gateway]
 ```
+
+## Privacy boundary
+
+VA3LM GeoVision is wired for authorized, **non-identifying object and scene recognition**. The wider EYERIS implementation explicitly excludes face recognition, biometric embeddings, named-person lookup, and persistent individual tracking.
 
 **Additive-only design:** this app lives in its own directory and does not replace the existing Zyra application.
