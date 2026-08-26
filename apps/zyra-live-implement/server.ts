@@ -12,6 +12,8 @@ app.use(express.static(publicDir));
 
 const baseUrl = () => (process.env.FOUNDRY_BASE_URL || "").replace(/\/$/, "");
 const token = () => process.env.FOUNDRY_TOKEN || "";
+const eyerisBaseUrl = () => (process.env.EYERIS_BASE_URL || "").replace(/\/$/, "");
+const eyerisOntology = () => process.env.EYERIS_ONTOLOGY || "";
 let shuttingDown = false;
 let server: ReturnType<typeof app.listen>;
 
@@ -52,6 +54,56 @@ async function foundry(pathname: string, init: RequestInit = {}) {
   return body;
 }
 
+async function eyeris(pathname: string) {
+  if (!eyerisBaseUrl()) throw new Error("EYERIS_BASE_URL is required for live detector health");
+  const response = await fetch(`${eyerisBaseUrl()}${pathname}`, { headers: { Accept: "application/json" } });
+  const text = await response.text();
+  let body: unknown = text;
+  try { body = text ? JSON.parse(text) : {}; } catch {}
+  if (!response.ok) throw new Error(`EYERIS ${response.status}: ${typeof body === "string" ? body : JSON.stringify(body)}`);
+  return body;
+}
+
+function requireGeoVisionOntology(explicit?: string) {
+  const ontology = explicit || eyerisOntology();
+  if (!ontology) throw new Error("EYERIS_ONTOLOGY or an explicit ontology API name is required");
+  return ontology;
+}
+
+async function geoVisionStatus() {
+  let detector: unknown = { configured: Boolean(eyerisBaseUrl()), reachable: false };
+  if (eyerisBaseUrl()) {
+    try {
+      detector = { configured: true, reachable: true, health: await eyeris("/health") };
+    } catch (error) {
+      detector = { configured: true, reachable: false, error: String(error) };
+    }
+  }
+
+  return {
+    mode: "VA3LM",
+    profile: "PALANTIRVABRAIN3LM / GPT-DOUG-LLM / ZYRA / XUNA / SONOXO ECOSYSTEM",
+    capability: "NON_IDENTIFYING_OBJECT_SCENE_RECOGNITION",
+    foundryConfigured: Boolean(baseUrl() && token()),
+    ontology: eyerisOntology() || null,
+    detector,
+    evidenceFlow: [
+      "AUTHORIZED_MEDIA",
+      "OBJECT_SCENE_INFERENCE",
+      "WGS84_GEOSPATIAL_ENRICHMENT",
+      "CAMERA_DETECTION_ONTOLOGY",
+      "MAP_WORKSHOP_OSDK",
+      "REVIEWABLE_EVIDENCE",
+    ],
+    prohibitedIdentityModes: [
+      "FACE_RECOGNITION",
+      "BIOMETRIC_EMBEDDINGS",
+      "NAMED_PERSON_LOOKUP",
+      "PERSISTENT_INDIVIDUAL_TRACKING",
+    ],
+  };
+}
+
 async function executeStep(step: VirginiaStep) {
   switch (step.op) {
     case "LIST_ONTOLOGIES":
@@ -65,6 +117,16 @@ async function executeStep(step: VirginiaStep) {
         method: "POST",
         body: JSON.stringify({ parameters: step.parameters || {} }),
       });
+    case "GEOVISION_STATUS":
+      return geoVisionStatus();
+    case "GEOVISION_CAMERAS": {
+      const ontology = requireGeoVisionOntology(step.ontology);
+      return foundry(`/api/v2/ontologies/${encodeURIComponent(ontology)}/objects/Camera`);
+    }
+    case "GEOVISION_DETECTIONS": {
+      const ontology = requireGeoVisionOntology(step.ontology);
+      return foundry(`/api/v2/ontologies/${encodeURIComponent(ontology)}/objects/Detection`);
+    }
     case "SHUTDOWN_ZYRA":
       return {
         command: "/RICHMONDVA3LM",
@@ -82,9 +144,15 @@ app.get("/api/health", (_req, res) => {
     ok: !shuttingDown,
     status: shuttingDown ? "SHUTTING_DOWN" : "ONLINE",
     app: "zyra-live-implement",
-    mode: "VAL3M",
+    mode: "VAL3M+VA3LM",
     foundryConfigured: Boolean(baseUrl() && token()),
+    eyerisConfigured: Boolean(eyerisBaseUrl()),
+    eyerisOntology: eyerisOntology() || null,
   });
+});
+
+app.get("/api/va3lm/geovision/status", async (_req, res) => {
+  res.json(await geoVisionStatus());
 });
 
 app.get("/api/foundry/ontologies", async (_req, res) => {
