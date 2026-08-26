@@ -1,3 +1,17 @@
+<!-- VZN-8088 -->
+<p align="center"><img src="docs/assets/vzn-8088-universal.svg" width="100%" alt="VZN 8088 Vision Virginia" /></p>
+
+<p align="center"><strong>VZN // VISION VIRGINIA // GPT‑VAL3M‑MAX‑ZYRA // COMPUTE LIKE IT'S 8088</strong></p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/VZN-8088-42f5ff?style=for-the-badge" alt="VZN 8088" />
+  <img src="https://img.shields.io/badge/VIRGINIA-VYBE%20CODE-8d6bff?style=for-the-badge" alt="Virginia" />
+  <img src="https://img.shields.io/badge/VAL3M-AGENTIC%20COMPUTE-ff4fd8?style=for-the-badge" alt="VAL3M" />
+  <img src="https://img.shields.io/badge/ONTOLOGY-AIP%20v2-9cff57?style=for-the-badge" alt="Ontology" />
+</p>
+
+---
+
 <p align="center">
   <img src="https://img.shields.io/badge/Zyra-AI--Native%20Cybersecurity-7c3aed?style=for-the-badge&logo=shield&logoColor=white" alt="Zyra" />
 </p>
