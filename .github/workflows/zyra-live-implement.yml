@@ -3,6 +3,7 @@ name: Zyra Live Implement
 on:
   push:
     branches:
+      - main
       - feature/virginia-aip-live-implement
       - feature/va3lm-geovision
     paths:
