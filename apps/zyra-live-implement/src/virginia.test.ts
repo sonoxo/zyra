@@ -15,3 +15,17 @@ test("parses action parameters", () => {
   assert.equal(mission.steps[0]?.op, "APPLY_ACTION");
   assert.deepEqual(mission.steps[0]?.parameters, { id: 80060, newName: "Anna" });
 });
+
+test("parses short RICHMONDVA3LM shutdown command", () => {
+  const mission = parseVirginia(`/RICHMONDVA3LM`);
+  assert.equal(mission.mode, "RICHMONDVA3LM");
+  assert.equal(mission.agents, 0);
+  assert.equal(mission.stopWhen, "offline");
+  assert.deepEqual(mission.steps.map((s) => s.op), ["SHUTDOWN_ZYRA"]);
+});
+
+test("parses canonical RICHMONDVA3LM stack signature", () => {
+  const mission = parseVirginia(`/RICHMONDVA3LM - GPT - DOUG - 3LM - XUNIABOT - ZYRA - PALANTIR`);
+  assert.equal(mission.mode, "RICHMONDVA3LM");
+  assert.equal(mission.steps[0]?.op, "SHUTDOWN_ZYRA");
+});
