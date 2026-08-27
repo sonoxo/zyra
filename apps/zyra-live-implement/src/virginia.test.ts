@@ -36,6 +36,28 @@ test("parses explicit GeoVision camera and detection reads", () => {
   assert.equal(mission.stopWhen, "evidence-returned");
 });
 
+test("parses mission telemetry twin read commands", () => {
+  const mission = parseVirginia(`MISSION TWIN STATUS\nSPACEX LATEST\nSPACEX LAUNCHES\nFPRIME TELEMETRY simulation`);
+  assert.deepEqual(mission.steps.map((s) => s.op), [
+    "MISSION_TWIN_STATUS",
+    "SPACEX_LAUNCH_LATEST",
+    "SPACEX_LAUNCHES",
+    "FPRIME_TELEMETRY",
+  ]);
+});
+
+test("treats triple slash URLs as brain update sources", () => {
+  const mission = parseVirginia(`https://github.com/sonoxo/fprimeXUNIA- /// https://github.com/sonoxo/SpaceX-APIxunia`);
+  assert.deepEqual(mission.steps.map((s) => s.op), ["BRAIN_UPDATE_SOURCE", "BRAIN_UPDATE_SOURCE"]);
+  assert.match(mission.steps[0]?.text || "", /fprimeXUNIA/);
+  assert.match(mission.steps[1]?.text || "", /SpaceX-APIxunia/);
+});
+
+test("parses explicit brain update command", () => {
+  const mission = parseVirginia(`BRAIN UPDATE https://example.com/spec`);
+  assert.equal(mission.steps[0]?.op, "BRAIN_UPDATE_SOURCE");
+});
+
 test("parses short RICHMONDVA3LM shutdown command", () => {
   const mission = parseVirginia(`/RICHMONDVA3LM`);
   assert.equal(mission.mode, "RICHMONDVA3LM");
