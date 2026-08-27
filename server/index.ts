@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { registerBaselineAssuranceRoutes } from "./baseline-assurance";
 import { registerZyraShieldRoutes } from "./zyra-shield";
+import { registerManagedBrowserRoutes } from "./managed-browser";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -140,7 +141,7 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env"];
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -160,6 +161,7 @@ app.use((req, res, next) => {
 (async () => {
   registerBaselineAssuranceRoutes(app);
   registerZyraShieldRoutes(app);
+  registerManagedBrowserRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -200,6 +202,7 @@ app.use((req, res, next) => {
         process.env.HF_TOKEN ? "vision-ai" : null,
         "bas-detection-assurance",
         "zyra-shield",
+        "managed-profile-browser",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
