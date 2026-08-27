@@ -128,7 +128,7 @@ export async function browserStatus(): Promise<{ running: boolean; managedRoot: 
   }
 }
 
-export async function launchManagedBrowser(): Promise<ReturnType<typeof browserStatus>> {
+export async function launchManagedBrowser(): Promise<Awaited<ReturnType<typeof browserStatus>>> {
   const current = await browserStatus();
   if (current.running) return current;
 
