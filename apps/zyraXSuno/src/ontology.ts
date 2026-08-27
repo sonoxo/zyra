@@ -13,7 +13,7 @@ export class ZyraSunoOntology {
   private nodes = new Map<string, OntologyNode>();
   private edges: OntologyEdge[] = [];
 
-  addNode<T>(kind: OntologyNode<T>["kind"], label: string, data: T, id = randomUUID()) {
+  addNode<T>(kind: OntologyNode<T>["kind"], label: string, data: T, id: string = randomUUID()) {
     if (this.nodes.has(id)) throw new Error(`Ontology node already exists: ${id}`);
     const node: OntologyNode<T> = {
       id,
@@ -30,6 +30,9 @@ export class ZyraSunoOntology {
     if (!this.nodes.has(from) || !this.nodes.has(to)) {
       throw new Error(`Cannot link missing ontology nodes: ${from} -> ${to}`);
     }
+    const existing = this.edges.find((edge) => edge.from === from && edge.to === to && edge.relation === relation);
+    if (existing) return existing;
+
     const edge: OntologyEdge = {
       id: randomUUID(),
       from,
@@ -42,10 +45,19 @@ export class ZyraSunoOntology {
   }
 
   registerBatch(spec: BatchSpec) {
-    const artist = this.addNode("Artist", spec.artist, { name: spec.artist }, `artist:${norm(spec.artist)}`);
-    const batch = this.addNode("Batch", spec.id, spec, `batch:${spec.id}`);
-    const constraints = this.addNode("ConstraintSet", `${spec.id}:constraints`, spec.constraints, `constraints:${spec.id}`);
-    const flow = this.addNode("FlowProfile", spec.flow.name, spec.flow, `flow:${norm(spec.flow.name)}`);
+    const batchId = `batch:${spec.id}`;
+    const existing = this.nodes.get(batchId);
+    if (existing) return existing;
+
+    const artistId = `artist:${norm(spec.artist)}`;
+    const flowId = `flow:${norm(spec.flow.name)}`;
+    const constraintsId = `constraints:${spec.id}`;
+
+    const artist = this.nodes.get(artistId) ?? this.addNode("Artist", spec.artist, { name: spec.artist }, artistId);
+    const flow = this.nodes.get(flowId) ?? this.addNode("FlowProfile", spec.flow.name, spec.flow, flowId);
+    const constraints = this.nodes.get(constraintsId) ?? this.addNode("ConstraintSet", `${spec.id}:constraints`, spec.constraints, constraintsId);
+    const batch = this.addNode("Batch", spec.id, spec, batchId);
+
     this.link(batch.id, artist.id, "CREATED_BY");
     this.link(batch.id, constraints.id, "HAS_CONSTRAINTS");
     this.link(batch.id, flow.id, "USES_FLOW");
@@ -53,6 +65,7 @@ export class ZyraSunoOntology {
   }
 
   registerSong(batch: BatchSpec, song: SongDraft) {
+    this.registerBatch(batch);
     const validation = this.validateSong(batch, song);
     if (!validation.valid) return validation;
 
