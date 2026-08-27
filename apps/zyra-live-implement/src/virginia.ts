@@ -7,6 +7,11 @@ export type VirginiaStep = {
     | "GEOVISION_STATUS"
     | "GEOVISION_CAMERAS"
     | "GEOVISION_DETECTIONS"
+    | "MISSION_TWIN_STATUS"
+    | "SPACEX_LAUNCH_LATEST"
+    | "SPACEX_LAUNCHES"
+    | "FPRIME_TELEMETRY"
+    | "BRAIN_UPDATE_SOURCE"
     | "SHUTDOWN_ZYRA"
     | "NOTE";
   ontology?: string;
@@ -27,14 +32,22 @@ export type VirginiaMission = {
 const RICHMONDVA3LM = /^\/RICHMONDVA3LM(?:\s*-\s*GPT\s*-\s*DOUG\s*-\s*3LM\s*-\s*XUNIABOT\s*-\s*ZYRA\s*-\s*PALANTIR)?$/i;
 const VA3LM = /^\/VA3LM(?:\s*-\s*PALANTIRVABRAIN3LM\s*-\s*GPT\s*-\s*DOUG\s*-\s*LLM\s*-\s*ZYRA\s*-\s*XUNA\s*-\s*SONOXO\s*-\s*ECOSYSTEM)?$/i;
 const VA3LM_PROFILE = "PALANTIRVABRAIN3LM / GPT-DOUG-LLM / ZYRA / XUNA / SONOXO ECOSYSTEM";
+const URL_PATTERN = /^https?:\/\/\S+$/i;
 
 export function parseVirginia(input: string): VirginiaMission {
-  const lines = input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const rawSegments = input.includes("///") ? input.split(/\s*\/\/\/\s*/) : [input];
+  const brainSources = rawSegments.length > 1
+    ? rawSegments.map((segment) => segment.trim()).filter((segment) => URL_PATTERN.test(segment))
+    : [];
+  const commandInput = rawSegments.length > 1
+    ? rawSegments.filter((segment) => !URL_PATTERN.test(segment.trim())).join("\n")
+    : input;
+  const lines = commandInput.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   let mode: VirginiaMission["mode"] = "VIRGINIA";
   let agents = 24;
   let stopWhen = "green";
   let profile: string | undefined;
-  const steps: VirginiaStep[] = [];
+  const steps: VirginiaStep[] = brainSources.map((source) => ({ op: "BRAIN_UPDATE_SOURCE", text: source }));
 
   for (const line of lines) {
     if (RICHMONDVA3LM.test(line)) {
@@ -59,6 +72,11 @@ export function parseVirginia(input: string): VirginiaMission {
       mode = "VAL3M";
       continue;
     }
+    const brainUpdate = line.match(/^BRAIN\s+UPDATE\s+(https?:\/\/\S+)$/i);
+    if (brainUpdate) {
+      steps.push({ op: "BRAIN_UPDATE_SOURCE", text: brainUpdate[1] });
+      continue;
+    }
     const agentMatch = line.match(/^AGENTS\s+(\d+)$/i);
     if (agentMatch) {
       agents = Math.max(1, Math.min(24, Number(agentMatch[1])));
@@ -67,6 +85,23 @@ export function parseVirginia(input: string): VirginiaMission {
     const stopMatch = line.match(/^STOP\s+WHEN\s+(.+)$/i);
     if (stopMatch) {
       stopWhen = stopMatch[1].trim();
+      continue;
+    }
+    if (/^MISSION\s+TWIN\s+STATUS$/i.test(line)) {
+      steps.push({ op: "MISSION_TWIN_STATUS" });
+      continue;
+    }
+    if (/^SPACEX\s+LATEST$/i.test(line)) {
+      steps.push({ op: "SPACEX_LAUNCH_LATEST", text: "read-only public SpaceX API data" });
+      continue;
+    }
+    if (/^SPACEX\s+LAUNCHES$/i.test(line)) {
+      steps.push({ op: "SPACEX_LAUNCHES", text: "read-only public SpaceX API data" });
+      continue;
+    }
+    const fprimeTelemetry = line.match(/^FPRIME\s+TELEMETRY(?:\s+(.+))?$/i);
+    if (fprimeTelemetry) {
+      steps.push({ op: "FPRIME_TELEMETRY", text: fprimeTelemetry[1]?.trim() || "simulation" });
       continue;
     }
     if (/^GEOVISION\s+STATUS$/i.test(line)) {
