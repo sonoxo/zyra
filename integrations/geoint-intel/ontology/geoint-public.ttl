@@ -1,0 +1,50 @@
+@prefix geo: <https://sonoxo.dev/ontology/geoint#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+geo:PublicGEOINTOntology a owl:Ontology ;
+  rdfs:label "Zyra Public GEOINT / Intelligence Ontology" .
+
+geo:GEOINTEntity a owl:Class .
+geo:Observation a owl:Class .
+geo:Document a owl:Class .
+geo:Dataset a owl:Class .
+geo:Sensor a owl:Class .
+geo:Place a owl:Class .
+geo:Geometry a owl:Class .
+geo:CoordinateReferenceSystem a owl:Class .
+geo:AnalyticWorkflow a owl:Class .
+geo:AnalyticAssessment a owl:Class .
+geo:AIModel a owl:Class .
+geo:GEOINTStandard a owl:Class .
+geo:MetadataProfile a owl:Class .
+geo:ProvenanceRecord a owl:Class .
+geo:SourcePublisher a owl:Class .
+geo:Transformation a owl:Class .
+geo:ConfidenceAssessment a owl:Class .
+
+geo:observes a owl:ObjectProperty ; rdfs:domain geo:Observation ; rdfs:range geo:GEOINTEntity .
+geo:capturedBy a owl:ObjectProperty ; rdfs:domain geo:Observation ; rdfs:range geo:Sensor .
+geo:derivedFrom a owl:ObjectProperty .
+geo:hasGeometry a owl:ObjectProperty ; rdfs:range geo:Geometry .
+geo:usesCRS a owl:ObjectProperty ; rdfs:range geo:CoordinateReferenceSystem .
+geo:conformsTo a owl:ObjectProperty ; rdfs:range geo:GEOINTStandard .
+geo:hasMetadata a owl:ObjectProperty ; rdfs:range geo:MetadataProfile .
+geo:hasProvenance a owl:ObjectProperty ; rdfs:range geo:ProvenanceRecord .
+geo:usesModel a owl:ObjectProperty ; rdfs:range geo:AIModel .
+geo:publishedBy a owl:ObjectProperty ; rdfs:range geo:SourcePublisher .
+geo:mentionsPlace a owl:ObjectProperty ; rdfs:range geo:Place .
+geo:producesAssessment a owl:ObjectProperty ; rdfs:range geo:AnalyticAssessment .
+geo:transformedBy a owl:ObjectProperty ; rdfs:range geo:Transformation .
+
+geo:sourceUrl a owl:DatatypeProperty ; rdfs:range xsd:anyURI .
+geo:sourceDocumentId a owl:DatatypeProperty ; rdfs:range xsd:string .
+geo:publicationDate a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+geo:ingestionDate a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+geo:observationTime a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+geo:confidence a owl:DatatypeProperty ; rdfs:range xsd:decimal .
+geo:classificationLabel a owl:DatatypeProperty ; rdfs:range xsd:string .
+geo:summary a owl:DatatypeProperty ; rdfs:range xsd:string .
