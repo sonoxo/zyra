@@ -1,0 +1,10 @@
+{
+  "bindingId": "zyra-fcc-part100-v1",
+  "ontologyRef": "./fcc-space-modernization-part100.v1.json",
+  "project": "ZYRA",
+  "mode": "PRODUCT_POLICY_AND_RUNTIME_CONTEXT",
+  "surfaces": ["regulatory status card", "filing readiness", "deadline alerts", "evidence provenance", "transition status", "conditional-grant conditions"],
+  "policyGuards": ["never display inferred authorization as granted", "label conditional grants distinctly", "show source/date/confidence with regulatory facts", "show effective-date status before presenting Part 100 as operative", "keep FNPRM proposals visually distinct from adopted rules"],
+  "eventTypes": ["FCC_ORDER_INDEXED", "SPACE_BUREAU_PUBLIC_NOTICE_INDEXED", "PART100_EFFECTIVE_DATE_VERIFIED", "APPLICATION_FILED", "DEFICIENCY_NOTICE", "PUBLIC_NOTICE", "REVIEW_TRIGGER_DETECTED", "CONDITIONAL_GRANT", "AUTHORIZATION_VERIFIED", "OPERATIONAL_OBLIGATION_DUE"],
+  "notifications": ["effective-date change", "verified filing deadline", "public-notice window", "missing evidence", "license-condition deadline", "rule amendment"]
+}
