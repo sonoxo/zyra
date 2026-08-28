@@ -1,0 +1,43 @@
+{
+  "version": "0.1.0",
+  "policy": {
+    "public_only": true,
+    "require_provenance": true,
+    "allow_inference_from_redactions": false,
+    "official_affiliation_claim": false
+  },
+  "sources": [
+    {
+      "id": "cia-reading-room",
+      "publisher": "Central Intelligence Agency",
+      "type": "public_declassified_archive",
+      "url": "https://www.cia.gov/readingroom/",
+      "classification": "PUBLIC/DECLASSIFIED",
+      "enabled": true
+    },
+    {
+      "id": "cia-csi",
+      "publisher": "Central Intelligence Agency - Center for the Study of Intelligence",
+      "type": "public_unclassified_scholarship",
+      "url": "https://www.cia.gov/resources/csi/",
+      "classification": "PUBLIC/UNCLASSIFIED",
+      "enabled": true
+    },
+    {
+      "id": "nga-public",
+      "publisher": "National Geospatial-Intelligence Agency",
+      "type": "public_geoint_resources",
+      "url": "https://www.nga.mil/",
+      "classification": "PUBLIC",
+      "enabled": true
+    },
+    {
+      "id": "nga-gwg",
+      "publisher": "NGA Geospatial Intelligence Standards Working Group",
+      "type": "public_standards",
+      "url": "https://gwg.nga.mil/",
+      "classification": "PUBLIC",
+      "enabled": true
+    }
+  ]
+}
