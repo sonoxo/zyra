@@ -1,0 +1,47 @@
+name: RVIA Badge Gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/credentials/applications/**.json'
+      - 'docs/credentials/rvia-badge-registry.json'
+      - 'scripts/rvia-badge-gate.mjs'
+      - 'shared/ontology/**'
+      - 'ontology/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-rvia-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate credential applications
+        run: node scripts/rvia-badge-gate.mjs
+
+      - name: Publish badge evaluation summary
+        if: always()
+        run: |
+          echo '## ZYRA-Palantir AIP RVIA Badge Gate' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Repository credential eligibility only. This workflow does not issue government, legal, security-clearance, or Palantir Technologies credentials.' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f rvia-badge-results.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat rvia-badge-results.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No applicant manifests were present in this run.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload evaluation artifact
+        if: always() && hashFiles('rvia-badge-results.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rvia-badge-results
+          path: rvia-badge-results.json
+          if-no-files-found: ignore
