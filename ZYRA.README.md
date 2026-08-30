@@ -113,6 +113,227 @@ The Google AI Professional Certificate documents seven courses:
 
 The archive contains completion-badge artifacts for all seven. Four also have separately issued Coursera course certificates and therefore appear above as distinct issuer records. Badge-only constituent artifacts are retained as supplemental evidence rather than inflated into additional certificate counts.
 
+## Business Intelligence + Artificial Intelligence credential ontology
+
+This ontology converts the reconciled **Business Intelligence** and **Artificial Intelligence** credential evidence into a structured graph that GPT-DOUG-LLM, ZYRA, XUNIA / Glass Onion, and RVAI can consume. It models **what evidence exists and how it relates**; it does not claim permissions, employment authority, government status, or competencies that are not supported by the credential record.
+
+### Ontology graph
+
+```mermaid
+graph TD
+    OWNER[CredentialOwner: Douglas Brown]
+    ISSUER_G[Issuer: Google / Coursera]
+    ISSUER_I[Issuer: IBM SkillsBuild]
+
+    BI[Credential: Foundations of Business Intelligence]
+    AI_PRO[Credential: Google AI Professional Certificate]
+    AI_RES[Credential: AI for Research and Insights]
+    AI_WRITE[Credential: AI for Writing and Communicating]
+    AI_CONTENT[Credential: AI for Content Creation]
+    AI_APP[Credential: AI for App Building]
+    DS[Credential: Data Science Landscape]
+
+    DOM_BI[Domain: Business Intelligence]
+    DOM_AI[Domain: Artificial Intelligence]
+    DOM_DS[Domain: Data Science]
+    DOM_APP[Domain: Application Development]
+
+    EVIDENCE[EvidenceLayer: issuer verification / supplied archive]
+    APPS[ApplicationConsumers: GPT-DOUG-LLM / ZYRA / XUNIA-GLASS-ONION / RVAI]
+    AUTH[AuthorizationState: external platform controls]
+
+    OWNER -->|holds| BI
+    OWNER -->|holds| AI_PRO
+    OWNER -->|holds| AI_RES
+    OWNER -->|holds| AI_WRITE
+    OWNER -->|holds| AI_CONTENT
+    OWNER -->|holds| AI_APP
+    OWNER -->|holds| DS
+
+    ISSUER_G -->|issued| BI
+    ISSUER_G -->|issued| AI_PRO
+    ISSUER_G -->|issued| AI_RES
+    ISSUER_G -->|issued| AI_WRITE
+    ISSUER_G -->|issued| AI_CONTENT
+    ISSUER_G -->|issued| AI_APP
+    ISSUER_I -->|issued| DS
+
+    BI -->|classifiedAs| DOM_BI
+    AI_PRO -->|classifiedAs| DOM_AI
+    AI_RES -->|classifiedAs| DOM_AI
+    AI_WRITE -->|classifiedAs| DOM_AI
+    AI_CONTENT -->|classifiedAs| DOM_AI
+    AI_APP -->|classifiedAs| DOM_AI
+    AI_APP -->|crossDomain| DOM_APP
+    DS -->|classifiedAs| DOM_DS
+
+    BI -->|verifiedBy| EVIDENCE
+    AI_PRO -->|verifiedBy| EVIDENCE
+    AI_RES -->|verifiedBy| EVIDENCE
+    AI_WRITE -->|verifiedBy| EVIDENCE
+    AI_CONTENT -->|verifiedBy| EVIDENCE
+    AI_APP -->|verifiedBy| EVIDENCE
+    DS -->|verifiedBy| EVIDENCE
+
+    EVIDENCE -->|availableTo| APPS
+    APPS -->|mustCheck| AUTH
+```
+
+### Machine-readable ontology contract
+
+```yaml
+ontology:
+  id: zyra:credential-ontology:business-intelligence-artificial-intelligence
+  version: 1.0.0
+  owner:
+    type: CredentialOwner
+    name: Douglas Brown
+
+  classes:
+    - CredentialOwner
+    - Issuer
+    - Credential
+    - ProfessionalCertificate
+    - CourseCertificate
+    - EvidenceArtifact
+    - Domain
+    - ApplicationConsumer
+    - AuthorizationState
+
+  relations:
+    holds:
+      domain: CredentialOwner
+      range: Credential
+    issuedBy:
+      domain: Credential
+      range: Issuer
+    classifiedAs:
+      domain: Credential
+      range: Domain
+    verifiedBy:
+      domain: Credential
+      range: EvidenceArtifact
+    consumedBy:
+      domain: EvidenceArtifact
+      range: ApplicationConsumer
+    requiresAuthorizationCheck:
+      domain: ApplicationConsumer
+      range: AuthorizationState
+
+  domains:
+    businessIntelligence:
+      label: Business Intelligence
+    artificialIntelligence:
+      label: Artificial Intelligence
+    dataScience:
+      label: Data Science
+    applicationDevelopment:
+      label: Application Development
+
+  credentials:
+    googleFoundationsBusinessIntelligence:
+      ledgerRecord: 31
+      type: CourseCertificate
+      title: Foundations of Business Intelligence
+      issuer: Google / Coursera
+      domain: businessIntelligence
+      issued: 2026-08-04
+      evidenceState: ISSUER COURSE CERTIFICATE
+      verification: https://coursera.org/verify/JY87E17F8Y0S
+
+    googleAIProfessionalCertificate:
+      ledgerRecord: 26
+      type: ProfessionalCertificate
+      title: Google AI Professional Certificate
+      issuer: Google / Coursera
+      domain: artificialIntelligence
+      issued: 2026-07-31
+      evidenceState: SUPPLIED ISSUER EVIDENCE
+      verification: https://coursera.org/verify/professional-cert/QBUP5I6Q063G
+      constituentCourseTitles:
+        - AI Fundamentals
+        - AI for Brainstorming and Planning
+        - AI for Research and Insights
+        - AI for Writing and Communicating
+        - AI for Content Creation
+        - AI for Data Analysis
+        - AI for App Building
+
+    googleAIResearchInsights:
+      ledgerRecord: 29
+      type: CourseCertificate
+      title: AI for Research and Insights
+      issuer: Google / Coursera
+      domain: artificialIntelligence
+      issued: 2026-07-31
+      evidenceState: ISSUER COURSE CERTIFICATE
+      verification: https://coursera.org/verify/9EDB14ATGX3V
+
+    googleAIWritingCommunicating:
+      ledgerRecord: 28
+      type: CourseCertificate
+      title: AI for Writing and Communicating
+      issuer: Google / Coursera
+      domain: artificialIntelligence
+      issued: 2026-07-30
+      evidenceState: ISSUER COURSE CERTIFICATE
+      verification: https://coursera.org/verify/HR3WX505VSIU
+
+    googleAIContentCreation:
+      ledgerRecord: 27
+      type: CourseCertificate
+      title: AI for Content Creation
+      issuer: Google / Coursera
+      domain: artificialIntelligence
+      issued: 2026-07-30
+      evidenceState: ISSUER COURSE CERTIFICATE
+      verification: https://coursera.org/verify/5YNKW9L6QXDE
+
+    googleAIAppBuilding:
+      ledgerRecord: 30
+      type: CourseCertificate
+      title: AI for App Building
+      issuer: Google / Coursera
+      domain:
+        - artificialIntelligence
+        - applicationDevelopment
+      issued: 2026-07-30
+      evidenceState: ISSUER COURSE CERTIFICATE
+      verification: https://coursera.org/verify/WPB5I4OB1LST
+
+    ibmDataScienceLandscape:
+      ledgerRecord: 32
+      type: Credential
+      title: Data Science Landscape
+      issuer: IBM SkillsBuild
+      domain: dataScience
+      issued: 2026-07-23
+      evidenceState: SUPPLIED COMPLETION CERTIFICATE
+      verificationReference: ALM-COURSE_4058878
+
+  applicationConsumers:
+    - GPT-DOUG-LLM
+    - ZYRA
+    - XUNIA / GLASS ONION
+    - RVAI
+
+  authorizationRule:
+    state: EXTERNAL_PLATFORM_CONTROLLED
+    statement: >-
+      Credential evidence may establish training and provenance, but every live action
+      remains subject to the target platform's authentication, authorization, policy,
+      and human-governance controls.
+```
+
+### Ontology interpretation rule
+
+`Credential → evidence of completion/training`  
+`Domain → classification of the credential record`  
+`ApplicationConsumer → system permitted to read the ledger`  
+`AuthorizationState → separate runtime decision`
+
+A credential may therefore support the **Business Intelligence / Artificial Intelligence evidence graph** without automatically granting access to a dataset, tenant, API, model, government system, or production action.
+
 ## Credly badge-wallet sources
 
 ZYRA tracks all three supplied Credly identities as first-class digital-credential sources.
