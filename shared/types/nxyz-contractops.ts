@@ -34,6 +34,8 @@ export type RequirementState = "UNMAPPED" | "PARTIAL" | "SUPPORTED" | "BLOCKED";
 export type EvidenceTier = "ISSUER" | "REPOSITORY" | "PLATFORM_ACCESS" | "SELF_REPORTED";
 export type ReviewDecision = "PENDING" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
 export type HumanBidDecision = "UNDER_REVIEW" | "BID" | "NO_BID";
+export type ProposalStatus = "DRAFTING" | "REVIEW" | "REVIEW_CHANGES" | "REJECTED" | "SUBMISSION_READY";
+export type ProposalSectionStatus = "DRAFT" | "EVIDENCE_NEEDED" | "READY";
 
 export interface FederalRegistration {
   id: string;
@@ -109,20 +111,39 @@ export interface BidAssessment {
   };
 }
 
+export interface ProposalReadiness {
+  ready: boolean;
+  policy: "NXYZ_CONTRACTOPS_DEFAULT_V1";
+  blockers: string[];
+  readySectionCount: number;
+  requiredSectionCount: number;
+  evidenceGapCount: number;
+  registrationFlags: string[];
+  warning: string;
+}
+
 export interface ProposalWorkspace {
   id: string;
   opportunityId: string;
-  status: "NOT_STARTED" | "DRAFTING" | "REVIEW" | "SUBMISSION_READY" | "SUBMITTED";
+  title: string;
+  status: ProposalStatus;
   sections: ProposalSection[];
   reviewDecision: ReviewDecision;
+  readiness: ProposalReadiness;
+  blockers: string[];
+  reviewNotes?: string;
   updatedAt: string;
 }
 
 export interface ProposalSection {
   id: string;
+  key: string;
   title: string;
-  status: "EMPTY" | "DRAFT" | "EVIDENCE_NEEDED" | "READY";
-  evidenceIds: string[];
+  ordinal: number;
+  content: string;
+  status: ProposalSectionStatus;
+  requirementRefs: string[];
+  evidenceRefs: string[];
 }
 
 export interface ContractOpsSnapshot {
@@ -141,12 +162,23 @@ export const CONTRACTOPS_SCORING_WEIGHTS = {
   deadlineReadiness: 15,
 } as const;
 
+export const CONTRACTOPS_PROPOSAL_POLICY = {
+  id: "NXYZ_CONTRACTOPS_DEFAULT_V1",
+  coreRegistrationReview: ["SAM", "UEI", "CAGE"],
+  requireHumanBidDecision: true,
+  requireAllSectionsReady: true,
+  requireNoEvidenceGaps: true,
+  externalSubmissionPerformed: false,
+} as const;
+
 export const CONTRACTOPS_GUARDRAILS = {
   neverInventRegistrationIdentifiers: true,
   credentialsDoNotEqualAuthorization: true,
   readinessScoresAreAdvisoryOnly: true,
+  proposalDraftsRequireHumanValidation: true,
   requireEvidenceForProposalClaims: true,
   requireHumanBidDecision: true,
   requireHumanReviewBeforeSubmission: true,
+  submissionReadyIsInternalWorkflowState: true,
   neverAutoSubmitToGovernmentPortals: true,
 } as const;
