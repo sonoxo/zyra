@@ -1,3 +1,10 @@
+<p align="center">
+  <a href="ZYRA.README.md">
+    <img src="docs/assets/zyra-credential-pathway.svg" width="560" alt="ZYRA Application Credential — open credential page" />
+  </a>
+</p>
+<p align="center"><strong><a href="ZYRA.README.md">Open ZYRA Credential Pathway</a></strong></p>
+
 <!-- VZN-8088 -->
 <p align="center"><img src="docs/assets/vzn-8088-universal.svg" width="100%" alt="Beginner-friendly Zyra function map: type a mission, Zyra reads it, chooses an operation, calls Foundry, and shows the result" /></p>
 
