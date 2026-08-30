@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FilePenLine, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Download, FileJson2, FilePenLine, Loader2, RefreshCw, Send, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,11 +53,37 @@ type Proposal = {
   sections: ProposalSection[];
 };
 
+type SubmissionPackageResponse = {
+  manifest: {
+    packageId: string;
+    generatedAt: string;
+    internalStatus: "SUBMISSION_READY";
+    externalSubmissionPerformed: false;
+    [key: string]: unknown;
+  };
+  markdown: string;
+};
+
+type PackageFormat = "markdown" | "json";
+
 function proposalStatusTone(status: string) {
   if (status === "SUBMISSION_READY") return "bg-green-500/10 text-green-600 border-green-500/20";
   if (status === "REJECTED") return "bg-red-500/10 text-red-600 border-red-500/20";
   if (status === "REVIEW_CHANGES") return "bg-amber-500/10 text-amber-600 border-amber-500/20";
   return "bg-violet-500/10 text-violet-600 border-violet-500/20";
+}
+
+function saveBrowserFile(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function SectionEditor({
@@ -123,6 +149,7 @@ export function ProposalWorkspace() {
   const proposals = proposalData?.proposals ?? [];
   const canEdit = user?.role === "owner" || user?.role === "admin" || user?.role === "analyst";
   const canReview = user?.role === "owner" || user?.role === "admin";
+  const canExport = canEdit;
   const availableBids = useMemo(() => {
     const existing = new Set(proposals.map((proposal) => proposal.opportunityId));
     return (opportunityData?.opportunities ?? []).filter((opportunity) => opportunity.bidDecision === "BID" && !existing.has(opportunity.id));
@@ -177,6 +204,27 @@ export function ProposalWorkspace() {
     onError: (error: any) => toast({ title: "Review could not be recorded", description: error?.message || "Resolve readiness blockers or check authorization.", variant: "destructive" }),
   });
 
+  const packageMutation = useMutation({
+    mutationFn: async ({ proposalId, format }: { proposalId: string; format: PackageFormat }) => {
+      const response = await apiRequest("POST", `/api/contractops/proposals/${proposalId}/package`, {});
+      const data = await response.json() as SubmissionPackageResponse;
+      return { data, format };
+    },
+    onSuccess: ({ data, format }) => {
+      const packageId = data.manifest.packageId || "nxyz-contractops-package";
+      if (format === "markdown") {
+        saveBrowserFile(`${packageId}.md`, data.markdown, "text/markdown;charset=utf-8");
+      } else {
+        saveBrowserFile(`${packageId}.json`, JSON.stringify(data.manifest, null, 2), "application/json;charset=utf-8");
+      }
+      toast({
+        title: format === "markdown" ? "Markdown package downloaded" : "JSON manifest downloaded",
+        description: "This is an internal reviewed export. No external agency or portal submission was performed.",
+      });
+    },
+    onError: (error: any) => toast({ title: "Submission package could not be generated", description: error?.message || "The proposal must be internally approved and SUBMISSION_READY.", variant: "destructive" }),
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -209,6 +257,7 @@ export function ProposalWorkspace() {
         ) : proposals.map((proposal) => {
           const readiness = proposal.readiness as ProposalReadiness;
           const isReady = Boolean(readiness?.ready);
+          const exportingThisProposal = packageMutation.isPending && packageMutation.variables?.proposalId === proposal.id;
           return (
             <div key={proposal.id} className="rounded-2xl border overflow-hidden">
               <div className="p-4 bg-muted/30 border-b">
@@ -226,6 +275,16 @@ export function ProposalWorkspace() {
                     {canReview && proposal.status !== "SUBMISSION_READY" && (
                       <Button size="sm" disabled={!isReady} onClick={() => setReviewState({ proposalId: proposal.id, decision: "APPROVED", notes: "" })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Approve ready package</Button>
                     )}
+                    {canExport && proposal.status === "SUBMISSION_READY" && proposal.reviewDecision === "APPROVED" && (
+                      <>
+                        <Button size="sm" variant="outline" disabled={exportingThisProposal} onClick={() => packageMutation.mutate({ proposalId: proposal.id, format: "markdown" })}>
+                          {exportingThisProposal && packageMutation.variables?.format === "markdown" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1" />}Markdown
+                        </Button>
+                        <Button size="sm" variant="outline" disabled={exportingThisProposal} onClick={() => packageMutation.mutate({ proposalId: proposal.id, format: "json" })}>
+                          {exportingThisProposal && packageMutation.variables?.format === "json" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <FileJson2 className="h-3.5 w-3.5 mr-1" />}JSON
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
                 {!isReady && readiness?.blockers?.length > 0 && (
@@ -235,7 +294,7 @@ export function ProposalWorkspace() {
                     {readiness.registrationFlags?.length > 0 && <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">{readiness.registrationFlags.map((flag, index) => <div key={index}>↳ {flag}</div>)}</div>}
                   </div>
                 )}
-                {isReady && <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/5 p-3 text-xs text-green-700 dark:text-green-300">Internal readiness gate clear. Owner/admin approval can mark this package SUBMISSION_READY; external submission still remains manual.</div>}
+                {isReady && proposal.status !== "SUBMISSION_READY" && <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/5 p-3 text-xs text-green-700 dark:text-green-300">Internal readiness gate clear. Owner/admin approval can mark this package SUBMISSION_READY; external submission still remains manual.</div>}
               </div>
               <div className="p-4 space-y-3">
                 {proposal.sections.map((section) => <SectionEditor key={section.id} proposalId={proposal.id} section={section} canEdit={canEdit && proposal.status !== "SUBMISSION_READY"} onSaved={refreshAll} />)}
@@ -245,7 +304,11 @@ export function ProposalWorkspace() {
                     <Button variant="outline" size="sm" className="text-red-600" onClick={() => setReviewState({ proposalId: proposal.id, decision: "REJECTED", notes: "" })}>Reject package</Button>
                   </div>
                 )}
-                {proposal.status === "SUBMISSION_READY" && <div className="rounded-xl border p-4 text-sm"><strong>SUBMISSION_READY:</strong> internal review passed. <span className="text-muted-foreground">No portal submission, certification, signature, pricing commitment, or agency representation was performed by ContractOps.</span></div>}
+                {proposal.status === "SUBMISSION_READY" && (
+                  <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm">
+                    <strong>SUBMISSION_READY:</strong> internal review passed. <span className="text-muted-foreground">Use Markdown or JSON to export the reviewed package and human checklist. No portal submission, certification, signature, pricing commitment, or agency representation is performed by ContractOps.</span>
+                  </div>
+                )}
               </div>
             </div>
           );
