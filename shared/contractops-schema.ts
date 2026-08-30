@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, jsonb, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { organizations, users } from "./schema";
 
 export const contractopsRegistrations = pgTable(
@@ -48,5 +48,58 @@ export const contractopsOpportunities = pgTable("contractops_opportunities", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const contractopsProposals = pgTable(
+  "contractops_proposals",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+    opportunityId: varchar("opportunity_id").notNull().references(() => contractopsOpportunities.id),
+    title: text("title").notNull(),
+    status: text("status").notNull().default("DRAFTING"),
+    reviewDecision: text("review_decision").notNull().default("PENDING"),
+    blockers: jsonb("blockers").notNull().default(sql`'[]'::jsonb`),
+    readiness: jsonb("readiness").notNull().default(sql`'{}'::jsonb`),
+    createdById: varchar("created_by_id").references(() => users.id),
+    reviewedById: varchar("reviewed_by_id").references(() => users.id),
+    reviewNotes: text("review_notes"),
+    reviewedAt: timestamp("reviewed_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    organizationOpportunityUnique: uniqueIndex("contractops_proposal_org_opportunity_unique").on(
+      table.organizationId,
+      table.opportunityId,
+    ),
+  }),
+);
+
+export const contractopsProposalSections = pgTable(
+  "contractops_proposal_sections",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    organizationId: varchar("organization_id").notNull().references(() => organizations.id),
+    proposalId: varchar("proposal_id").notNull().references(() => contractopsProposals.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    title: text("title").notNull(),
+    ordinal: integer("ordinal").notNull().default(0),
+    content: text("content").notNull().default(""),
+    status: text("status").notNull().default("DRAFT"),
+    requirementRefs: jsonb("requirement_refs").notNull().default(sql`'[]'::jsonb`),
+    evidenceRefs: jsonb("evidence_refs").notNull().default(sql`'[]'::jsonb`),
+    updatedById: varchar("updated_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    proposalSectionKeyUnique: uniqueIndex("contractops_proposal_section_key_unique").on(
+      table.proposalId,
+      table.key,
+    ),
+  }),
+);
+
 export type ContractOpsRegistrationRow = typeof contractopsRegistrations.$inferSelect;
 export type ContractOpsOpportunityRow = typeof contractopsOpportunities.$inferSelect;
+export type ContractOpsProposalRow = typeof contractopsProposals.$inferSelect;
+export type ContractOpsProposalSectionRow = typeof contractopsProposalSections.$inferSelect;
