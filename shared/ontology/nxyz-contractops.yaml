@@ -1,8 +1,8 @@
 ontology:
   id: zyra:nxyz-contractops
-  version: 0.6.0
+  version: 0.7.0
   name: NXYZ ContractOps
-  purpose: Evidence-backed federal readiness, opportunity qualification, advisory bid scoring, governed proposal preparation, and human-controlled internal submission readiness.
+  purpose: Evidence-backed federal readiness, opportunity qualification, advisory bid scoring, governed proposal preparation, internal package export, and human-controlled external submission.
 
 classes:
   Organization:
@@ -33,6 +33,10 @@ classes:
     properties: [policy, ready, blockers, readySectionCount, requiredSectionCount, evidenceGapCount, registrationFlags, warning]
   ReviewDecision:
     properties: [reviewId, decision, reviewer, reviewedAt, notes]
+  SubmissionPackage:
+    properties: [packageId, schemaVersion, generatedAt, internalStatus, externalSubmissionPerformed, evidenceIndex, requirementIndex, checklist, disclaimer]
+  SubmissionChecklistItem:
+    properties: [itemId, label, state, detail]
   AuditEvent:
     properties: [eventId, actor, action, target, timestamp, provenance]
 
@@ -50,6 +54,8 @@ relations:
   proposalHasSection: { domain: Proposal, range: ProposalSection }
   proposalHasReadiness: { domain: Proposal, range: ProposalReadiness }
   proposalHasReview: { domain: Proposal, range: ReviewDecision }
+  proposalExportsPackage: { domain: Proposal, range: SubmissionPackage }
+  packageHasChecklistItem: { domain: SubmissionPackage, range: SubmissionChecklistItem }
   emitsAudit: { domain: Opportunity, range: AuditEvent }
 
 proposalPolicy:
@@ -62,6 +68,16 @@ proposalPolicy:
   requireHumanOwnerOrAdminApproval: true
   externalSubmissionPerformed: false
   note: This default workflow policy is not a statement that every opportunity has identical legal or registration requirements; users must verify the specific solicitation.
+
+packagePolicy:
+  schemaVersion: nxyz-contractops-package/1.0
+  sourceStateRequired: SUBMISSION_READY
+  reviewDecisionRequired: APPROVED
+  sectionStateRequired: READY
+  outputFormats: [MARKDOWN, JSON]
+  includes: [proposal, opportunity, registrationSnapshot, readiness, evidenceIndex, requirementIndex, humanSubmissionChecklist, sections]
+  externalSubmissionPerformed: false
+  portalAction: HUMAN_ONLY
 
 actions:
   captureOpportunity:
@@ -116,6 +132,14 @@ actions:
     internalWorkflowStateOnly: true
     externalSubmissionEffect: NONE
     implementation: IMPLEMENTED
+  generateSubmissionPackage:
+    mutating: false
+    approval: owner_admin_or_analyst
+    requiresProposalStatus: SUBMISSION_READY
+    requiresReviewDecision: APPROVED
+    outputFormats: [MARKDOWN, JSON]
+    externalSubmissionEffect: NONE
+    implementation: IMPLEMENTED
   recordSubmission:
     mutating: true
     approval: human_external_process
@@ -139,7 +163,7 @@ scoring:
 rules:
   - Never invent UEI, CAGE, SAM, or other government registration identifiers.
   - A registration may be ACTIVE only when a verification source is recorded.
-  - CAGE may remain PENDING while opportunity capture, evidence matching, advisory scoring, and proposal drafting continue.
+  - CAGE may remain PENDING while opportunity capture, evidence matching, advisory scoring, proposal drafting, and internal package preparation continue.
   - Under the default internal readiness policy, unresolved SAM, UEI, or CAGE review prevents SUBMISSION_READY but does not prevent drafting.
   - Opportunity-specific solicitation and eligibility requirements must be verified independently; the default policy is not legal advice or an agency determination.
   - ZYRA/RVIA repository badges are evidence of repository work, not government authorization or security clearance.
@@ -150,6 +174,8 @@ rules:
   - Generated proposal sections are draft frameworks and require human validation before use.
   - Every material proposal claim should resolve to credential, repository, product, or other traceable evidence.
   - SUBMISSION_READY is an internal workflow state and does not mean an agency accepted, certified, or received the package.
+  - Submission package exports are internal artifacts and always record externalSubmissionPerformed as false.
+  - Markdown and JSON package downloads include a human submission checklist and do not trigger a browser or portal submission action.
   - No government portal submission is performed automatically; external submission remains a human-controlled action.
   - Secrets, access tokens, passwords, and restricted data must not be stored in this ontology contract.
 
@@ -167,5 +193,9 @@ implementationState:
   proposalReadinessGate: IMPLEMENTED
   humanProposalReview: IMPLEMENTED
   internalSubmissionReadyState: IMPLEMENTED
+  submissionPackageBuilder: IMPLEMENTED
+  submissionPackageMarkdownExport: IMPLEMENTED
+  submissionPackageJsonExport: IMPLEMENTED
+  humanSubmissionChecklist: IMPLEMENTED
   foundryOntologyBinding: READY_FOR_CONFIGURATION
   automatedGovernmentSubmission: PROHIBITED
