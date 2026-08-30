@@ -4,7 +4,7 @@
 
 <h1 align="center">ZYRA Application Credential Pathway</h1>
 
-<p align="center"><strong>Identity → credential evidence → skills evidence → repository provenance → authenticated platform access → governed action → audit.</strong></p>
+<p align="center"><strong>Identity → credential evidence → skills evidence → ecosystem provenance → authenticated platform access → governed action → audit.</strong></p>
 
 ---
 
@@ -21,18 +21,35 @@
 
 This ledger is evidence-tiered. A certificate image, issuer verification link, Credly badge record, Credly Skills Wallet entry, public profile listing, resume/library reference, and live platform entitlement are different evidence classes and are not collapsed into one status.
 
+## Ecosystem binding
+
+The owner-designated application pathway for this credential stack is:
+
+```text
+GPT-DOUG-LLM
+      ↓
+ZYRA
+      ↓
+XUNIA — GLASS ONION
+      ↓
+RVAI
+```
+
+This is an ecosystem/provenance binding. It identifies the applications and project identities that may consume the ZYRA credential ledger. It does not convert a training certificate into third-party authorization, a government credential, or unrestricted access.
+
 ## Audit summary
 
-**Current reconciled ledger: 25 credential / training / professional-development records.**
+**Current reconciled ledger: 34 credential / training / professional-development records.**
 
-- **9 issuer/supplied primary records**
-- **6 additional library-referenced professional-development records**
+- **19 issuer/supplied/evidence-backed primary records**
+- **5 additional library-referenced professional-development records**
 - **10 public LinkedIn historical/profile-listed records**
 - **3 Credly profiles registered as digital-credential evidence sources**
 - **2 Credly Skills Wallets registered as skills-evidence sources**
 - **1 separate Palantir AIP Now platform-access record** — tracked as access evidence, not counted as a training credential
+- **1 Education archive evidence manifest** — `docs/credentials/education-archive-audit.md`
 
-The 25-record count is intentionally unchanged until additional Credly badge metadata can be individually reconciled. Skills are not counted as certifications. Expired certifications remain historical. Coursework is not promoted to a license. Platform access is not inferred from a badge alone.
+The previous 25-record ledger was expanded after direct audit of the supplied `Education .zip`. Nine additional evidence-backed records were reconciled. Skills are not counted as certifications. Expired certifications remain historical. Coursework is not promoted to a license. Platform access is not inferred from a badge alone.
 
 ## Primary issuer / supplied credential stack
 
@@ -42,7 +59,7 @@ The 25-record count is intentionally unchanged until additional Credly badge met
 | 2 | **Palantir Foundry Security** | **Deep Dive: Data Protection Tools in Foundry** | **ISSUER CREDENTIAL** | Jul 23, 2026 | `gdirvobazx2y` — https://verify.skilljar.com/c/gdirvobazx2y |
 | 3 | **Palantir Foundry / AIP** | **Introduction to Foundry & AIP for Enterprise Organizations** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `7ogvo4qo4aad` — https://verify.skilljar.com/c/7ogvo4qo4aad |
 | 4 | **Palantir Data Science** | **Speedrun: Data Science Fundamentals** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `tt9ue6hsm96y` — https://verify.skilljar.com/c/tt9ue6hsm96y |
-| 5 | **Cybersecurity** | **Google Cybersecurity Professional Certificate — 9 courses** | **SUPPLIED ISSUER EVIDENCE** | Jul 29, 2026 | Coursera / Google certificate supplied by credential owner |
+| 5 | **Cybersecurity** | **Google Cybersecurity Professional Certificate — 9 courses** | **SUPPLIED ISSUER EVIDENCE** | Jul 29, 2026 | https://coursera.org/verify/professional-cert/JGOZ2VZJ1VJX |
 | 6 | **Quantum / Machine Learning** | **IBM Quantum Machine Learning** | **SUPPLIED ISSUER EVIDENCE + CREDLY** | Jun 26, 2026 | https://www.credly.com/badges/a5b99d3e-5945-471a-8d75-df75251887ad |
 | 7 | **Linux / Systems** | **Red Hat System Administration I — Training Course Attendance** | **SUPPLIED TRAINING EVIDENCE** | 2026 | Red Hat training credential supplied by credential owner |
 | 8 | **Research / Funding** | **Funding Hacks for Researchers — Elsevier Researcher Academy** | **SUPPLIED ISSUER EVIDENCE** | Jun 30, 2026 | Completion certificate supplied by credential owner |
@@ -62,11 +79,43 @@ The supplied Google/Coursera certificate documents completion of these nine cour
 8. Put It to Work: Prepare for Cybersecurity Jobs
 9. Accelerate Your Job Search with AI
 
-These nine course completions are components of the single Google Cybersecurity Professional Certificate and are not double-counted as nine additional certificates.
+These nine course completions are components of the single Google Cybersecurity Professional Certificate and are not automatically counted as nine additional professional certificates.
+
+## Education archive — newly reconciled records
+
+The supplied `Education .zip` added nine records that were not represented in the prior 25-record ledger.
+
+| # | Domain | Credential / record | Evidence state | Issued | Verification / evidence |
+|---:|---|---|---|---|---|
+| 26 | **Google AI** | **Google AI Professional Certificate — 7 courses** | **SUPPLIED ISSUER EVIDENCE** | Jul 31, 2026 | https://coursera.org/verify/professional-cert/QBUP5I6Q063G |
+| 27 | **Google AI** | **AI for Content Creation** | **ISSUER COURSE CERTIFICATE** | Jul 30, 2026 | https://coursera.org/verify/5YNKW9L6QXDE |
+| 28 | **Google AI** | **AI for Writing and Communicating** | **ISSUER COURSE CERTIFICATE** | Jul 30, 2026 | https://coursera.org/verify/HR3WX505VSIU |
+| 29 | **Google AI** | **AI for Research and Insights** | **ISSUER COURSE CERTIFICATE** | Jul 31, 2026 | https://coursera.org/verify/9EDB14ATGX3V |
+| 30 | **Google AI / App Development** | **AI for App Building** | **ISSUER COURSE CERTIFICATE** | Jul 30, 2026 | https://coursera.org/verify/WPB5I4OB1LST |
+| 31 | **Business Intelligence** | **Foundations of Business Intelligence** — Google / Coursera | **ISSUER COURSE CERTIFICATE** | Aug 4, 2026 | https://coursera.org/verify/JY87E17F8Y0S |
+| 32 | **IBM Data Science** | **Data Science Landscape** | **SUPPLIED COMPLETION CERTIFICATE** | Jul 23, 2026 | IBM SkillsBuild `ALM-COURSE_4058878` |
+| 33 | **Application Development** | **Replit Certification — Level 3 Proficient Builder** | **SUPPLIED BADGE ARTIFACT** | 2026 archive evidence | Badge artifact supplied; owner name is not encoded in the badge image itself |
+| 34 | **Threat Intelligence** | **Threat Hunting with Google Threat Intelligence — Episode 7** — BrightTALK | **VIEWING CERTIFICATE** | Aug 24, 2026 | Certificate states Douglas Brown; viewing record states `1 of 59 minutes` |
+
+Full archive-level hashes and reconciliation notes: **[`docs/credentials/education-archive-audit.md`](docs/credentials/education-archive-audit.md)**.
+
+### Google AI Professional Certificate — constituent evidence
+
+The Google AI Professional Certificate documents seven courses:
+
+1. AI Fundamentals
+2. AI for Brainstorming and Planning
+3. AI for Research and Insights
+4. AI for Writing and Communicating
+5. AI for Content Creation
+6. AI for Data Analysis
+7. AI for App Building
+
+The archive contains completion-badge artifacts for all seven. Four also have separately issued Coursera course certificates and therefore appear above as distinct issuer records. Badge-only constituent artifacts are retained as supplemental evidence rather than inflated into additional certificate counts.
 
 ## Credly badge-wallet sources
 
-ZYRA now tracks all three supplied Credly identities as first-class digital-credential sources.
+ZYRA tracks all three supplied Credly identities as first-class digital-credential sources.
 
 | Credly source | Public verification profile | Owner badge-management reference | Status |
 |---|---|---|---|
@@ -91,7 +140,7 @@ ZYRA may use these wallets to enrich a separate skills ontology after the indivi
 
 ## Additional library-audited professional development
 
-These records appear in the owner's stored resume/professional-development evidence but do not currently have a separate issuer certificate file attached to this repository. They are therefore labeled accurately as **LIBRARY-REFERENCED** rather than issuer-verified.
+These records appear in stored professional-development evidence. Where the Education archive upgraded the evidence class, that upgrade is reflected directly.
 
 | # | Domain | Record | Evidence state | Detail |
 |---:|---|---|---|---|
@@ -99,7 +148,7 @@ These records appear in the owner's stored resume/professional-development evide
 | 11 | **Psychology** | **Alison Diploma in Psychology (CPD)** | **LIBRARY-REFERENCED** | Listed in stored professional resumes |
 | 12 | **Research / Publishing** | **Elsevier Certified Peer Reviewer Course** | **LIBRARY-REFERENCED** | Listed in stored professional resumes |
 | 13 | **Google Cloud** | **Create a VPC Using Cloud Shell** | **LIBRARY-REFERENCED COMPLETION** | Stored resume records completion with 100% score in 2026 |
-| 14 | **Google Career Development** | **Accelerate Your Job Search with AI** | **INCLUDED + LIBRARY-REFERENCED** | Also documented as course 9 of the supplied Google Cybersecurity certificate; not double-counted as a second certificate |
+| 14 | **Google Career Development** | **Accelerate Your Job Search with AI** | **ISSUER COURSE CERTIFICATE** | Jul 29, 2026 — https://coursera.org/verify/OQ5XVBCHL374; also constituent course 9 of the Google Cybersecurity Professional Certificate |
 | 15 | **IBM Quantum / Security** | **Quantum computing and quantum-safe cryptography coursework** | **LIBRARY-REFERENCED COURSEWORK** | Broader IBM professional-development record beyond the supplied Quantum Machine Learning credential |
 
 ## LinkedIn public-profile credential ledger
@@ -125,7 +174,7 @@ The credential library contains an electronic Palantir AIP Now contract/access r
 
 **Evidence state:** `PLATFORM ACCESS EVIDENCE PRESENT`
 
-This is intentionally separate from the 25 credential/training records above. A platform contract/account is an entitlement/access record, not a training certificate. No passwords, tokens, payment data, private addresses, session cookies, or other secrets belong in this public repository.
+This is intentionally separate from the 34 credential/training records above. A platform contract/account is an entitlement/access record, not a training certificate. No passwords, tokens, payment data, private addresses, session cookies, or other secrets belong in this public repository.
 
 ## Credential and skills coverage
 
@@ -134,9 +183,12 @@ The reconciled stack documents evidence across:
 - Palantir Foundry, AIP, data protection, and data science
 - Palantir AIP Now platform access evidence
 - Google cybersecurity, Linux, SQL, SIEM, detection/response, Python automation, and job-readiness training
-- Google Cloud networking/VPC work
+- Google AI professional training, research, writing, content creation, data analysis, and application building
+- Google business intelligence and Google Cloud networking/VPC work
 - Red Hat system administration training
-- IBM quantum machine learning, quantum computing, and quantum-safe cryptography coursework
+- IBM quantum machine learning, data science, quantum computing, and quantum-safe cryptography coursework
+- Replit application-building badge evidence
+- Google Threat Intelligence / BrightTALK viewing evidence
 - Anthropic / Claude AI professional development
 - research funding and Elsevier peer-review training
 - psychology coursework and CPD study
@@ -149,6 +201,8 @@ The reconciled stack documents evidence across:
 ## ZYRA verification chain
 
 ```text
+GPT-DOUG-LLM / ZYRA / XUNIA — GLASS ONION / RVAI
+        ↓
 ZYRA APPLICATION CREDENTIAL
         ↓
 CREDENTIAL OWNER
@@ -175,7 +229,10 @@ AUDIT EVIDENCE + CONTROLLED WRITEBACK
 | Evidence class | Meaning |
 |---|---|
 | **ISSUER CREDENTIAL** | Certificate/credential has issuer-backed evidence or verification reference in the supplied record |
+| **ISSUER COURSE CERTIFICATE** | Separately issued course certificate with its own verification identifier |
 | **SUPPLIED ISSUER EVIDENCE** | Credential image/PDF supplied by the credential owner and visibly attributed to the issuer |
+| **SUPPLIED BADGE ARTIFACT** | Badge artifact is present but the artifact itself may not encode the owner's identity |
+| **VIEWING CERTIFICATE** | Attendance/viewing evidence; scope and duration must be preserved exactly |
 | **CREDLY BADGE SOURCE** | Credly profile/badge wallet is registered; individual badges require metadata-level reconciliation before counting |
 | **CREDLY SKILLS SOURCE** | Skills Wallet source is registered; skill labels are not automatically certifications |
 | **LIBRARY-REFERENCED** | Record appears in stored professional documents but a separate issuer certificate has not yet been attached to this repository |
@@ -196,7 +253,7 @@ Never commit Foundry tokens, OAuth secrets, passkeys, cookies, passwords, client
 
 ## Operational rule
 
-> **The badge identifies the pathway. The credential ledger proves the credential history. Credly enriches verified digital-badge and skills evidence. Platform evidence proves account access. Live authorization determines what ZYRA may do. The audit trail proves what happened.**
+> **The ecosystem identifies the pathway. The badge identifies the credential owner context. The ledger proves credential history. Credly enriches digital-badge and skills evidence. Platform evidence proves account access. Live authorization determines what an application may do. The audit trail proves what happened.**
 
 ## Security boundary
 
@@ -204,5 +261,6 @@ ZYRA is intended for authorized defensive security, engineering, data, research,
 
 ---
 
+<p align="center"><strong>GPT-DOUG-LLM • ZYRA • XUNIA / GLASS ONION • RVAI</strong></p>
 <p align="center"><strong>ZYRA — AUDITED CREDENTIAL + SKILLS PATHWAY</strong></p>
 <p align="center">identity • credentials • skills • provenance • access • authorization • audit</p>
