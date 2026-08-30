@@ -48,6 +48,12 @@ const navGroups = [
     ],
   },
   {
+    label: "Federal",
+    items: [
+      { href: "/contractops", label: "NXYZ ContractOps", icon: Building2 },
+    ],
+  },
+  {
     label: "Security",
     items: [
       { href: "/scans", label: "Security Scans", icon: Search },
