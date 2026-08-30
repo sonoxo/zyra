@@ -1,252 +1,214 @@
 <p align="center">
-  <img src="../../docs/assets/nxyz-contractops-hero.svg" width="100%" alt="NXYZ ContractOps flow from federal registrations to opportunities, Zyra evidence, advisory scoring, human decisions, proposal review, and submission readiness" />
+  <img src="../../docs/assets/nxyz-contractops-hero.svg" width="100%" alt="NXYZ ContractOps flow from federal registrations to opportunities, Zyra evidence, advisory scoring, human decisions, proposal review, and internal submission readiness" />
 </p>
 
 <h1 align="center">NXYZ ContractOps</h1>
-<p align="center"><strong>Federal opportunity readiness for beginners — registrations, requirements, evidence, advisory bid scoring, human decisions, and proposal control inside the ZYRA ecosystem.</strong></p>
+<p align="center"><strong>Federal opportunity readiness for beginners — registrations, evidence, bid qualification, proposal control, and human review inside the ZYRA ecosystem.</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/PRODUCT-NXYZ%20CONTRACTOPS-a855f7?style=for-the-badge" alt="NXYZ ContractOps" />
-  <img src="https://img.shields.io/badge/CORE-v0.5-2df6ff?style=for-the-badge" alt="ContractOps core version 0.5" />
+  <img src="https://img.shields.io/badge/CORE-v0.6-2df6ff?style=for-the-badge" alt="ContractOps core version 0.6" />
   <img src="https://img.shields.io/badge/CAGE-PENDING-f5c451?style=for-the-badge" alt="CAGE pending" />
-  <img src="https://img.shields.io/badge/DECISIONS-HUMAN%20CONTROLLED-9cff57?style=for-the-badge" alt="Human controlled decisions" />
+  <img src="https://img.shields.io/badge/SUBMISSION-HUMAN%20CONTROLLED-9cff57?style=for-the-badge" alt="Human controlled submission" />
 </p>
 
-## Start here — what does ContractOps do?
+## Start here
 
-ContractOps is a **federal opportunity mission-control layer** inside ZYRA.
-
-A beginner can think about it like this:
+**ContractOps is a governed capture-to-proposal workspace.** It helps a beginner answer five questions in order:
 
 ```text
-1. RECORD what registrations are actually known
-2. CAPTURE a real opportunity from an official source
-3. BREAK the opportunity into requirements
-4. MATCH requirements to ZYRA evidence
-5. SCORE readiness with visible math
-6. LET A HUMAN decide BID or NO BID
-7. BUILD the proposal from supported claims
-8. REVIEW before any external submission
+WHAT opportunity are we looking at?
+        ↓
+WHAT does it require?
+        ↓
+WHAT can ZYRA actually prove?
+        ↓
+SHOULD a human decide to bid?
+        ↓
+IS the proposal internally ready for human submission?
 ```
 
-The current implementation reaches **step 6**. Proposal workspace is the next product phase.
-
-> **CAGE pending does not stop preparation.** ContractOps keeps CAGE as `PENDING`, includes that state in readiness scoring, and still allows opportunity capture, evidence matching, and advisory analysis. It never invents an identifier.
+It does **not** claim that an agency approved the company, that a credential creates federal authorization, or that an internal score equals government eligibility.
 
 ---
 
-## Current product state
+## v0.6 — what is live now?
 
-| Capability | State | What it means |
+| Product capability | State | What it does |
 |---|---|---|
-| ZYRA navigation entry | **IMPLEMENTED** | `Federal → NXYZ ContractOps` is visible in the main sidebar. |
-| `/contractops` dashboard | **IMPLEMENTED** | Protected ZYRA product route. |
-| PostgreSQL registration records | **IMPLEMENTED SOURCE** | SAM / UEI / CAGE / SBIR-STTR / DSIP / Grants.gov schema and API exist. Apply with `npm run db:push`. |
-| Registration Control UI | **IMPLEMENTED** | Owner/admin can record status, identifier, verification source, and notes. |
-| Opportunity intake | **IMPLEMENTED** | Agency, source URL, solicitation, deadline, NAICS, PSC, set-aside, summary, requirements. |
-| Evidence matching | **IMPLEMENTED** | Requirements map deterministically to supporting ZYRA credential/repository candidates. |
-| Advisory Bid / No-Bid scoring | **IMPLEMENTED** | Four transparent dimensions produce an advisory score and recommendation. |
-| Human BID / NO BID decision | **IMPLEMENTED** | Owner/admin records final capture decision with required rationale. |
-| Audit trail | **IMPLEMENTED** | Registration, opportunity, evidence, scoring, and human-decision writes emit audit events. |
-| Proposal workspace | **NEXT BUILD** | Sections, claim/evidence citations, blockers, reviews, readiness package. |
-| Government portal auto-submit | **PROHIBITED** | ContractOps does not silently submit to external government systems. |
+| Registration Control | **IMPLEMENTED** | Tracks SAM, UEI, CAGE, SBIR/STTR, DSIP, and Grants.gov states with verification-source rules. |
+| Opportunity Intake | **IMPLEMENTED** | Stores real source URL, agency, solicitation number, deadline, NAICS/PSC, set-aside, summary, and requirements. |
+| Evidence Matching | **IMPLEMENTED** | Maps captured requirements to ZYRA issuer credentials and repository evidence candidates. |
+| Advisory Bid Scoring | **IMPLEMENTED** | Scores technical-fit proxy, evidence coverage, registration readiness, and deadline readiness. |
+| Human BID / NO BID | **IMPLEMENTED** | Owner/admin records the final capture decision with written rationale. |
+| Proposal Workspace | **IMPLEMENTED** | Creates database-backed proposal sections only after a confirmed human BID decision. |
+| Proposal Readiness Gate | **IMPLEMENTED** | Blocks internal approval while sections, evidence, or configured registration review remain incomplete. |
+| Human Proposal Review | **IMPLEMENTED** | Owner/admin can approve, request changes, or reject with notes. |
+| `SUBMISSION_READY` | **IMPLEMENTED** | Internal workflow state only; no external portal action occurs. |
+| Automatic government submission | **PROHIBITED** | ContractOps never silently submits, signs, certifies, or commits pricing to an agency. |
 
 ---
 
-## Beginner ecosystem map
+## Beginner workflow
 
 ```mermaid
-flowchart LR
-    A[Registration records] --> B[Opportunity]
-    B --> C[Requirements]
-    C --> D[ZYRA evidence matcher]
-    E[Issuer credentials] --> D
-    F[RVIA repository evidence] --> D
-    G[ZYRA product / code evidence] --> D
-    D --> H[Evidence matrix]
-    H --> I[Advisory readiness score]
-    A --> I
-    B --> I
-    I --> J{Human BID / NO BID}
-    J -->|BID| K[Proposal workspace]
-    J -->|NO BID| L[Archive rationale]
-    K --> M{Human review}
-    M -->|approved| N[Submission Ready]
-    N --> O[Human uses authorized external portal]
+flowchart TD
+    A[Record registrations] --> B[Capture real opportunity]
+    B --> C[Extract / enter requirements]
+    C --> D[Match ZYRA evidence]
+    D --> E[Advisory readiness score]
+    E --> F{Human BID / NO BID}
+    F -->|NO BID| G[Archive decision + rationale]
+    F -->|BID| H[Create Proposal Workspace]
+    H --> I[Edit six governed proposal sections]
+    I --> J[Mark sections READY]
+    J --> K[Refresh readiness gate]
+    K -->|blockers| I
+    K -->|clear| L{Owner / Admin review}
+    L -->|changes| I
+    L -->|reject| M[Rejected]
+    L -->|approve| N[SUBMISSION_READY]
+    N --> O[Human uses authorized external submission process]
 ```
 
-### What every box means
+### Why this matters
 
-| Word | Plain-English meaning |
-|---|---|
-| **Registration** | A recorded status for SAM, UEI, CAGE, SBIR/STTR, DSIP, Grants.gov, etc. |
-| **Opportunity** | A real solicitation, SBIR topic, grant, contract, or funding target. |
-| **Requirement** | Something the source says the bidder must do, provide, or prove. |
-| **Evidence candidate** | A credential, repository artifact, implementation, or other traceable source that may support a requirement. |
-| **Evidence gap** | ZYRA does not currently have a matching supporting source for that requirement. |
-| **Readiness score** | An internal advisory score; it is not an agency evaluation or eligibility decision. |
-| **BID / NO BID** | The human decision about whether to pursue the opportunity. |
-| **Submission Ready** | A future ContractOps state after proposal evidence and human review are complete. |
+A proposal can sound strong and still be weak if the claims cannot be traced to proof. ContractOps keeps **capability**, **evidence**, **registration state**, **human decisions**, and **external authorization** separate.
 
 ---
 
-## The ZYRA trust layer
+## Proposal Workspace
 
-ContractOps consumes the existing evidence-tiered ZYRA credential system instead of treating every badge, certificate, repository file, and permission as equivalent.
+After a human records `BID`, ContractOps can create one workspace for that opportunity with six starter sections:
+
+1. **Executive Summary**
+2. **Technical Approach**
+3. **Requirements & Evidence Matrix**
+4. **Credentials & Evidence Plan**
+5. **Management & Delivery Plan**
+6. **Risks, Assumptions & Open Items**
+
+The generated text is deliberately labeled as a **draft framework requiring human validation**. It does not fabricate past performance, staffing, eligibility, clearances, certifications, pricing, facilities, or agency acceptance.
+
+```text
+CONFIRMED HUMAN BID
+       ↓
+PROPOSAL SEED
+       ↓
+DRAFT / EVIDENCE_NEEDED / READY
+       ↓
+READINESS ENGINE
+       ↓
+BLOCKERS OR CLEAR GATE
+       ↓
+OWNER / ADMIN REVIEW
+       ↓
+SUBMISSION_READY
+```
+
+`SUBMISSION_READY` means **the configured internal ContractOps gate passed**. It does not mean a government portal received the package or that an agency accepted it.
+
+---
+
+## The readiness gate
+
+The default policy is machine-readable as:
+
+```text
+NXYZ_CONTRACTOPS_DEFAULT_V1
+```
+
+It currently checks:
+
+- Human `BID` decision exists.
+- No captured requirement remains an unresolved evidence gap.
+- Every generated proposal section is marked `READY` with substantive content.
+- SAM / UEI / CAGE review is resolved under the default internal policy.
+- Owner/admin performs final proposal review.
+
+> This is a **workflow policy**, not legal advice and not a statement that every solicitation has identical registration requirements. The specific opportunity must still be checked against its official instructions.
+
+### CAGE is still pending
+
+That state is intentional:
+
+```text
+CAGE = PENDING
+```
+
+ContractOps allows research, opportunity capture, evidence matching, scoring, BID decisions, and proposal drafting to continue. Under the default internal gate, unresolved CAGE review prevents `SUBMISSION_READY` until the real issued identifier and verification source are recorded.
+
+No identifier is invented.
+
+---
+
+## ZYRA evidence layer
+
+ContractOps can use the existing evidence-tiered ZYRA credential and repository system when the evidence actually matches a requirement.
 
 <p align="center">
-  <img src="../../docs/assets/rvia-badges/rvia-foundation.svg" width="112" alt="ZYRA RVIA Foundation repository credential" />
-  <img src="../../docs/assets/rvia-badges/ontology-contributor.svg" width="112" alt="ZYRA RVIA Ontology Contributor repository credential" />
-  <img src="../../docs/assets/rvia-badges/ontology-analyst.svg" width="112" alt="ZYRA RVIA Ontology Analyst repository credential" />
-  <img src="../../docs/assets/rvia-badges/ontology-architect.svg" width="112" alt="ZYRA RVIA Ontology Architect repository credential" />
-</p>
-<p align="center">
-  <img src="../../docs/assets/rvia-badges/source-validation-specialist.svg" width="112" alt="ZYRA RVIA Source Validation Specialist repository credential" />
-  <img src="../../docs/assets/rvia-badges/chain-of-custody-verified.svg" width="112" alt="ZYRA RVIA Chain of Custody Verified repository credential" />
-  <img src="../../docs/assets/rvia-badges/governance-compliance-certified.svg" width="112" alt="ZYRA RVIA Governance and Compliance repository credential" />
-  <img src="../../docs/assets/rvia-badges/mission-credentialed.svg" width="112" alt="ZYRA RVIA Mission Credentialed repository credential" />
+  <img src="../../docs/assets/rvia-badges/rvia-foundation.svg" width="108" alt="ZYRA RVIA Foundation repository credential" />
+  <img src="../../docs/assets/rvia-badges/ontology-contributor.svg" width="108" alt="ZYRA RVIA Ontology Contributor repository credential" />
+  <img src="../../docs/assets/rvia-badges/ontology-analyst.svg" width="108" alt="ZYRA RVIA Ontology Analyst repository credential" />
+  <img src="../../docs/assets/rvia-badges/ontology-architect.svg" width="108" alt="ZYRA RVIA Ontology Architect repository credential" />
+  <img src="../../docs/assets/rvia-badges/source-validation-specialist.svg" width="108" alt="ZYRA RVIA Source Validation Specialist repository credential" />
+  <img src="../../docs/assets/rvia-badges/governance-compliance-certified.svg" width="108" alt="ZYRA RVIA Governance and Compliance repository credential" />
 </p>
 
-**RVIA badges are ZYRA repository credentials.** They are not government licenses, government credentials, security clearances, or Palantir-issued credentials. Their purpose inside ContractOps is provenance: they help identify repository work that can be inspected as supporting evidence.
+These are **repository credentials**, not government credentials, security clearances, licenses, or Palantir-issued permissions.
 
-The evidence catalog currently includes traceable records in domains such as:
+Evidence candidates currently span domains such as:
 
 - Palantir Foundry / AIP
-- Foundry data protection / governance
-- Data science
-- Cybersecurity
-- Artificial intelligence
-- Business intelligence
-- Machine learning
-- ZYRA ontology / governance repository evidence
-- ZYRA software implementation evidence
+- cybersecurity
+- artificial intelligence
+- data science
+- business intelligence
+- Linux / systems
+- application development
+- ZYRA ontology / governance implementation
+- repository implementation evidence
 
-Every match is labeled:
+A match has authority:
 
 ```text
 SUPPORTING_EVIDENCE_ONLY
 ```
 
-That label matters. A credential match can support a proposal claim; it does **not** create government authorization, clearance, eligibility, contract award, or agency acceptance.
+That means it can help a human support a proposal claim. It does not independently prove contract eligibility or agency acceptance.
 
 ---
 
-## How evidence matching works
-
-ContractOps normalizes each captured requirement and compares its words with a controlled ZYRA evidence catalog.
-
-```text
-REQUIREMENT
-"Provide AI and machine-learning capability"
-       ↓
-TOKEN MATCH
-AI · machine · learning
-       ↓
-CANDIDATES
-Google AI Professional Certificate
-IBM Quantum Machine Learning
-Palantir Data Science Fundamentals
-       ↓
-STATE
-SUPPORTED_CANDIDATE
-```
-
-If nothing matches:
-
-```text
-REQUIREMENT
-"Operate a certified deep-sea welding vessel fleet"
-       ↓
-NO CATALOG SUPPORT
-       ↓
-STATE
-GAP
-```
-
-The matcher intentionally reports the gap instead of inventing experience.
-
----
-
-## Advisory Bid / No-Bid score
-
-The scoring model is transparent and deterministic:
+## Advisory Bid / No-Bid model
 
 ```mermaid
 pie title NXYZ ContractOps Advisory Readiness
-    "Technical fit proxy" : 35
+    "Technical-fit proxy" : 35
     "Evidence coverage" : 30
     "Recorded registration readiness" : 20
     "Deadline readiness" : 15
 ```
 
-### Dimensions
-
-**Technical fit proxy — 35%**  
-Average strength of requirement-to-evidence matches. This is only a proxy for internal qualification.
-
-**Evidence coverage — 30%**  
-Percentage of captured requirements with at least one supporting evidence candidate.
-
-**Recorded registration readiness — 20%**  
-Uses the SAM, UEI, and CAGE states stored in ContractOps. `ACTIVE` requires a verification source. `PENDING` contributes partial readiness. Missing/unstarted states reduce the score.
-
-**Deadline readiness — 15%**  
-Uses the recorded deadline. Past due scores zero; urgent windows are flagged; more lead time increases readiness.
-
-### Advisory recommendation
+The model produces:
 
 ```text
-75–100  → BID_CANDIDATE
-50–74   → HUMAN_REVIEW
-0–49    → NO_BID_RISK
+BID_CANDIDATE
+HUMAN_REVIEW
+NO_BID_RISK
 ```
 
-This recommendation **does not change the final BID / NO BID field**. The owner/admin must explicitly record the decision and rationale.
-
-### CAGE pending example
-
-If SAM and UEI are active with traceable verification while CAGE is still pending:
+Those are recommendations only. The actual stored decision remains:
 
 ```text
-SAM   ACTIVE   = 100
-UEI   ACTIVE   = 100
-CAGE  PENDING  =  50
--------------------
-Recorded registration readiness ≈ 83%
+UNDER_REVIEW → BID
+             ↘ NO_BID
 ```
 
-So the system can continue qualification work while clearly exposing CAGE as an unresolved registration item.
-
----
-
-## Human control
-
-ContractOps separates **machine analysis** from **human authority**.
-
-```mermaid
-flowchart TD
-    A[Evidence matrix] --> B[Advisory score]
-    B --> C[Recommendation]
-    C --> D{Owner / admin decision}
-    D -->|BID + rationale| E[BID_CONFIRMED]
-    D -->|NO BID + rationale| F[NO_BID_CONFIRMED]
-    E --> G[Future proposal workspace]
-    F --> H[Retain audit record]
-```
-
-A final human decision:
-
-- requires owner/admin role;
-- requires written rationale;
-- is written to the ContractOps record;
-- emits an audit event;
-- does **not** submit anything externally.
+and requires an owner/admin rationale.
 
 ---
 
 ## API surface
-
-Authenticated ContractOps endpoints currently include:
 
 ```text
 GET  /api/contractops/registrations
@@ -254,170 +216,113 @@ PUT  /api/contractops/registrations/:system
 
 GET  /api/contractops/opportunities
 POST /api/contractops/opportunities
-
-GET  /api/contractops/evidence-catalog
 POST /api/contractops/opportunities/:id/evidence-match
 POST /api/contractops/opportunities/:id/score
 PUT  /api/contractops/opportunities/:id/decision
 
-GET  /api/contractops/summary
+GET  /api/contractops/proposals
+GET  /api/contractops/proposals/:id
+POST /api/contractops/opportunities/:id/proposal
+PUT  /api/contractops/proposals/:id/sections/:sectionId
+POST /api/contractops/proposals/:id/refresh-readiness
+PUT  /api/contractops/proposals/:id/review
 ```
 
-Mutation authorization:
-
-| Operation | Required user state |
-|---|---|
-| Capture opportunity | Authenticated user |
-| Run evidence match | Authenticated user |
-| Run advisory score | Authenticated user |
-| Update registration | Owner / admin |
-| Record final BID / NO BID | Owner / admin + rationale |
+All records are organization-scoped through authenticated ZYRA requests. Mutating review decisions use role gates and ContractOps writes audit events for material state changes.
 
 ---
 
-## Persistence
+## Data architecture
 
-ContractOps uses organization-scoped PostgreSQL records through Drizzle.
-
-Tables:
-
-```text
-contractops_registrations
-contractops_opportunities
+```mermaid
+flowchart LR
+    ORG[Organization] --> REG[Federal Registration]
+    ORG --> CAP[ZYRA Capability]
+    OPP[Opportunity] --> REQ[Requirement]
+    REQ --> EVID[Evidence Match]
+    EVID --> CAP
+    OPP --> SCORE[Bid Assessment]
+    SCORE --> HD[Human Bid Decision]
+    HD --> PROP[Proposal]
+    PROP --> SEC[Proposal Sections]
+    PROP --> READY[Proposal Readiness]
+    READY --> REVIEW[Human Review]
+    REVIEW --> SR[SUBMISSION_READY]
 ```
 
-The opportunity record stores:
+PostgreSQL persistence is defined in:
 
-```text
-source metadata
-requirements JSON
-matching evidence matrix
-advisory bid assessment
-human bid decision state
-```
+- [`shared/contractops-schema.ts`](../../shared/contractops-schema.ts)
+- [`shared/contractops-proposal.ts`](../../shared/contractops-proposal.ts)
+- [`shared/contractops-evidence.ts`](../../shared/contractops-evidence.ts)
+- [`shared/contractops-scoring.ts`](../../shared/contractops-scoring.ts)
 
-### Apply the database schema
+Server implementation:
 
-After pulling this implementation into the runtime environment:
+- [`server/contractops.ts`](../../server/contractops.ts)
+- [`server/contractops-proposals.ts`](../../server/contractops-proposals.ts)
+
+Client implementation:
+
+- [`client/src/pages/contractops.tsx`](../../client/src/pages/contractops.tsx)
+- [`client/src/components/contractops/RegistrationControl.tsx`](../../client/src/components/contractops/RegistrationControl.tsx)
+- [`client/src/components/contractops/ProposalWorkspace.tsx`](../../client/src/components/contractops/ProposalWorkspace.tsx)
+
+Ontology:
+
+- [`shared/ontology/nxyz-contractops.yaml`](../../shared/ontology/nxyz-contractops.yaml) — **v0.6.0**
+
+---
+
+## Deployment step
+
+The source now defines additional ContractOps proposal tables. The target Zyra PostgreSQL environment must apply the schema:
 
 ```bash
 npm run db:push
 ```
 
-Until that schema push is applied to the target PostgreSQL database, the source is implemented but the new ContractOps persistence tables are not live in that environment.
+That deployment action requires the environment's real `DATABASE_URL`; the repository source alone does not prove the live database has already been migrated.
 
 ---
 
-## Repository map
+## Guardrails
+
+ContractOps is designed to preserve these boundaries:
+
+- Never invent SAM, UEI, CAGE, or other registration identifiers.
+- Never mark a registration `ACTIVE` without a verification source.
+- Never treat a training credential as government authorization.
+- Never treat a repository badge as a clearance or license.
+- Never turn an advisory readiness score into an automatic BID decision.
+- Never create a proposal before a human BID decision.
+- Never approve a proposal while the configured readiness gate has blockers.
+- Never represent `SUBMISSION_READY` as agency acceptance.
+- Never auto-submit to government portals.
+- Never store portal passwords, bearer tokens, secrets, or restricted data in the ContractOps ontology.
+
+---
+
+## What comes next
+
+The strongest next product layer is **Submission Package Builder**:
 
 ```text
-ZYRA
-├── client/src/pages/contractops.tsx
-│   └── main ContractOps dashboard
-├── client/src/components/contractops/RegistrationControl.tsx
-│   └── SAM / UEI / CAGE / program registration controls
-├── server/contractops.ts
-│   └── authenticated ContractOps API + audit events
-├── shared/contractops-schema.ts
-│   └── PostgreSQL / Drizzle persistence
-├── shared/contractops-evidence.ts
-│   └── controlled ZYRA evidence catalog + matching engine
-├── shared/contractops-scoring.ts
-│   └── deterministic advisory readiness model
-├── shared/types/nxyz-contractops.ts
-│   └── ecosystem domain contract
-├── shared/ontology/nxyz-contractops.yaml
-│   └── ontology model, actions, guardrails, implementation state
-├── server/contractops-evidence.test.ts
-├── server/contractops-scoring.test.ts
-├── docs/credentials/
-│   └── evidence-tiered credential / RVIA repository credential system
-└── products/nxyz-contractops/README.md
-    └── this beginner product guide
+APPROVED INTERNAL PROPOSAL
+          ↓
+PACKAGE MANIFEST
+          ↓
+SECTION EXPORTS + EVIDENCE INDEX
+          ↓
+FINAL HUMAN CHECKLIST
+          ↓
+DOWNLOADABLE / PORTAL-READY PACKAGE
+          ↓
+HUMAN SUBMISSION
 ```
 
----
-
-## Palantir / AIP mapping
-
-The ContractOps data model is designed to map into an authorized Foundry Ontology:
-
-```text
-Organization
-  ├── FederalRegistration
-  └── Capability
-        ├── CredentialEvidence
-        └── RepositoryEvidence
-
-Opportunity
-  ├── Requirement
-  │     └── EvidenceMatch
-  ├── BidAssessment
-  └── HumanBidDecision
-
-Proposal
-  ├── ProposalSection
-  └── ReviewDecision
-```
-
-The repository contract is **ready for configuration**, but a live Foundry object/action binding must still be created and authorized in the actual tenant before being described as live.
+That next layer can prepare files and a checklist while still keeping the actual external submission human-controlled.
 
 ---
 
-## Security / integrity rules
-
-ContractOps enforces these design rules:
-
-- never invent SAM, UEI, CAGE, or other government identifiers;
-- `ACTIVE` registration requires a verification source;
-- CAGE may remain pending while internal preparation continues;
-- credentials do not become authorization;
-- evidence matching is supporting evidence only;
-- scoring is advisory only;
-- final BID / NO BID is human-controlled;
-- material proposal claims should resolve to traceable evidence;
-- no autonomous government-portal submission;
-- no passwords, access tokens, secrets, or restricted data in the ontology contract;
-- external permissions remain controlled by the external platform.
-
----
-
-## Build sequence
-
-**Phase 1 — Foundation ✅**  
-Domain types · ontology · beginner dashboard · guardrails · product visual.
-
-**Phase 2 — Persistent opportunity intake ✅**  
-Database · registration API · opportunity capture · requirements · sidebar product entry.
-
-**Phase 3 — Evidence qualification ✅**  
-Credential/repository evidence catalog · deterministic matching · gaps · regression tests.
-
-**Phase 4A — Bid readiness ✅**  
-Four-dimension advisory score · CAGE-pending handling · human BID / NO BID decision · audit trail.
-
-**Phase 4B — Proposal workspace ⏭️**  
-Proposal sections · claim-to-evidence citations · blocker resolution · human review · submission-readiness package.
-
-**Phase 5 — Foundry/AIP binding**  
-Authorized Ontology object types/actions · AIP extraction/scoring assistance · governed proposal workflow. External government submission remains human-controlled.
-
----
-
-## Verification language
-
-ContractOps deliberately keeps these states separate:
-
-- **Implemented source** — code exists in GitHub.
-- **Database applied** — the target PostgreSQL environment has received the schema.
-- **Tested** — automated checks have actually run successfully for that revision.
-- **Evidence-backed** — a claim resolves to recorded evidence.
-- **Configured** — an external integration has values and permissions.
-- **Verified live** — the real external environment completed the operation.
-- **Authorized** — the external system granted the required permission.
-
-Never collapse those into a single “verified” claim.
-
----
-
-<p align="center"><strong>NXYZ ContractOps — capture the opportunity, prove what you can prove, expose what is missing, score transparently, and keep the final decision human.</strong></p>
+<p align="center"><strong>NXYZ ContractOps — find the requirement, prove the capability, make the human decision, and keep the evidence attached to the work.</strong></p>
