@@ -12,6 +12,7 @@ import {
   buildOpportunityEvidenceMatrix,
   ZYRA_CONTRACTOPS_EVIDENCE_CATALOG,
 } from "@shared/contractops-evidence";
+import { buildAdvisoryBidAssessment } from "@shared/contractops-scoring";
 
 const REGISTRATION_SYSTEMS = ["SAM", "UEI", "CAGE", "SBIR_STTR", "DSIP", "GRANTS_GOV"] as const;
 const REGISTRATION_STATES = ["PENDING", "ACTIVE", "ACTION_REQUIRED", "EXPIRED", "NOT_STARTED"] as const;
@@ -36,6 +37,11 @@ const opportunitySchema = z.object({
   requirementsText: z.string().max(30000).optional(),
 });
 
+const decisionSchema = z.object({
+  decision: z.enum(["BID", "NO_BID"]),
+  rationale: z.string().trim().min(3).max(5000),
+});
+
 function normalizeRequirements(input?: string): string[] {
   if (!input) return [];
   return input
@@ -47,6 +53,21 @@ function normalizeRequirements(input?: string): string[] {
 
 function requirementArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+}
+
+function evidenceScoreArray(value: unknown): Array<{ state: "SUPPORTED_CANDIDATE" | "GAP"; topScore: number }> {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    const state = row.state === "SUPPORTED_CANDIDATE" || row.state === "GAP" ? row.state : null;
+    if (!state) return [];
+    return [{ state, topScore: typeof row.topScore === "number" ? row.topScore : 0 }];
+  });
+}
+
+function jsonObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
 async function writeAudit(req: Request, action: string, resourceType: string, resourceId?: string, details?: Record<string, unknown>) {
@@ -165,6 +186,7 @@ export function registerContractOpsRoutes(app: Express): void {
       summary: parsed.data.summary || null,
       requirements,
       evidenceMatches: [],
+      bidAssessment: null,
       status: "CAPTURED",
       bidDecision: "UNDER_REVIEW",
       evidenceCoverageReady: false,
@@ -210,6 +232,7 @@ export function registerContractOpsRoutes(app: Express): void {
       .update(contractopsOpportunities)
       .set({
         evidenceMatches: matrix.matches,
+        bidAssessment: null,
         evidenceCoverageReady: matrix.ready,
         status: matrix.ready ? "EVIDENCE_READY" : "EVIDENCE_GAPS",
         updatedAt: new Date(),
@@ -228,6 +251,114 @@ export function registerContractOpsRoutes(app: Express): void {
     return res.json({ opportunity: updated, matrix });
   });
 
+  app.post("/api/contractops/opportunities/:id/score", requireAuth, async (req: Request, res: Response) => {
+    const [opportunity, registrationRows] = await Promise.all([
+      db
+        .select()
+        .from(contractopsOpportunities)
+        .where(and(
+          eq(contractopsOpportunities.id, req.params.id),
+          eq(contractopsOpportunities.organizationId, req.user!.organizationId),
+        ))
+        .limit(1)
+        .then((rows) => rows[0]),
+      db
+        .select()
+        .from(contractopsRegistrations)
+        .where(eq(contractopsRegistrations.organizationId, req.user!.organizationId)),
+    ]);
+
+    if (!opportunity) return res.status(404).json({ message: "Opportunity not found" });
+    const requirements = requirementArray(opportunity.requirements);
+    if (requirements.length === 0) return res.status(400).json({ message: "Add requirements before scoring bid readiness" });
+
+    let evidenceMatches = evidenceScoreArray(opportunity.evidenceMatches);
+    let fullEvidenceMatches: unknown = opportunity.evidenceMatches;
+    if (evidenceMatches.length !== requirements.length) {
+      const matrix = buildOpportunityEvidenceMatrix(requirements);
+      evidenceMatches = matrix.matches.map((match) => ({ state: match.state, topScore: match.topScore }));
+      fullEvidenceMatches = matrix.matches;
+    }
+
+    const registrations = virtualRegistrationRows(registrationRows).map((row) => ({
+      system: row.system,
+      status: row.status,
+      verificationSource: row.verificationSource,
+    }));
+    const assessment = buildAdvisoryBidAssessment({
+      evidenceMatches,
+      registrations,
+      deadline: opportunity.deadline,
+    });
+
+    const [updated] = await db
+      .update(contractopsOpportunities)
+      .set({
+        evidenceMatches: fullEvidenceMatches,
+        evidenceCoverageReady: assessment.dimensions.evidenceCoverage === 100,
+        bidAssessment: assessment,
+        status: "SCORED",
+        updatedAt: new Date(),
+      })
+      .where(eq(contractopsOpportunities.id, opportunity.id))
+      .returning();
+
+    await writeAudit(req, "contractops.bid_readiness.scored", "federal_opportunity", opportunity.id, {
+      overallScore: assessment.overallScore,
+      recommendation: assessment.recommendation,
+      advisoryOnly: true,
+      dimensions: assessment.dimensions,
+    });
+
+    return res.json({ opportunity: updated, assessment });
+  });
+
+  app.put(
+    "/api/contractops/opportunities/:id/decision",
+    requireAuth,
+    requireRole("owner", "admin"),
+    async (req: Request, res: Response) => {
+      const parsed = decisionSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: parsed.error.issues.map((issue) => issue.message).join(", ") });
+
+      const [opportunity] = await db
+        .select()
+        .from(contractopsOpportunities)
+        .where(and(
+          eq(contractopsOpportunities.id, req.params.id),
+          eq(contractopsOpportunities.organizationId, req.user!.organizationId),
+        ))
+        .limit(1);
+      if (!opportunity) return res.status(404).json({ message: "Opportunity not found" });
+      if (!opportunity.bidAssessment) return res.status(400).json({ message: "Run advisory readiness scoring before recording a final human decision" });
+
+      const decidedAt = new Date().toISOString();
+      const humanDecision = {
+        decision: parsed.data.decision,
+        rationale: parsed.data.rationale,
+        decidedAt,
+        decidedByUserId: req.user!.userId,
+      };
+      const [updated] = await db
+        .update(contractopsOpportunities)
+        .set({
+          bidDecision: parsed.data.decision,
+          bidAssessment: { ...jsonObject(opportunity.bidAssessment), humanDecision },
+          status: parsed.data.decision === "BID" ? "BID_CONFIRMED" : "NO_BID_CONFIRMED",
+          updatedAt: new Date(),
+        })
+        .where(eq(contractopsOpportunities.id, opportunity.id))
+        .returning();
+
+      await writeAudit(req, "contractops.bid_decision.recorded", "federal_opportunity", opportunity.id, {
+        decision: parsed.data.decision,
+        rationale: parsed.data.rationale,
+        humanDecision: true,
+      });
+      return res.json({ opportunity: updated, humanDecision });
+    },
+  );
+
   app.get("/api/contractops/summary", requireAuth, async (req: Request, res: Response) => {
     const [registrationRows, opportunities] = await Promise.all([
       db.select().from(contractopsRegistrations).where(eq(contractopsRegistrations.organizationId, req.user!.organizationId)),
@@ -240,6 +371,7 @@ export function registerContractOpsRoutes(app: Express): void {
       opportunityCount: opportunities.length,
       submissionReadyCount: opportunities.filter((row) => row.status === "SUBMISSION_READY").length,
       evidenceReadyCount: opportunities.filter((row) => row.evidenceCoverageReady).length,
+      scoredCount: opportunities.filter((row) => Boolean(row.bidAssessment)).length,
       bidCount: opportunities.filter((row) => row.bidDecision === "BID").length,
       noBidCount: opportunities.filter((row) => row.bidDecision === "NO_BID").length,
       evidenceRule: true,
