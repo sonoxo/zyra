@@ -4,7 +4,7 @@
 
 <h1 align="center">ZYRA Application Credential Pathway</h1>
 
-<p align="center"><strong>Identity → credential evidence → repository provenance → authenticated platform access → governed action → audit.</strong></p>
+<p align="center"><strong>Identity → credential evidence → skills evidence → repository provenance → authenticated platform access → governed action → audit.</strong></p>
 
 ---
 
@@ -14,9 +14,11 @@
 **Project:** ZYRA  
 **Repository:** https://github.com/sonoxo/zyra  
 **LinkedIn:** https://www.linkedin.com/in/douglasbrownjr/  
+**Credly profile A:** https://www.credly.com/users/douglas-brown-jr.3b8f5b3d  
+**Credly profile B:** https://www.credly.com/users/douglas-brown.348b51c1  
 **Application credential asset:** `docs/assets/zyra-credential-pathway.svg`
 
-This ledger is evidence-tiered. A certificate image, issuer verification link, public profile listing, resume/library reference, and live platform entitlement are different evidence classes and are not collapsed into one status.
+This ledger is evidence-tiered. A certificate image, issuer verification link, Credly badge record, Credly Skills Wallet entry, public profile listing, resume/library reference, and live platform entitlement are different evidence classes and are not collapsed into one status.
 
 ## Audit summary
 
@@ -25,9 +27,11 @@ This ledger is evidence-tiered. A certificate image, issuer verification link, p
 - **9 issuer/supplied primary records**
 - **6 additional library-referenced professional-development records**
 - **10 public LinkedIn historical/profile-listed records**
+- **2 Credly profiles registered as digital-credential evidence sources**
+- **2 Credly Skills Wallets registered as skills-evidence sources**
 - **1 separate Palantir AIP Now platform-access record** — tracked as access evidence, not counted as a training credential
 
-Expired certifications remain historical. Coursework is not promoted to a license. Platform access is not inferred from a badge alone.
+The 25-record count is intentionally unchanged until additional Credly badge metadata can be individually reconciled. Skills are not counted as certifications. Expired certifications remain historical. Coursework is not promoted to a license. Platform access is not inferred from a badge alone.
 
 ## Primary issuer / supplied credential stack
 
@@ -38,7 +42,7 @@ Expired certifications remain historical. Coursework is not promoted to a licens
 | 3 | **Palantir Foundry / AIP** | **Introduction to Foundry & AIP for Enterprise Organizations** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `7ogvo4qo4aad` — https://verify.skilljar.com/c/7ogvo4qo4aad |
 | 4 | **Palantir Data Science** | **Speedrun: Data Science Fundamentals** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `tt9ue6hsm96y` — https://verify.skilljar.com/c/tt9ue6hsm96y |
 | 5 | **Cybersecurity** | **Google Cybersecurity Professional Certificate — 9 courses** | **SUPPLIED ISSUER EVIDENCE** | Jul 29, 2026 | Coursera / Google certificate supplied by credential owner |
-| 6 | **Quantum / Machine Learning** | **IBM Quantum Machine Learning** | **SUPPLIED ISSUER EVIDENCE** | Jun 26, 2026 | Credly verification shown on supplied credential |
+| 6 | **Quantum / Machine Learning** | **IBM Quantum Machine Learning** | **SUPPLIED ISSUER EVIDENCE + CREDLY** | Jun 26, 2026 | https://www.credly.com/badges/a5b99d3e-5945-471a-8d75-df75251887ad |
 | 7 | **Linux / Systems** | **Red Hat System Administration I — Training Course Attendance** | **SUPPLIED TRAINING EVIDENCE** | 2026 | Red Hat training credential supplied by credential owner |
 | 8 | **Research / Funding** | **Funding Hacks for Researchers — Elsevier Researcher Academy** | **SUPPLIED ISSUER EVIDENCE** | Jun 30, 2026 | Completion certificate supplied by credential owner |
 | 9 | **Education / Communication** | **TED-Ed Idea Workshop** | **SUPPLIED ISSUER EVIDENCE** | Completion evidence supplied | Certificate issued to 24k-Media Productions |
@@ -58,6 +62,30 @@ The supplied Google/Coursera certificate documents completion of these nine cour
 9. Accelerate Your Job Search with AI
 
 These nine course completions are components of the single Google Cybersecurity Professional Certificate and are not double-counted as nine additional certificates.
+
+## Credly badge-wallet sources
+
+ZYRA now tracks both supplied Credly identities as first-class digital-credential sources.
+
+| Credly source | Public verification profile | Owner badge-management reference | Status |
+|---|---|---|---|
+| **Credly A** | https://www.credly.com/users/douglas-brown-jr.3b8f5b3d | https://www.credly.com/users/douglas-brown-jr.3b8f5b3d/edit/badges/credly | **SOURCE REGISTERED** |
+| **Credly B** | https://www.credly.com/users/douglas-brown.348b51c1 | https://www.credly.com/users/douglas-brown.348b51c1/edit/badges/credly | **SOURCE REGISTERED** |
+
+The `/edit/badges/credly` URLs are account-management routes supplied by the credential owner. They are recorded as management references, not presented as public verification pages. Individual Credly badges are added to the credential count only after their badge title, issuer, issue state, and badge URL can be reconciled against the existing ledger.
+
+**Currently reconciled Credly-backed credential:** IBM Quantum Machine Learning.
+
+## Credly Skills Wallet sources
+
+Credly Skills Wallet entries are maintained separately from credentials. Skills can be derived from earned badges and occupation history; therefore a skill label is not automatically a certification.
+
+| Credly source | Owner skills-management reference | ZYRA evidence state |
+|---|---|---|
+| **Credly A Skills Wallet** | https://www.credly.com/users/douglas-brown-jr.3b8f5b3d/edit/skills | **SKILLS SOURCE REGISTERED** |
+| **Credly B Skills Wallet** | https://www.credly.com/users/douglas-brown.348b51c1/edit/skills | **SKILLS SOURCE REGISTERED** |
+
+ZYRA may use these wallets to enrich a separate skills ontology after the individual skill labels are visible and reconciled. The skills ontology must preserve provenance back to the Credly profile/badge evidence rather than inventing certification status.
 
 ## Additional library-audited professional development
 
@@ -97,7 +125,7 @@ The credential library contains an electronic Palantir AIP Now contract/access r
 
 This is intentionally separate from the 25 credential/training records above. A platform contract/account is an entitlement/access record, not a training certificate. No passwords, tokens, payment data, private addresses, session cookies, or other secrets belong in this public repository.
 
-## Credential coverage
+## Credential and skills coverage
 
 The reconciled stack documents evidence across:
 
@@ -111,6 +139,8 @@ The reconciled stack documents evidence across:
 - research funding and Elsevier peer-review training
 - psychology coursework and CPD study
 - technical communication / TED-Ed education work
+- Credly digital-badge evidence across two owner-supplied profiles
+- Credly skills-wallet evidence across two owner-supplied profiles
 - fitness coaching, behavior-change programming, client retention, and group-training design
 - historical CPR/AED/first-aid and personal-training certifications
 
@@ -121,7 +151,9 @@ ZYRA APPLICATION CREDENTIAL
         ↓
 CREDENTIAL OWNER
         ↓
-ISSUER / SUPPLIED / LIBRARY / PUBLIC-PROFILE EVIDENCE
+ISSUER / SUPPLIED / CREDLY / LIBRARY / PUBLIC-PROFILE EVIDENCE
+        ↓
+CREDLY SKILLS WALLET / SKILL PROVENANCE
         ↓
 GITHUB REPOSITORY + COMMIT PROVENANCE
         ↓
@@ -142,6 +174,8 @@ AUDIT EVIDENCE + CONTROLLED WRITEBACK
 |---|---|
 | **ISSUER CREDENTIAL** | Certificate/credential has issuer-backed evidence or verification reference in the supplied record |
 | **SUPPLIED ISSUER EVIDENCE** | Credential image/PDF supplied by the credential owner and visibly attributed to the issuer |
+| **CREDLY BADGE SOURCE** | Credly profile/badge wallet is registered; individual badges require metadata-level reconciliation before counting |
+| **CREDLY SKILLS SOURCE** | Skills Wallet source is registered; skill labels are not automatically certifications |
 | **LIBRARY-REFERENCED** | Record appears in stored professional documents but a separate issuer certificate has not yet been attached to this repository |
 | **PROFILE-LISTED** | Public professional-profile listing retained as evidence |
 | **HISTORICAL — EXPIRED** | Credential is part of the professional history but is not active |
@@ -160,13 +194,13 @@ Never commit Foundry tokens, OAuth secrets, passkeys, cookies, passwords, client
 
 ## Operational rule
 
-> **The badge identifies the pathway. The ledger proves the credential history. Platform evidence proves account access. Live authorization determines what ZYRA may do. The audit trail proves what happened.**
+> **The badge identifies the pathway. The credential ledger proves the credential history. Credly enriches verified digital-badge and skills evidence. Platform evidence proves account access. Live authorization determines what ZYRA may do. The audit trail proves what happened.**
 
 ## Security boundary
 
-ZYRA is intended for authorized defensive security, engineering, data, research, and automation workflows. The credential pathway must not be used to impersonate an external organization, bypass authentication, forge entitlement, represent expired credentials as current, or represent coursework as a license.
+ZYRA is intended for authorized defensive security, engineering, data, research, and automation workflows. The credential pathway must not be used to impersonate an external organization, bypass authentication, forge entitlement, represent expired credentials as current, or represent skills/coursework as licenses.
 
 ---
 
-<p align="center"><strong>ZYRA — AUDITED CREDENTIAL PATHWAY</strong></p>
-<p align="center">identity • credentials • provenance • access • authorization • audit</p>
+<p align="center"><strong>ZYRA — AUDITED CREDENTIAL + SKILLS PATHWAY</strong></p>
+<p align="center">identity • credentials • skills • provenance • access • authorization • audit</p>
