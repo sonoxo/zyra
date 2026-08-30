@@ -8,6 +8,10 @@ import {
   contractopsOpportunities,
   contractopsRegistrations,
 } from "@shared/contractops-schema";
+import {
+  buildOpportunityEvidenceMatrix,
+  ZYRA_CONTRACTOPS_EVIDENCE_CATALOG,
+} from "@shared/contractops-evidence";
 
 const REGISTRATION_SYSTEMS = ["SAM", "UEI", "CAGE", "SBIR_STTR", "DSIP", "GRANTS_GOV"] as const;
 const REGISTRATION_STATES = ["PENDING", "ACTIVE", "ACTION_REQUIRED", "EXPIRED", "NOT_STARTED"] as const;
@@ -39,6 +43,10 @@ function normalizeRequirements(input?: string): string[] {
     .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
     .filter(Boolean)
     .slice(0, 100);
+}
+
+function requirementArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
 }
 
 async function writeAudit(req: Request, action: string, resourceType: string, resourceId?: string, details?: Record<string, unknown>) {
@@ -156,6 +164,7 @@ export function registerContractOpsRoutes(app: Express): void {
       setAside: parsed.data.setAside || null,
       summary: parsed.data.summary || null,
       requirements,
+      evidenceMatches: [],
       status: "CAPTURED",
       bidDecision: "UNDER_REVIEW",
       evidenceCoverageReady: false,
@@ -171,6 +180,54 @@ export function registerContractOpsRoutes(app: Express): void {
     return res.status(201).json({ opportunity });
   });
 
+  app.get("/api/contractops/evidence-catalog", requireAuth, (_req: Request, res: Response) => {
+    return res.json({
+      authority: "SUPPORTING_EVIDENCE_ONLY",
+      candidates: ZYRA_CONTRACTOPS_EVIDENCE_CATALOG,
+      warning: "Evidence candidates support human proposal review. They are not government credentials, clearances, contract eligibility determinations, or agency acceptance.",
+    });
+  });
+
+  app.post("/api/contractops/opportunities/:id/evidence-match", requireAuth, async (req: Request, res: Response) => {
+    const [opportunity] = await db
+      .select()
+      .from(contractopsOpportunities)
+      .where(and(
+        eq(contractopsOpportunities.id, req.params.id),
+        eq(contractopsOpportunities.organizationId, req.user!.organizationId),
+      ))
+      .limit(1);
+
+    if (!opportunity) return res.status(404).json({ message: "Opportunity not found" });
+
+    const requirements = requirementArray(opportunity.requirements);
+    if (requirements.length === 0) {
+      return res.status(400).json({ message: "Add at least one requirement before running evidence matching" });
+    }
+
+    const matrix = buildOpportunityEvidenceMatrix(requirements);
+    const [updated] = await db
+      .update(contractopsOpportunities)
+      .set({
+        evidenceMatches: matrix.matches,
+        evidenceCoverageReady: matrix.ready,
+        status: matrix.ready ? "EVIDENCE_READY" : "EVIDENCE_GAPS",
+        updatedAt: new Date(),
+      })
+      .where(eq(contractopsOpportunities.id, opportunity.id))
+      .returning();
+
+    await writeAudit(req, "contractops.evidence.matched", "federal_opportunity", opportunity.id, {
+      requirementCount: requirements.length,
+      supportedCount: matrix.supportedCount,
+      gapCount: matrix.gapCount,
+      coveragePercent: matrix.coveragePercent,
+      ready: matrix.ready,
+    });
+
+    return res.json({ opportunity: updated, matrix });
+  });
+
   app.get("/api/contractops/summary", requireAuth, async (req: Request, res: Response) => {
     const [registrationRows, opportunities] = await Promise.all([
       db.select().from(contractopsRegistrations).where(eq(contractopsRegistrations.organizationId, req.user!.organizationId)),
@@ -182,6 +239,7 @@ export function registerContractOpsRoutes(app: Express): void {
       cage: cage ? { status: cage.status, identifier: cage.identifier, verificationSource: cage.verificationSource } : { status: "PENDING", identifier: null, verificationSource: null },
       opportunityCount: opportunities.length,
       submissionReadyCount: opportunities.filter((row) => row.status === "SUBMISSION_READY").length,
+      evidenceReadyCount: opportunities.filter((row) => row.evidenceCoverageReady).length,
       bidCount: opportunities.filter((row) => row.bidDecision === "BID").length,
       noBidCount: opportunities.filter((row) => row.bidDecision === "NO_BID").length,
       evidenceRule: true,
