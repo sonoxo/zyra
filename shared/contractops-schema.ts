@@ -39,6 +39,7 @@ export const contractopsOpportunities = pgTable("contractops_opportunities", {
   summary: text("summary"),
   requirements: jsonb("requirements").notNull().default(sql`'[]'::jsonb`),
   evidenceMatches: jsonb("evidence_matches").notNull().default(sql`'[]'::jsonb`),
+  bidAssessment: jsonb("bid_assessment"),
   status: text("status").notNull().default("CAPTURED"),
   bidDecision: text("bid_decision").notNull().default("UNDER_REVIEW"),
   evidenceCoverageReady: boolean("evidence_coverage_ready").notNull().default(false),
