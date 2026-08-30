@@ -27,9 +27,17 @@ type ContractOpsSummary = {
   cage: { status: string; identifier: string | null; verificationSource: string | null };
   opportunityCount: number;
   submissionReadyCount: number;
+  evidenceReadyCount: number;
   bidCount: number;
   noBidCount: number;
   evidenceRule: boolean;
+};
+
+type EvidenceMatch = {
+  requirement: string;
+  state: "SUPPORTED_CANDIDATE" | "GAP";
+  topScore: number;
+  candidates: Array<{ label: string; domain: string; score: number }>;
 };
 
 type ContractOpsOpportunity = {
@@ -44,6 +52,7 @@ type ContractOpsOpportunity = {
   setAside: string | null;
   summary: string | null;
   requirements: string[];
+  evidenceMatches: EvidenceMatch[];
   status: string;
   bidDecision: string;
   evidenceCoverageReady: boolean;
@@ -128,11 +137,28 @@ export default function ContractOpsPage() {
     },
   });
 
+  const evidenceMutation = useMutation({
+    mutationFn: async (opportunityId: string) => {
+      const response = await apiRequest("POST", `/api/contractops/opportunities/${opportunityId}/evidence-match`, {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["/api/contractops/summary"] });
+      qc.invalidateQueries({ queryKey: ["/api/contractops/opportunities"] });
+      const coverage = data?.matrix?.coveragePercent ?? 0;
+      const gaps = data?.matrix?.gapCount ?? 0;
+      toast({ title: `Evidence coverage ${coverage}%`, description: gaps ? `${gaps} requirement gap${gaps === 1 ? "" : "s"} still need proof.` : "Every captured requirement has at least one supporting evidence candidate." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Evidence matching could not run", description: error?.message || "Add requirements and try again.", variant: "destructive" });
+    },
+  });
+
   const opportunities = opportunitiesData?.opportunities ?? [];
   const readinessCards = [
     { label: "CAGE", value: summary?.cage.status || "PENDING", detail: summary?.cage.identifier ? `Verified identifier: ${summary.cage.identifier}` : "Waiting for issued + verified identifier", tone: "text-amber-500" },
     { label: "Opportunities", value: String(summary?.opportunityCount ?? 0), detail: "Persisted federal opportunity records", tone: "text-cyan-500" },
-    { label: "Submission Ready", value: String(summary?.submissionReadyCount ?? 0), detail: "Human review is required", tone: "text-violet-500" },
+    { label: "Evidence Ready", value: String(summary?.evidenceReadyCount ?? 0), detail: "Every captured requirement has a supporting candidate", tone: "text-violet-500" },
     { label: "Evidence Rule", value: summary?.evidenceRule === false ? "OFF" : "ON", detail: "Material claims require traceable proof", tone: "text-green-500" },
   ];
 
@@ -213,27 +239,62 @@ export default function ContractOpsPage() {
                 <div className="mt-2 text-sm font-semibold">No opportunities captured yet</div>
                 <p className="mt-1 text-xs text-muted-foreground">Use Capture opportunity to store the first real solicitation. ContractOps will not fabricate sample federal records.</p>
               </div>
-            ) : opportunities.map((opportunity) => (
-              <div key={opportunity.id} className="rounded-xl border p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="font-semibold text-sm">{opportunity.title}</div>
-                      <Badge variant="outline" className="text-[10px]">{opportunity.status}</Badge>
-                      <Badge variant="outline" className="text-[10px] text-amber-600">{opportunity.bidDecision.replace(/_/g, " ")}</Badge>
+            ) : opportunities.map((opportunity) => {
+              const matches = Array.isArray(opportunity.evidenceMatches) ? opportunity.evidenceMatches : [];
+              const gapCount = matches.filter((match) => match.state === "GAP").length;
+              return (
+                <div key={opportunity.id} className="rounded-xl border p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-semibold text-sm">{opportunity.title}</div>
+                        <Badge variant="outline" className="text-[10px]">{opportunity.status}</Badge>
+                        <Badge variant="outline" className="text-[10px] text-amber-600">{opportunity.bidDecision.replace(/_/g, " ")}</Badge>
+                        {opportunity.evidenceCoverageReady && <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/20">EVIDENCE READY</Badge>}
+                        {!opportunity.evidenceCoverageReady && matches.length > 0 && <Badge variant="outline" className="text-[10px] text-orange-600">{gapCount} EVIDENCE GAP{gapCount === 1 ? "" : "S"}</Badge>}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{opportunity.agency}{opportunity.solicitationNumber ? ` · ${opportunity.solicitationNumber}` : ""}</div>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                        <span>Deadline: {formatDeadline(opportunity.deadline)}</span>
+                        {opportunity.naics && <span>NAICS: {opportunity.naics}</span>}
+                        {opportunity.psc && <span>PSC: {opportunity.psc}</span>}
+                        <span>Requirements: {Array.isArray(opportunity.requirements) ? opportunity.requirements.length : 0}</span>
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">{opportunity.agency}{opportunity.solicitationNumber ? ` · ${opportunity.solicitationNumber}` : ""}</div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-                      <span>Deadline: {formatDeadline(opportunity.deadline)}</span>
-                      {opportunity.naics && <span>NAICS: {opportunity.naics}</span>}
-                      {opportunity.psc && <span>PSC: {opportunity.psc}</span>}
-                      <span>Requirements: {Array.isArray(opportunity.requirements) ? opportunity.requirements.length : 0}</span>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled={!Array.isArray(opportunity.requirements) || opportunity.requirements.length === 0 || (evidenceMutation.isPending && evidenceMutation.variables === opportunity.id)}
+                        onClick={() => evidenceMutation.mutate(opportunity.id)}
+                      >
+                        {evidenceMutation.isPending && evidenceMutation.variables === opportunity.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <BadgeCheck className="h-3.5 w-3.5 mr-1" />}
+                        Match evidence
+                      </Button>
+                      <Button variant="outline" size="sm" asChild><a href={opportunity.sourceUrl} target="_blank" rel="noreferrer">Source <ExternalLink className="h-3.5 w-3.5 ml-1" /></a></Button>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" asChild><a href={opportunity.sourceUrl} target="_blank" rel="noreferrer">Source <ExternalLink className="h-3.5 w-3.5 ml-1" /></a></Button>
+
+                  {matches.length > 0 && (
+                    <div className="mt-4 border-t pt-3 space-y-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Requirement evidence matrix</div>
+                      {matches.slice(0, 5).map((match, index) => (
+                        <div key={`${opportunity.id}-match-${index}`} className="rounded-lg bg-muted/40 p-2.5">
+                          <div className="flex items-start gap-2 justify-between">
+                            <div className="text-xs font-medium leading-relaxed">{match.requirement}</div>
+                            <Badge variant="outline" className={match.state === "GAP" ? "text-red-600 border-red-500/30" : "text-green-600 border-green-500/30"}>{match.state === "GAP" ? "GAP" : `${match.topScore}% MATCH`}</Badge>
+                          </div>
+                          <div className="mt-1 text-[11px] text-muted-foreground">
+                            {match.candidates?.length ? `Top evidence: ${match.candidates[0].label} · ${match.candidates[0].domain}` : "No supporting ZYRA evidence candidate found yet."}
+                          </div>
+                        </div>
+                      ))}
+                      {matches.length > 5 && <div className="text-[11px] text-muted-foreground">+ {matches.length - 5} more requirement matches stored in ContractOps.</div>}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -241,7 +302,7 @@ export default function ContractOpsPage() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><BadgeCheck className="h-4 w-4 text-green-500" />ZYRA evidence domains</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground mb-3">ContractOps can use the existing evidence-tiered ZYRA credential ledger when a credential actually supports the requirement. Credentials do not automatically grant authorization.</p>
+              <p className="text-xs text-muted-foreground mb-3">ContractOps uses issuer credentials and repository evidence as supporting evidence candidates when the requirement actually matches. Evidence never becomes government authorization automatically.</p>
               <div className="flex flex-wrap gap-2">{credentialDomains.map((domain) => <Badge key={domain} variant="outline">{domain}</Badge>)}</div>
             </CardContent>
           </Card>
@@ -251,7 +312,7 @@ export default function ContractOpsPage() {
               <div>• Never invent SAM, UEI, CAGE, or other registration identifiers.</div>
               <div>• Registration state becomes ACTIVE only after a verification source exists.</div>
               <div>• RVIA badges are repository credentials, not government authority or clearance.</div>
-              <div>• Material proposal claims require traceable evidence.</div>
+              <div>• Evidence matches are proposal-support candidates, not eligibility determinations.</div>
               <div>• External submission remains human-controlled.</div>
             </CardContent>
           </Card>
@@ -273,15 +334,15 @@ export default function ContractOpsPage() {
 
         <div className="space-y-4">
           <Card><CardContent className="p-5"><FileSearch className="h-5 w-5 text-cyan-500" /><div className="mt-3 font-semibold">Opportunity Intake</div><p className="mt-1 text-xs text-muted-foreground">LIVE: source URL, agency, deadline, NAICS/PSC, set-aside, summary, and normalized requirement lines are stored in PostgreSQL.</p><Badge className="mt-4 bg-green-500/10 text-green-600 border-green-500/20">IMPLEMENTED</Badge></CardContent></Card>
-          <Card><CardContent className="p-5"><FileCheck2 className="h-5 w-5 text-violet-500" /><div className="mt-3 font-semibold">Evidence Matching</div><p className="mt-1 text-xs text-muted-foreground">Next: map each captured requirement to ZYRA capabilities, credentials, repository proof, demos, and provenance.</p><Badge variant="outline" className="mt-4">NEXT BUILD</Badge></CardContent></Card>
-          <Card><CardContent className="p-5"><CalendarClock className="h-5 w-5 text-amber-500" /><div className="mt-3 font-semibold">Proposal Control</div><p className="mt-1 text-xs text-muted-foreground">Planned: draft sections, expose blockers, review claims, and track readiness before a human submits.</p><Badge variant="outline" className="mt-4">PLANNED</Badge></CardContent></Card>
+          <Card><CardContent className="p-5"><FileCheck2 className="h-5 w-5 text-violet-500" /><div className="mt-3 font-semibold">Evidence Matching</div><p className="mt-1 text-xs text-muted-foreground">LIVE: deterministic requirement matching uses the ZYRA credential/repository evidence catalog, persists the matrix, and exposes evidence gaps.</p><Badge className="mt-4 bg-green-500/10 text-green-600 border-green-500/20">IMPLEMENTED</Badge></CardContent></Card>
+          <Card><CardContent className="p-5"><CalendarClock className="h-5 w-5 text-amber-500" /><div className="mt-3 font-semibold">Proposal Control</div><p className="mt-1 text-xs text-muted-foreground">Next: Bid / No-Bid scoring, proposal claims, blockers, approval state, and human-controlled submission readiness.</p><Badge variant="outline" className="mt-4">NEXT BUILD</Badge></CardContent></Card>
         </div>
       </section>
 
       <Card>
         <CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between">
-          <div className="flex items-start gap-3"><Building2 className="h-5 w-5 text-primary mt-0.5" /><div><div className="font-semibold">Operational foundation</div><div className="text-xs text-muted-foreground">Organization-scoped PostgreSQL records + authenticated API + audit logging + opportunity intake + ontology/evidence guardrails.</div></div></div>
-          <Badge variant="outline" className="w-fit">v0.2 opportunity intake</Badge>
+          <div className="flex items-start gap-3"><Building2 className="h-5 w-5 text-primary mt-0.5" /><div><div className="font-semibold">Operational ContractOps core</div><div className="text-xs text-muted-foreground">Organization-scoped PostgreSQL records + authenticated API + audit logging + opportunity intake + deterministic credential/repository evidence matching.</div></div></div>
+          <Badge variant="outline" className="w-fit">v0.3 evidence matching</Badge>
         </CardContent>
       </Card>
     </div>
