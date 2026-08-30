@@ -1,120 +1,154 @@
 <p align="center">
-  <img src="docs/assets/zyra-credential-pathway.svg" width="520" alt="ZYRA Credential Pathway identity seal" />
+  <img src="docs/assets/zyra-credential-pathway.svg" width="560" alt="ZYRA Application Credential" />
 </p>
 
-<h1 align="center">ZYRA Credential Pathway</h1>
+<h1 align="center">ZYRA Application Credential Pathway</h1>
 
-<p align="center"><strong>Owner-controlled identity, training evidence, repository provenance, and live-platform authentication combined into one auditable access chain.</strong></p>
+<p align="center"><strong>Identity → training evidence → repository provenance → authenticated platform access → governed action → audit.</strong></p>
 
 ---
 
-## Identity anchor
+## Credential owner
 
-**Credential owner:** Douglas Brown  
-**ZYRA identity mark:** `docs/assets/zyra-credential-pathway.svg`  
-**Owner attestation:** Douglas Brown states that the ZYRA badge/seal used for this pathway is uniquely assigned to him.
+**Owner:** Douglas Brown  
+**Project:** ZYRA  
+**Repository:** https://github.com/sonoxo/zyra  
+**Application credential asset:** `docs/assets/zyra-credential-pathway.svg`
 
-The ZYRA seal is the project identity anchor for this pathway. It is an **internal ZYRA identity mark** and is not, by itself, proof of government employment, federal authority, or third-party platform authorization.
+The ZYRA badge is the project-controlled identity mark for this credential pathway. It is designed to bind the owner, evidence ledger, repository provenance, and authenticated runtime evidence into one auditable application-access chain.
 
-## Palantir training evidence
+The badge is not a bearer token, password, government credential, or substitute for third-party authentication.
 
-The following Palantir Learn completion credentials are used as the training-evidence layer of the pathway.
+## Credential stack
 
-| Credential | Status | Issued | Certificate | Verification |
-|---|---|---:|---|---|
-| **Introduction to Foundry & AIP for Enterprise Organizations** | **COMPLETED** | July 3, 2026 | `7ogvo4qo4aad` | https://verify.skilljar.com/c/7ogvo4qo4aad |
-| **Speedrun: Data Science Fundamentals** | **COMPLETED** | July 3, 2026 | `tt9ue6hsm96y` | https://verify.skilljar.com/c/tt9ue6hsm96y |
+| Domain | Credential | Evidence state | Issued / validity | Verification reference |
+|---|---|---|---|---|
+| **Palantir Foundry** | **Palantir Foundry Aware** | **ISSUER CREDENTIAL** | Valid Jun 24, 2026 → Jun 24, 2028; score 90% | `iyatkacnyv87` — https://verify.skilljar.com/c/iyatkacnyv87 |
+| **Palantir Foundry Security** | **Deep Dive: Data Protection Tools in Foundry** | **ISSUER CREDENTIAL** | Jul 23, 2026 | `gdirvobazx2y` — https://verify.skilljar.com/c/gdirvobazx2y |
+| **Palantir Foundry / AIP** | **Introduction to Foundry & AIP for Enterprise Organizations** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `7ogvo4qo4aad` — https://verify.skilljar.com/c/7ogvo4qo4aad |
+| **Palantir Data Science** | **Speedrun: Data Science Fundamentals** | **ISSUER CREDENTIAL** | Jul 3, 2026 | `tt9ue6hsm96y` — https://verify.skilljar.com/c/tt9ue6hsm96y |
+| **Cybersecurity** | **Google Cybersecurity Professional Certificate — 9 courses** | **SUPPLIED CREDENTIAL EVIDENCE** | Jul 29, 2026 | Coursera professional certificate supplied by credential owner |
+| **Quantum / Machine Learning** | **IBM Quantum Machine Learning** | **SUPPLIED CREDENTIAL EVIDENCE** | Jun 26, 2026 | Credly badge supplied by credential owner |
+| **Linux / Systems** | **Red Hat System Administration I — Training Course Attendance** | **SUPPLIED TRAINING EVIDENCE** | 2026 evidence supplied | Red Hat training credential supplied by credential owner |
+| **Research / Funding** | **Funding Hacks for Researchers — Elsevier Researcher Academy** | **SUPPLIED CREDENTIAL EVIDENCE** | Jun 30, 2026 | Completion certificate supplied by credential owner |
+| **Education / Communication** | **TED-Ed Idea Workshop** | **SUPPLIED CREDENTIAL EVIDENCE** | Completion evidence supplied | Certificate issued to 24k-Media Productions |
 
-These certificates prove completion of the named Palantir Learn coursework. They are credential evidence in the ZYRA pathway; they are **not stored or treated as bearer tokens**.
+### What this stack establishes
+
+The credential ledger demonstrates documented training across:
+
+- Palantir Foundry and AIP fundamentals
+- Foundry-aware platform concepts
+- Foundry data-protection controls
+- data science
+- cybersecurity operations and defensive tooling
+- Linux/system administration
+- quantum machine learning
+- research funding
+- technical communication and education
+
+It does **not** convert training credentials into unrestricted platform permissions. Runtime authority is determined by the target platform's authenticated authorization controls.
 
 ## ZYRA verification chain
 
-ZYRA treats credential verification as a chain rather than a single image check:
-
 ```text
-ZYRA UNIQUE IDENTITY MARK
+ZYRA APPLICATION CREDENTIAL
         ↓
-PALANTIR LEARN COMPLETION EVIDENCE
+CREDENTIAL OWNER: DOUGLAS BROWN
         ↓
-GITHUB OWNER + REPOSITORY PROVENANCE
+ISSUER / SUPPLIED TRAINING EVIDENCE
         ↓
-AUTHORIZED FOUNDRY/AIP AUTHENTICATION
+GITHUB REPOSITORY + COMMIT PROVENANCE
         ↓
-ONTOLOGY / ACTION VALIDATION
+AUTHORIZED FOUNDRY / AIP AUTHENTICATION
+        ↓
+ONTOLOGY / OBJECT / ACTION VALIDATION
+        ↓
+HUMAN-GOVERNED EXECUTION
         ↓
 AUDIT EVIDENCE + CONTROLLED WRITEBACK
 ```
 
-### Gate 1 — ZYRA identity mark
+## Verification gates
 
-The ZYRA badge/seal identifies the credential pathway owner inside the ZYRA project.
+### Gate 1 — Application credential
 
-**State:** `OWNER-ATTESTED / PROJECT-CONTROLLED`
+The ZYRA application badge binds the pathway to the project and credential owner.
 
-### Gate 2 — Palantir Learn completion
+**State:** `PROJECT-CONTROLLED / OWNER-BOUND`
 
-The certificate identifiers and public Skilljar verification links establish the training-completion layer.
+### Gate 2 — Training and professional evidence
 
-**State:** `VERIFIED TRAINING EVIDENCE`
+Issuer certificate IDs, public verification references when supplied, and owner-provided completion evidence establish the training layer.
+
+**State:** `EVIDENCE-BACKED`
 
 ### Gate 3 — Repository provenance
 
-The active GitHub repository, signed-in owner permissions, commit history, CI output, and evidence artifacts establish which ZYRA code is being executed.
-
-**Repository:** https://github.com/sonoxo/zyra
+GitHub ownership, branch/commit provenance, CI output, tests, SBOMs, and retained security artifacts establish which ZYRA implementation is being executed.
 
 **State:** `VERSION-CONTROLLED`
 
-### Gate 4 — Live Foundry/AIP authentication
+### Gate 4 — Runtime authentication
 
-A live Foundry/AIP environment must still authenticate the user or application using the platform-supported identity/token mechanism.
+A live external platform must authenticate ZYRA or its authorized operator through that platform's supported mechanism.
 
-ZYRA never substitutes an image, certificate number, or README claim for a real authenticated session.
+**State:** `PASS ONLY WHEN AUTHENTICATED`
 
-**State:** `RUNTIME-VERIFIED WHEN AUTHENTICATION SUCCEEDS`
+### Gate 5 — Authorization validation
 
-### Gate 5 — Ontology/action validation
-
-Before governed writeback, ZYRA should perform a read or validate-only action and preserve the returned evidence.
+ZYRA performs read/validate operations before governed writeback and records returned evidence.
 
 **State:** `FAIL-CLOSED UNTIL VERIFIED`
 
+### Gate 6 — Governed action
+
+Write operations require the permissions, human-approval rules, and action contracts configured for the target platform.
+
+**State:** `AUTHORIZED ACTIONS ONLY`
+
 ## Foundry connection contract
 
-The current ZYRA Foundry bridge expects server-side configuration such as:
+The current ZYRA Foundry bridge uses server-side configuration:
 
 ```text
 FOUNDRY_BASE_URL=<authorized Foundry environment>
 FOUNDRY_TOKEN=<authorized server-side credential>
 ```
 
-Never commit real Foundry tokens, OAuth secrets, passkeys, session cookies, passwords, or private credentials to GitHub.
+Never commit Foundry tokens, OAuth secrets, passkeys, cookies, passwords, client secrets, or other bearer credentials to GitHub.
 
-The credential pathway verifies **who/what is authorized and what evidence supports the authorization**. It does not bypass Palantir authentication.
+The credential pathway supplies evidence and provenance. Authentication and authorization remain platform-enforced.
 
-## Evidence states
+## Runtime evidence states
 
-| Evidence | ZYRA status |
+| Evidence | ZYRA state |
 |---|---|
-| Unique ZYRA badge/seal ownership | **OWNER-ATTESTED** |
-| Palantir Learn: Foundry & AIP completion | **VERIFIED** |
-| Palantir Learn: Data Science Fundamentals completion | **VERIFIED** |
-| GitHub repository ownership/provenance | **VERSION-CONTROLLED** |
-| Foundry/AIP live tenant access | **VERIFY AT RUNTIME** |
+| ZYRA application credential | **PROJECT-CONTROLLED** |
+| Palantir Foundry Aware | **ISSUER CREDENTIAL** |
+| Palantir Data Protection Tools | **ISSUER CREDENTIAL** |
+| Palantir Foundry & AIP | **ISSUER CREDENTIAL** |
+| Palantir Data Science Fundamentals | **ISSUER CREDENTIAL** |
+| Google Cybersecurity | **SUPPLIED CREDENTIAL EVIDENCE** |
+| IBM Quantum Machine Learning | **SUPPLIED CREDENTIAL EVIDENCE** |
+| Red Hat System Administration I | **SUPPLIED TRAINING EVIDENCE** |
+| Elsevier Research Funding | **SUPPLIED CREDENTIAL EVIDENCE** |
+| TED-Ed Idea Workshop | **SUPPLIED CREDENTIAL EVIDENCE** |
+| GitHub code provenance | **VERSION-CONTROLLED** |
+| Live Foundry/AIP tenant authentication | **VERIFY AT RUNTIME** |
 | Foundry token/session | **SECRET — NEVER COMMIT** |
-| Ontology/action access | **VERIFY WITH AUTHENTICATED CALL** |
+| Ontology/object/action authorization | **VERIFY WITH AUTHENTICATED CALL** |
 | Governed writeback | **ONLY AFTER AUTHORIZATION + VALIDATION** |
 
 ## Operational rule
 
-**The badge starts the pathway; the evidence chain completes it.**
-
-For ZYRA, Douglas Brown's supplied identity badge and Palantir Learn completion credentials are recognized as project credential evidence. Live platform permissions are accepted only when the target platform confirms them through an authenticated session or API call.
+> **The badge identifies the pathway. The credential ledger establishes training evidence. The live platform establishes access. The audit trail proves what happened.**
 
 ## Security boundary
 
-ZYRA is intended for authorized defensive, engineering, data, and automation workflows. Credential verification must never be used to impersonate a government agency, bypass third-party access controls, forge entitlement, or represent training completion as permissions the external platform has not actually granted.
+ZYRA is intended for authorized defensive security, engineering, data, research, and automation workflows. The credential pathway must not be used to impersonate an external organization, bypass authentication, forge entitlement, or represent training completion as permissions the external platform has not granted.
 
 ---
 
-<p align="center"><strong>ZYRA — identity → evidence → authentication → authorization → audit.</strong></p>
+<p align="center"><strong>ZYRA — VERIFIED CREDENTIAL PATHWAY</strong></p>
+<p align="center">identity • evidence • provenance • authentication • authorization • audit</p>
