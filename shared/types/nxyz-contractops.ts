@@ -8,6 +8,7 @@ export type FederalRegistrationKind =
   | "OTHER";
 
 export type RegistrationState =
+  | "NOT_STARTED"
   | "NOT_RECORDED"
   | "PENDING"
   | "ACTIVE"
@@ -16,9 +17,13 @@ export type RegistrationState =
 
 export type OpportunityState =
   | "DISCOVERED"
+  | "CAPTURED"
+  | "EVIDENCE_READY"
+  | "EVIDENCE_GAPS"
+  | "SCORED"
   | "QUALIFYING"
-  | "BID"
-  | "NO_BID"
+  | "BID_CONFIRMED"
+  | "NO_BID_CONFIRMED"
   | "DRAFTING"
   | "REVIEW"
   | "SUBMISSION_READY"
@@ -28,6 +33,7 @@ export type OpportunityState =
 export type RequirementState = "UNMAPPED" | "PARTIAL" | "SUPPORTED" | "BLOCKED";
 export type EvidenceTier = "ISSUER" | "REPOSITORY" | "PLATFORM_ACCESS" | "SELF_REPORTED";
 export type ReviewDecision = "PENDING" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
+export type HumanBidDecision = "UNDER_REVIEW" | "BID" | "NO_BID";
 
 export interface FederalRegistration {
   id: string;
@@ -50,6 +56,7 @@ export interface ContractOpportunity {
   psc?: string[];
   setAside?: string;
   state: OpportunityState;
+  bidDecision: HumanBidDecision;
   capturedAt: string;
 }
 
@@ -86,13 +93,20 @@ export interface ContractEvidence {
 
 export interface BidAssessment {
   opportunityId: string;
-  technicalFit: number;
+  advisoryOnly: true;
+  technicalFitProxy: number;
   evidenceCoverage: number;
   registrationReadiness: number;
-  deadlineRisk: number;
-  overallFit: number;
+  deadlineReadiness: number;
+  overallScore: number;
   blockers: string[];
-  recommendation: "BID" | "NO_BID" | "REVIEW";
+  recommendation: "BID_CANDIDATE" | "NO_BID_RISK" | "HUMAN_REVIEW";
+  humanDecision?: {
+    decision: "BID" | "NO_BID";
+    rationale: string;
+    decidedAt: string;
+    decidedByUserId: string;
+  };
 }
 
 export interface ProposalWorkspace {
@@ -120,10 +134,19 @@ export interface ContractOpsSnapshot {
   proposals: ProposalWorkspace[];
 }
 
+export const CONTRACTOPS_SCORING_WEIGHTS = {
+  technicalFitProxy: 35,
+  evidenceCoverage: 30,
+  registrationReadiness: 20,
+  deadlineReadiness: 15,
+} as const;
+
 export const CONTRACTOPS_GUARDRAILS = {
   neverInventRegistrationIdentifiers: true,
   credentialsDoNotEqualAuthorization: true,
+  readinessScoresAreAdvisoryOnly: true,
   requireEvidenceForProposalClaims: true,
+  requireHumanBidDecision: true,
   requireHumanReviewBeforeSubmission: true,
   neverAutoSubmitToGovernmentPortals: true,
 } as const;
