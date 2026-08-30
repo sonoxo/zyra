@@ -7,6 +7,7 @@ import { registerZyraShieldRoutes } from "./zyra-shield";
 import { registerManagedBrowserRoutes } from "./managed-browser";
 import { registerContractOpsRoutes } from "./contractops";
 import { registerContractOpsProposalRoutes } from "./contractops-proposals";
+import { registerContractOpsPackageRoutes } from "./contractops-package";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -166,6 +167,7 @@ app.use((req, res, next) => {
   registerManagedBrowserRoutes(app);
   registerContractOpsRoutes(app);
   registerContractOpsProposalRoutes(app);
+  registerContractOpsPackageRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -209,6 +211,7 @@ app.use((req, res, next) => {
         "managed-profile-browser",
         "nxyz-contractops",
         "nxyz-contractops-proposals",
+        "nxyz-contractops-package-builder",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
