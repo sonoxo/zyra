@@ -45,12 +45,71 @@ export interface AipCommunityProject {
   auditEvents?: AuditEvent[];
 }
 
+export type NxyzEcosystemNode =
+  | "GPT-DOUG-LLM"
+  | "ZYRA"
+  | "XUNIA_GLASS_ONION"
+  | "NXYZ"
+  | "RVIA_REPOSITORY_INTELLIGENCE"
+  | "RVAI";
+
 export interface AipEcosystemBinding {
-  producer: "GPT-DOUG-LLM" | "ZYRA" | "XUNIA_GLASS_ONION" | "RVAI";
-  consumer: "GPT-DOUG-LLM" | "ZYRA" | "XUNIA_GLASS_ONION" | "RVAI";
+  producer: NxyzEcosystemNode;
+  consumer: NxyzEcosystemNode;
   contract: string;
   version: string;
   authorizationRequired: boolean;
 }
 
+export type ApolloRuntimeAccessState = "UNVERIFIED" | "CONFIGURED" | "AUTHORIZED" | "DEGRADED";
+
+export type ApolloSignalKind =
+  | "ENVIRONMENT_HEALTH"
+  | "PRODUCT_RELEASE_STATE"
+  | "DEPLOYMENT_ENTITY_STATE"
+  | "PLAN_STATE"
+  | "CHANGE_REQUEST_STATE"
+  | "RELEASE_PROMOTION_STATE"
+  | "DEPLOYMENT_CONSTRAINT"
+  | "MAINTENANCE_WINDOW"
+  | "RUNTIME_TELEMETRY";
+
+export interface ApolloIntelligenceSignal {
+  id: string;
+  kind: ApolloSignalKind;
+  source: "PALANTIR_APOLLO";
+  environment?: string;
+  product?: string;
+  release?: string;
+  deploymentEntity?: string;
+  observedAt: string;
+  accessState: ApolloRuntimeAccessState;
+  evidence?: EvidenceObject[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface ApolloDeploymentRiskAssessment {
+  id: string;
+  signalIds: string[];
+  risk: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | "UNKNOWN";
+  confidence: number;
+  reasons: string[];
+  recommendedAction?: string;
+  requiresHumanApproval: boolean;
+  authorization?: AuthorizationState;
+  auditEvents?: AuditEvent[];
+}
+
+export interface NxyzAipApolloContext {
+  platform: "NXYZ";
+  ontologyId: "nxyz:aip-apollo-intelligence";
+  aipFoundryConfigured: boolean;
+  apolloAccessState: ApolloRuntimeAccessState;
+  ontologyObjects?: AipOntologyObjectType[];
+  ontologyActions?: AipOntologyAction[];
+  apolloSignals?: ApolloIntelligenceSignal[];
+  assessments?: ApolloDeploymentRiskAssessment[];
+}
+
 export const PALANTIR_AIP_COMMUNITY_SOURCE = "https://github.com/palantir/aip-community-registry" as const;
+export const NXYZ_AIP_APOLLO_ONTOLOGY_ID = "nxyz:aip-apollo-intelligence" as const;
