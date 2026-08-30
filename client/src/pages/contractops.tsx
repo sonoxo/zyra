@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RegistrationControl } from "@/components/contractops/RegistrationControl";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { AuthUser } from "@/lib/auth";
@@ -313,6 +314,8 @@ export default function ContractOpsPage() {
         ))}
       </section>
 
+      <RegistrationControl canEdit={canDecide} />
+
       <section className="grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2 text-base"><FileSearch className="h-4 w-4 text-cyan-500" />Opportunity queue</CardTitle></CardHeader>
@@ -442,7 +445,7 @@ export default function ContractOpsPage() {
         </div>
       </section>
 
-      <Card><CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between"><div className="flex items-start gap-3"><Building2 className="h-5 w-5 text-primary mt-0.5" /><div><div className="font-semibold">Operational ContractOps core</div><div className="text-xs text-muted-foreground">Organization-scoped PostgreSQL + authenticated API + audit logs + opportunity intake + evidence matrix + advisory scoring + human BID / NO BID decision.</div></div></div><Badge variant="outline" className="w-fit">v0.4 bid readiness</Badge></CardContent></Card>
+      <Card><CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4 justify-between"><div className="flex items-start gap-3"><Building2 className="h-5 w-5 text-primary mt-0.5" /><div><div className="font-semibold">Operational ContractOps core</div><div className="text-xs text-muted-foreground">Organization-scoped PostgreSQL + authenticated API + registration control + audit logs + opportunity intake + evidence matrix + advisory scoring + human BID / NO BID decision.</div></div></div><Badge variant="outline" className="w-fit">v0.5 registration control</Badge></CardContent></Card>
 
       <Dialog open={Boolean(decisionState)} onOpenChange={(open) => { if (!open) setDecisionState(null); }}>
         <DialogContent>
