@@ -3,7 +3,7 @@ name: RVIA Badge Gate
 on:
   pull_request:
     paths:
-      - 'docs/credentials/applications/**.json'
+      - 'docs/credentials/applications/**/*.json'
       - 'docs/credentials/rvia-badge-registry.json'
       - 'scripts/rvia-badge-gate.mjs'
       - 'shared/ontology/**'
