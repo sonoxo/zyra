@@ -16,6 +16,7 @@
 **LinkedIn:** https://www.linkedin.com/in/douglasbrownjr/  
 **Credly profile A:** https://www.credly.com/users/douglas-brown-jr.3b8f5b3d  
 **Credly profile B:** https://www.credly.com/users/douglas-brown.348b51c1  
+**Credly profile C:** https://www.credly.com/users/douglas-brown-jr  
 **Application credential asset:** `docs/assets/zyra-credential-pathway.svg`
 
 This ledger is evidence-tiered. A certificate image, issuer verification link, Credly badge record, Credly Skills Wallet entry, public profile listing, resume/library reference, and live platform entitlement are different evidence classes and are not collapsed into one status.
@@ -27,7 +28,7 @@ This ledger is evidence-tiered. A certificate image, issuer verification link, C
 - **9 issuer/supplied primary records**
 - **6 additional library-referenced professional-development records**
 - **10 public LinkedIn historical/profile-listed records**
-- **2 Credly profiles registered as digital-credential evidence sources**
+- **3 Credly profiles registered as digital-credential evidence sources**
 - **2 Credly Skills Wallets registered as skills-evidence sources**
 - **1 separate Palantir AIP Now platform-access record** — tracked as access evidence, not counted as a training credential
 
@@ -65,12 +66,13 @@ These nine course completions are components of the single Google Cybersecurity 
 
 ## Credly badge-wallet sources
 
-ZYRA now tracks both supplied Credly identities as first-class digital-credential sources.
+ZYRA now tracks all three supplied Credly identities as first-class digital-credential sources.
 
 | Credly source | Public verification profile | Owner badge-management reference | Status |
 |---|---|---|---|
 | **Credly A** | https://www.credly.com/users/douglas-brown-jr.3b8f5b3d | https://www.credly.com/users/douglas-brown-jr.3b8f5b3d/edit/badges/credly | **SOURCE REGISTERED** |
 | **Credly B** | https://www.credly.com/users/douglas-brown.348b51c1 | https://www.credly.com/users/douglas-brown.348b51c1/edit/badges/credly | **SOURCE REGISTERED** |
+| **Credly C** | https://www.credly.com/users/douglas-brown-jr | https://www.credly.com/users/douglas-brown-jr/edit/badges/credly | **SOURCE REGISTERED** |
 
 The `/edit/badges/credly` URLs are account-management routes supplied by the credential owner. They are recorded as management references, not presented as public verification pages. Individual Credly badges are added to the credential count only after their badge title, issuer, issue state, and badge URL can be reconciled against the existing ledger.
 
@@ -139,7 +141,7 @@ The reconciled stack documents evidence across:
 - research funding and Elsevier peer-review training
 - psychology coursework and CPD study
 - technical communication / TED-Ed education work
-- Credly digital-badge evidence across two owner-supplied profiles
+- Credly digital-badge evidence across three owner-supplied profiles
 - Credly skills-wallet evidence across two owner-supplied profiles
 - fitness coaching, behavior-change programming, client retention, and group-training design
 - historical CPR/AED/first-aid and personal-training certifications
