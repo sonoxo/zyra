@@ -13,13 +13,14 @@
 **Owner:** Douglas Brown  
 **Project:** ZYRA  
 **Repository:** https://github.com/sonoxo/zyra  
+**LinkedIn:** https://www.linkedin.com/in/douglasbrownjr/  
 **Application credential asset:** `docs/assets/zyra-credential-pathway.svg`
 
-The ZYRA badge is the project-controlled identity mark for this credential pathway. It is designed to bind the owner, evidence ledger, repository provenance, and authenticated runtime evidence into one auditable application-access chain.
+The ZYRA badge is the project-controlled identity mark for this credential pathway. It binds the owner, evidence ledger, repository provenance, and authenticated runtime evidence into one auditable application-access chain.
 
 The badge is not a bearer token, password, government credential, or substitute for third-party authentication.
 
-## Credential stack
+## Current technical / professional credential stack
 
 | Domain | Credential | Evidence state | Issued / validity | Verification reference |
 |---|---|---|---|---|
@@ -33,21 +34,37 @@ The badge is not a bearer token, password, government credential, or substitute 
 | **Research / Funding** | **Funding Hacks for Researchers — Elsevier Researcher Academy** | **SUPPLIED CREDENTIAL EVIDENCE** | Jun 30, 2026 | Completion certificate supplied by credential owner |
 | **Education / Communication** | **TED-Ed Idea Workshop** | **SUPPLIED CREDENTIAL EVIDENCE** | Completion evidence supplied | Certificate issued to 24k-Media Productions |
 
-### What this stack establishes
+## LinkedIn public-profile credential ledger
 
-The credential ledger demonstrates documented training across:
+The following credentials are publicly listed on `linkedin.com/in/douglasbrownjr/`. Expired credentials are retained as historical evidence and are **not** represented as currently active licenses.
 
-- Palantir Foundry and AIP fundamentals
-- Foundry-aware platform concepts
-- Foundry data-protection controls
-- data science
+| Domain | Credential | Issuer | State | Issued / expiration | Credential ID |
+|---|---|---|---|---|---|
+| **Fitness / Behavior Change** | **Behavior Change in Exercise** | Personal Training Academy | **PROFILE-LISTED** | Feb 2018 | `18943` |
+| **Fitness / Program Design** | **Creating Behavior-Based Programs** | Personal Training Academy | **PROFILE-LISTED** | Feb 2018 | `18943` |
+| **Fitness / Business** | **Gaining and Retaining Clients** | Personal Training Academy | **PROFILE-LISTED** | Feb 2018 | `18943` |
+| **Fitness / Coaching** | **Motivation, Movement, and Program Design** | Personal Training Academy | **PROFILE-LISTED** | Feb 2018 | `18943` |
+| **Fitness / Group Training** | **Personalizing Your Group Training Eperience** | Personal Training Academy | **PROFILE-LISTED** | Feb 2018 | `18943` |
+| **Psychology** | **Abnormal Psychology Course** | Udemy Academy | **PROFILE-LISTED** | Dec 2014 | `UC-49FP11CN` |
+| **Psychology** | **Developmental Psychology Course** | Udemy Academy | **PROFILE-LISTED** | Dec 2014 | `UC-PVZQI3ZP` |
+| **Emergency Response** | **CPR, AED & FIRST AID** | National Health Care Provider Solutions | **HISTORICAL — EXPIRED** | Feb 2018 → Feb 2020 | `Douglas Brown` |
+| **Fitness** | **Smart Fitness Personal Trainer Certification** | Smart Fitness LLC | **HISTORICAL — EXPIRED** | May 2016 → May 2018 | `SFPT0509169899259` |
+| **Fitness** | **Certified Fitness Trainer** | International Sports Sciences Association | **HISTORICAL — EXPIRED** | Feb 2014 → Feb 2016 | `609949` |
+
+## Credential coverage
+
+The combined ZYRA credential ledger documents evidence across:
+
+- Palantir Foundry, AIP, data protection, and data science
 - cybersecurity operations and defensive tooling
-- Linux/system administration
+- Linux and system administration
 - quantum machine learning
-- research funding
-- technical communication and education
+- research funding and technical communication
+- fitness coaching, behavior-change programming, client retention, and group-training design
+- abnormal and developmental psychology coursework
+- historical CPR/AED/first-aid and personal-training certifications
 
-It does **not** convert training credentials into unrestricted platform permissions. Runtime authority is determined by the target platform's authenticated authorization controls.
+Training history does **not** convert an expired credential into an active license or convert coursework into unrestricted third-party platform permissions. Runtime authority remains determined by the target platform's authenticated authorization controls.
 
 ## ZYRA verification chain
 
@@ -56,7 +73,7 @@ ZYRA APPLICATION CREDENTIAL
         ↓
 CREDENTIAL OWNER: DOUGLAS BROWN
         ↓
-ISSUER / SUPPLIED TRAINING EVIDENCE
+ISSUER / SUPPLIED / PUBLIC PROFILE EVIDENCE
         ↓
 GITHUB REPOSITORY + COMMIT PROVENANCE
         ↓
@@ -79,7 +96,7 @@ The ZYRA application badge binds the pathway to the project and credential owner
 
 ### Gate 2 — Training and professional evidence
 
-Issuer certificate IDs, public verification references when supplied, and owner-provided completion evidence establish the training layer.
+Issuer certificate IDs, public verification references when supplied, owner-provided completion evidence, and public LinkedIn credential listings establish the training/professional-evidence layer.
 
 **State:** `EVIDENCE-BACKED`
 
@@ -134,6 +151,8 @@ The credential pathway supplies evidence and provenance. Authentication and auth
 | Red Hat System Administration I | **SUPPLIED TRAINING EVIDENCE** |
 | Elsevier Research Funding | **SUPPLIED CREDENTIAL EVIDENCE** |
 | TED-Ed Idea Workshop | **SUPPLIED CREDENTIAL EVIDENCE** |
+| LinkedIn public credential ledger | **PUBLIC PROFILE EVIDENCE** |
+| Expired LinkedIn-listed licenses | **HISTORICAL ONLY** |
 | GitHub code provenance | **VERSION-CONTROLLED** |
 | Live Foundry/AIP tenant authentication | **VERIFY AT RUNTIME** |
 | Foundry token/session | **SECRET — NEVER COMMIT** |
@@ -142,11 +161,11 @@ The credential pathway supplies evidence and provenance. Authentication and auth
 
 ## Operational rule
 
-> **The badge identifies the pathway. The credential ledger establishes training evidence. The live platform establishes access. The audit trail proves what happened.**
+> **The badge identifies the pathway. The credential ledger establishes evidence. The live platform establishes access. The audit trail proves what happened.**
 
 ## Security boundary
 
-ZYRA is intended for authorized defensive security, engineering, data, research, and automation workflows. The credential pathway must not be used to impersonate an external organization, bypass authentication, forge entitlement, or represent training completion as permissions the external platform has not granted.
+ZYRA is intended for authorized defensive security, engineering, data, research, and automation workflows. The credential pathway must not be used to impersonate an external organization, bypass authentication, forge entitlement, represent expired credentials as current, or represent training completion as permissions the external platform has not granted.
 
 ---
 
