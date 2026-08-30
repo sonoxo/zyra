@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
+import CommandCenterPage from "@/pages/command-center";
 import Scans from "@/pages/scans";
 import ScanDetail from "@/pages/scan-detail";
 import Compliance from "@/pages/compliance";
@@ -126,6 +127,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/accept-invite" component={AcceptInvitePage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/command-center">{() => <ProtectedRoute component={CommandCenterPage} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>
       <Route path="/compliance">{() => <ProtectedRoute component={Compliance} />}</Route>
