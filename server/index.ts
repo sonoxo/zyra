@@ -8,6 +8,7 @@ import { registerManagedBrowserRoutes } from "./managed-browser";
 import { registerContractOpsRoutes } from "./contractops";
 import { registerContractOpsProposalRoutes } from "./contractops-proposals";
 import { registerContractOpsPackageRoutes } from "./contractops-package";
+import { registerNxyzHorizonsRoutes } from "./nxyz-horizons";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -144,7 +145,7 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser"];
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -168,6 +169,7 @@ app.use((req, res, next) => {
   registerContractOpsRoutes(app);
   registerContractOpsProposalRoutes(app);
   registerContractOpsPackageRoutes(app);
+  registerNxyzHorizonsRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -212,6 +214,7 @@ app.use((req, res, next) => {
         "nxyz-contractops",
         "nxyz-contractops-proposals",
         "nxyz-contractops-package-builder",
+        "nxyz-horizons-intel-gateway",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
