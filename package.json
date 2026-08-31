@@ -8,7 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts",
+    "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts server/nxyz-horizons.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
