@@ -16,9 +16,10 @@ The following capabilities existed before the event and are not claimed as hacka
 Frozen evidence point:
 
 ```text
-branch: etholine-2026-baseline
-commit: 4182bb819c1c78ff4f882c1664da726aa48dddf6
+baseline commit: 4182bb819c1c78ff4f882c1664da726aa48dddf6
 ```
+
+The repository also contains a dedicated frozen pre-event baseline branch so reviewers can compare event work against the existing project state.
 
 ## Pre-event preparation allowed on this branch
 
@@ -50,7 +51,7 @@ Maintain all of the following during the event:
 - Test output.
 - Screenshots of working flows.
 - Demo video link.
-- Final diff against `ethonline-2026-baseline`.
+- Final diff against the frozen pre-event baseline.
 - A README section explicitly titled **Pre-existing Zyra** and another titled **Built during ETHOnline 2026**.
 
 ## Final verification command
