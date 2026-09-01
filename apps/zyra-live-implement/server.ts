@@ -1,6 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import { parseVirginia, type VirginiaStep } from "./src/virginia.js";
 
 const app = express();
@@ -14,8 +15,38 @@ const baseUrl = () => (process.env.FOUNDRY_BASE_URL || "").replace(/\/$/, "");
 const token = () => process.env.FOUNDRY_TOKEN || "";
 const eyerisBaseUrl = () => (process.env.EYERIS_BASE_URL || "").replace(/\/$/, "");
 const eyerisOntology = () => process.env.EYERIS_ONTOLOGY || "";
+const watchDogToken = () => process.env.WATCH_DOG_PIPELINE_TOKEN || "";
 let shuttingDown = false;
 let server: ReturnType<typeof app.listen>;
+
+type WatchDogPipelineEvent = {
+  id: string;
+  receivedAt: string;
+  schema: string;
+  source: string;
+  evidenceState: string;
+  privacy: {
+    publicCctv: "BLOCKED";
+    identityRecognition: "DISABLED";
+    authorizedCameraOnly: true;
+  };
+  detection: Record<string, unknown>;
+  palantir: {
+    disposition: "PENDING_HUMAN_APPROVAL";
+    suggestedObjectType: string;
+    suggestedAction: string;
+  };
+};
+
+const watchDogEvents: WatchDogPipelineEvent[] = [];
+const WATCH_DOG_EVENT_LIMIT = 500;
+
+function requireWatchDogAuth(req: express.Request) {
+  const required = watchDogToken();
+  if (!required) return;
+  const supplied = req.header("authorization") || "";
+  if (supplied !== `Bearer ${required}`) throw new Error("WATCH_DOG_PIPELINE_UNAUTHORIZED");
+}
 
 function beginShutdown(reason: string) {
   if (shuttingDown) return;
@@ -87,15 +118,24 @@ async function geoVisionStatus() {
     foundryConfigured: Boolean(baseUrl() && token()),
     ontology: eyerisOntology() || null,
     detector,
+    watchDog: {
+      pipeline: "ONLINE",
+      bufferedEvents: watchDogEvents.length,
+      palantirDisposition: "PENDING_HUMAN_APPROVAL",
+      publicCctv: "BLOCKED",
+      identityRecognition: "DISABLED",
+    },
     evidenceFlow: [
-      "AUTHORIZED_MEDIA",
+      "AUTHORIZED_PRIVATE_CAMERA",
       "OBJECT_SCENE_INFERENCE",
-      "WGS84_GEOSPATIAL_ENRICHMENT",
-      "CAMERA_DETECTION_ONTOLOGY",
-      "MAP_WORKSHOP_OSDK",
+      "WATCH_DOG_EVENT",
+      "ZYRA_GEOVISION_INGEST",
+      "PALANTIR_READY_ONTOLOGY_ENVELOPE",
+      "HUMAN_APPROVAL_GATE",
       "REVIEWABLE_EVIDENCE",
     ],
     prohibitedIdentityModes: [
+      "PUBLIC_CCTV_INGEST",
       "FACE_RECOGNITION",
       "BIOMETRIC_EMBEDDINGS",
       "NAMED_PERSON_LOOKUP",
@@ -148,11 +188,111 @@ app.get("/api/health", (_req, res) => {
     foundryConfigured: Boolean(baseUrl() && token()),
     eyerisConfigured: Boolean(eyerisBaseUrl()),
     eyerisOntology: eyerisOntology() || null,
+    watchDogBufferedEvents: watchDogEvents.length,
+    publicCctv: "BLOCKED",
   });
 });
 
 app.get("/api/va3lm/geovision/status", async (_req, res) => {
   res.json(await geoVisionStatus());
+});
+
+app.post("/api/va3lm/geovision/watch-dog/events", (req, res) => {
+  try {
+    requireWatchDogAuth(req);
+    const body = req.body || {};
+
+    if (body?.privacy?.publicCctv !== "BLOCKED" || body?.privacy?.authorizedCameraOnly !== true) {
+      return res.status(403).json({
+        accepted: false,
+        error: "PUBLIC_CCTV_BLOCKED",
+        requiredPrivacy: {
+          publicCctv: "BLOCKED",
+          identityRecognition: "DISABLED",
+          authorizedCameraOnly: true,
+        },
+      });
+    }
+
+    if (body?.source !== "gpt-doug-lllm-watch-dog") {
+      return res.status(400).json({ accepted: false, error: "UNTRUSTED_WATCH_DOG_SOURCE" });
+    }
+
+    const event: WatchDogPipelineEvent = {
+      id: randomUUID(),
+      receivedAt: new Date().toISOString(),
+      schema: String(body.schema || "zyra.geovision.watchdog.v1"),
+      source: body.source,
+      evidenceState: String(body.evidenceState || "LIVE"),
+      privacy: {
+        publicCctv: "BLOCKED",
+        identityRecognition: "DISABLED",
+        authorizedCameraOnly: true,
+      },
+      detection: typeof body.detection === "object" && body.detection ? body.detection : {},
+      palantir: {
+        disposition: "PENDING_HUMAN_APPROVAL",
+        suggestedObjectType: String(body?.palantir?.suggestedObjectType || "Detection"),
+        suggestedAction: String(body?.palantir?.suggestedAction || "upsertWatchDogDetection"),
+      },
+    };
+
+    watchDogEvents.unshift(event);
+    if (watchDogEvents.length > WATCH_DOG_EVENT_LIMIT) watchDogEvents.length = WATCH_DOG_EVENT_LIMIT;
+
+    res.status(202).json({
+      accepted: true,
+      id: event.id,
+      evidenceState: event.evidenceState,
+      zyra: "GEOVISION_INGESTED",
+      palantir: event.palantir,
+      publicCctv: "BLOCKED",
+    });
+  } catch (error) {
+    const message = String(error);
+    const status = message.includes("UNAUTHORIZED") ? 401 : 400;
+    res.status(status).json({ accepted: false, error: message });
+  }
+});
+
+app.get("/api/va3lm/geovision/watch-dog/events", (req, res) => {
+  try {
+    requireWatchDogAuth(req);
+    const limit = Math.max(1, Math.min(Number(req.query.limit || 50), 500));
+    res.json({
+      source: "ZYRA_GEOVISION",
+      publicCctv: "BLOCKED",
+      count: Math.min(limit, watchDogEvents.length),
+      events: watchDogEvents.slice(0, limit),
+    });
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+  }
+});
+
+app.get("/api/va3lm/geovision/watch-dog/palantir-pending", (req, res) => {
+  try {
+    requireWatchDogAuth(req);
+    res.json({
+      writePolicy: "HUMAN_APPROVAL_REQUIRED",
+      foundryConfigured: Boolean(baseUrl() && token()),
+      pending: watchDogEvents.map((event) => ({
+        eventId: event.id,
+        objectType: event.palantir.suggestedObjectType,
+        action: event.palantir.suggestedAction,
+        parameters: {
+          eventId: event.id,
+          receivedAt: event.receivedAt,
+          evidenceState: event.evidenceState,
+          source: event.source,
+          detection: event.detection,
+          privacy: event.privacy,
+        },
+      })),
+    });
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+  }
 });
 
 app.get("/api/foundry/ontologies", async (_req, res) => {
