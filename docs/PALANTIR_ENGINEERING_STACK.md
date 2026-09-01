@@ -1,11 +1,14 @@
 # Zyra Palantir Engineering Stack
 
-Zyra uses a clean-room engineering knowledge layer derived from public Palantir Learn links supplied by the project owner and public Palantir Foundry documentation. It does not copy certification-guide text, proprietary code, private APIs, or Palantir product assets.
+Zyra uses a clean-room engineering knowledge layer derived from public Palantir Learn links supplied by the project owner, public Palantir Foundry/AI FDE documentation, and the public migration demonstration supplied by the project owner. It does not copy certification-guide text, proprietary code, model weights, private APIs, or Palantir product assets.
 
 ## Source guides
 
 - https://learn.palantir.com/data-engineer-guide/1388785
 - https://learn.palantir.com/application-developer-guide/1481796
+- https://www.palantir.com/docs/foundry/ai-fde/overview/
+- https://www.palantir.com/docs/foundry/ai-fde/modes-capabilities/
+- https://www.youtube.com/watch?v=e90qUUh8_us
 
 ## Stack
 
@@ -45,6 +48,44 @@ Zyra decomposes complex engineering work into bounded specialist roles:
 
 The deterministic shared context is implemented in `server/engineering-context.ts`.
 
+## AI FDE migration fabric
+
+The migration specialization models the public pattern as an XUNIA-native workflow:
+
+```text
+PLAN
+  ↓
+CONNECT
+  ↓
+INTERPRET
+  ↓
+ENHANCE
+  ↓
+STANDARDIZE
+  ↓
+VERIFY ──fail──> DIAGNOSE ──> REPAIR PROPOSAL ──> RE-RUN ──┐
+  │                                                         │
+  └──────────────────────────────pass<───────────────────────┘
+  ↓
+SME / APPROVAL GATE
+  ↓
+DEPLOY
+  ↓
+EVIDENCE / AUDIT
+```
+
+Dedicated migration roles are `source-scout`, `schema-cartographer`, `code-interpreter`, `mapping-engineer`, `transform-builder`, `verifier`, `diagnostician`, `sme-gateway`, `release-controller`, and `auditor`.
+
+The verifier loop is deliberately bounded. The default repair budget is three cycles; exhausted or ambiguous work escalates to human/SME review instead of silently widening permissions or context.
+
+### Minimum-viable context
+
+Each role receives only the typed context required for its current stage. Typical context includes selected source connection metadata, schemas/data dictionaries, selected code, target standards, ontology contracts, constraints, and prior approved artifacts. Long-lived credentials and implicit broad access are excluded.
+
+### Phase gates
+
+Migration work uses checkpointed branches and separate authority for discovery, semantic mapping, transform writes, verification, and release. Production promotion requires rollback evidence, downstream-impact review, passed reconciliation/evaluations, and an auditable approval.
+
 ## Decision loop
 
 ```text
@@ -77,6 +118,6 @@ The fleet is a decision-support and orchestration pattern. It does not give an L
 - Publish stable contracts with ownership, schema, freshness, provenance, and known downstream consumers.
 - Encode critical assumptions as executable quality gates and prevent invalid data from propagating.
 - Use batch unless incremental or streaming requirements justify extra operational complexity.
-- Treat lineage, health, build evidence, and rollback as production features.
+- Treat lineage, health, build evidence, rollback, evaluations, and repair evidence as production features.
 
 This document and `server/engineering-context.ts` are XUNIA/Zyra implementations of public engineering concepts, not Palantir Foundry components and not evidence of Palantir affiliation or tenant access.
