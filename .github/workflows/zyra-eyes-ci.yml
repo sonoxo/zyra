@@ -1,0 +1,61 @@
+name: ZYRA Eyes CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+    paths:
+      - "server/zyra-eyes.ts"
+      - "server/zyra-eyes.test.ts"
+      - "apps/zyra-eyes-plugin/**"
+      - "client/src/pages/zyra-eyes.tsx"
+      - "shared/ontology/rvia-vision-control.yaml"
+      - "shared/policy/us-cz-ethical-scope.yaml"
+      - "docs/ZYRA-EYES-RVIA.md"
+      - ".github/workflows/zyra-eyes-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "server/zyra-eyes.ts"
+      - "server/zyra-eyes.test.ts"
+      - "apps/zyra-eyes-plugin/**"
+      - "client/src/pages/zyra-eyes.tsx"
+      - "shared/ontology/rvia-vision-control.yaml"
+      - "shared/policy/us-cz-ethical-scope.yaml"
+      - "docs/ZYRA-EYES-RVIA.md"
+
+permissions:
+  contents: read
+
+jobs:
+  eyes-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run check
+
+      - name: ZYRA Eyes tests
+        run: npx tsx --test server/zyra-eyes.test.ts
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python syntax check
+        run: python -m py_compile apps/zyra-eyes-plugin/zyra_eyes.py
+
+      - name: Policy invariants
+        run: |
+          grep -q "simulationDefault: true" server/zyra-eyes.ts
+          grep -q "nativeExecutionDefault: false" server/zyra-eyes.ts
+          grep -q "legalOverride: false" shared/ontology/rvia-vision-control.yaml
+          grep -q "policyOverride: false" shared/ontology/rvia-vision-control.yaml
