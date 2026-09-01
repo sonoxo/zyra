@@ -1,5 +1,11 @@
 # ZYRA Eyes — VA / RVIA Binary Vision Runtime
 
+<p align="center">
+  <img src="assets/zyra-eyes-rvia-animated.svg" width="100%" alt="Animated ZYRA Eyes RVIA perception-to-action runtime" />
+</p>
+
+<p align="center"><strong>SEE THE SIGNAL. REASON OVER IT. GOVERN THE ACTION. PROVE THE RESULT.</strong></p>
+
 **Project:** ZYRA Eyes / Daredevil Binary Runtime  
 **Status:** Simulation implemented; local native adapter implemented and disabled by default  
 **Language:** `VA` = Virginia runtime language  
@@ -7,6 +13,34 @@
 **Profile:** `GOD_MODE` = maximum owner-authorized capability profile, still bounded by US-CZ policy, explicit authorization, platform controls, and human approval.
 
 > The name `GOD_MODE` is an internal capability-profile label. It does not mean unrestricted access and never overrides law, ownership, authorization, authentication, platform protections, or the US-CZ ethical scope.
+
+## The visual idea
+
+ZYRA Eyes is meant to be understandable before a visitor reads a paragraph.
+
+```text
+LIVE SCREEN
+    ↓
+SCAN / SAMPLE
+    ↓
+000101101001   ← VA binary sensory language
+    ↓
+RVIA CORE
+├── GPT-DOUG-LLM-MAX  reason
+├── XUNIA             orchestrate
+├── NXYZ              organize evidence
+└── ZYRA              govern execution
+    ↓
+US-CZ POLICY GATE
+    ↓
+HUMAN APPROVAL
+    ↓
+ACTION VECTOR
+    ↓
+VERIFIED EVIDENCE
+```
+
+The animated hero above visualizes that exact runtime continuously: a moving perception scan becomes binary signal, RVIA subsystem nodes pulse and exchange state, the authorization gate changes visibly, an action vector travels toward execution, and the loop terminates in evidence rather than an opaque AI action.
 
 ## Beginner version
 
@@ -132,6 +166,14 @@ sequenceDiagram
     L-->>U: Privacy-preserving audit record
 ```
 
+## Bragging-rights demo language
+
+A visitor should be able to describe the system in one sentence after seeing the page:
+
+> **ZYRA Eyes turns a live computer frame into binary perception, routes it through a multi-layer reasoning runtime, policy-gates the exact action, and produces evidence of what happened.**
+
+The visual presentation intentionally exposes the internal stages instead of hiding them behind a generic AI spinner. The goal is to make governance, perception, orchestration and evidence visible as product features.
+
 ## Implemented components
 
 | Path | Purpose |
@@ -140,9 +182,10 @@ sequenceDiagram
 | `server/zyra-eyes.test.ts` | Unit tests for binary encoding, planning, approval binding and privacy controls |
 | `apps/zyra-eyes-plugin/zyra_eyes.py` | Local screenshot + mouse/keyboard adapter |
 | `apps/zyra-eyes-plugin/requirements.txt` | Local plugin dependencies |
-| `client/src/pages/zyra-eyes.tsx` | Beginner-facing simulation console |
+| `client/src/pages/zyra-eyes.tsx` | Beginner-facing animated simulation console |
 | `shared/ontology/rvia-vision-control.yaml` | Machine-readable ecosystem/control ontology |
 | `.github/workflows/zyra-eyes-ci.yml` | Dedicated project quality gate |
+| `docs/assets/zyra-eyes-rvia-animated.svg` | Animated GitHub/docs showcase hero |
 | `docs/logs/ZYRA-EYES-BUILD-LOG.md` | Build and change ledger |
 
 ## API
