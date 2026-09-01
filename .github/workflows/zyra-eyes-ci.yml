@@ -13,6 +13,7 @@ on:
       - "docs/ZYRA-EYES-RVIA.md"
       - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
       - "docs/ZYRA-EYES-SMOOTH-CURSOR.md"
+      - "docs/ZYRA-EYES-NATIVE-LOW-LATENCY.md"
       - ".github/workflows/zyra-eyes-ci.yml"
   pull_request:
     branches: [main, develop]
@@ -26,6 +27,7 @@ on:
       - "docs/ZYRA-EYES-RVIA.md"
       - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
       - "docs/ZYRA-EYES-SMOOTH-CURSOR.md"
+      - "docs/ZYRA-EYES-NATIVE-LOW-LATENCY.md"
 
 permissions:
   contents: read
@@ -60,6 +62,7 @@ jobs:
           python -m py_compile apps/zyra-eyes-plugin/zyra_gaze.py
           python -m py_compile apps/zyra-eyes-plugin/zyra_system_controller.py
           python -m py_compile apps/zyra-eyes-plugin/zyra_smooth_controller.py
+          python -m py_compile apps/zyra-eyes-plugin/zyra_native_controller.py
 
       - name: Gaze safety invariants
         run: |
@@ -82,6 +85,15 @@ jobs:
           grep -q 'rate_hz' apps/zyra-eyes-plugin/zyra_smooth_controller.py
           grep -q 'require_native_authorization' apps/zyra-eyes-plugin/zyra_smooth_controller.py
           grep -q 'PyAutoGUI corner failsafe' apps/zyra-eyes-plugin/zyra_smooth_controller.py
+
+      - name: Native low-latency invariants
+        run: |
+          grep -q 'LatestFrameCapture' apps/zyra-eyes-plugin/zyra_native_controller.py
+          grep -q 'FastEyeTracker' apps/zyra-eyes-plugin/zyra_native_controller.py
+          grep -q 'PredictiveGaze' apps/zyra-eyes-plugin/zyra_native_controller.py
+          grep -q 'CGWarpMouseCursorPosition' apps/zyra-eyes-plugin/zyra_native_controller.py
+          grep -q 'require_native_authorization' apps/zyra-eyes-plugin/zyra_native_controller.py
+          grep -q 'No network listener or remote-control channel' apps/zyra-eyes-plugin/zyra_native_controller.py
 
       - name: Policy invariants
         run: |
