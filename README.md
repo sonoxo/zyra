@@ -46,6 +46,7 @@
   <a href="#-tech--security-stack"><strong>STACK</strong></a> ·
   <a href="#ecosystem-architecture"><strong>ARCHITECTURE</strong></a> ·
   <a href="#products-in-the-ecosystem"><strong>PRODUCTS</strong></a> ·
+  <a href="#ussf--space-systems-command-prospective-collaboration"><strong>USSF / SSC</strong></a> ·
   <a href="#run-zyra"><strong>RUN ZYRA</strong></a> ·
   <a href="#security--trust"><strong>SECURITY</strong></a>
 </p>
@@ -209,6 +210,37 @@ CREDLY     → digital badge evidence
 | **NXYZ Horizons** | Intelligence gateway for the C4ADS Horizons integration path | Implemented source; external access/configuration dependent |
 | **GPT-DOUG-LLM** | Reasoning/orchestration consumer of ZYRA evidence and ontology contracts | Separate ecosystem repository |
 
+## USSF / Space Systems Command prospective collaboration
+
+<p>
+  <img src="https://img.shields.io/badge/USSF%20SSC-PROSPECTIVE%20COLLABORATION-2df6ff?style=for-the-badge" alt="USSF SSC prospective collaboration" />
+  <img src="https://img.shields.io/badge/STATUS-NOT%20GOVERNMENT%20ENDORSED-8d6bff?style=for-the-badge" alt="Not government endorsed" />
+</p>
+
+ZYRA/NXYZ is preparing a capability submission through the **official U.S. Space Force Front Door** for potential mission-owner evaluation. The proposal focuses on the software/integration-assurance layer around **open multi-vendor architectures, standardized interfaces, Cyber/Data/AI workflows, human-machine teaming, policy-gated automation, and evidence/provenance**.
+
+| Artifact | Purpose |
+|---|---|
+| [`USSF-SSC-COLLABORATION.md`](docs/partnerships/USSF-SSC-COLLABORATION.md) | Public-signal analysis, mission alignment, proposed 30-day unclassified prototype and explicit non-claims |
+| [`USSF-SSC-FRONT-DOOR-PROPOSAL.md`](docs/proposals/USSF-SSC-FRONT-DOOR-PROPOSAL.md) | Government-facing capability proposal for Front Door / SSC / USSPACECOM routing |
+| [Issue #60](https://github.com/sonoxo/zyra/issues/60) | Partnership execution tracker and follow-up checklist |
+
+```text
+USSF / SSC PUBLIC MISSION NEED
+            ↓
+FRONT DOOR / MISSION-OWNER REVIEW
+            ↓
+UNCLASSIFIED ZYRA INTEGRATION SANDBOX
+            ↓
+INTERFACE REGISTRY + POLICY GATES
+            ↓
+MULTI-VENDOR ADAPTER TESTING
+            ↓
+HUMAN APPROVAL + EVIDENCE PACKAGE
+```
+
+**Boundary:** this is a prospective commercial outreach effort only. No USSF, SSC, USSPACECOM, DoD/DoW, or other government sponsorship, partnership, authorization, contract, clearance, certification, operational connection, or endorsement is claimed unless formally documented by that organization.
+
 ### ContractOps
 
 Open: [`products/nxyz-contractops/README.md`](products/nxyz-contractops/README.md)
@@ -280,6 +312,8 @@ The checked-in `apps/zyra-live-implement/` module supports:
 | `products/` | Market-facing product modules and product READMEs |
 | `docs/credentials/` | Credential evidence and repository credential program |
 | `docs/compliance/` | External ecosystem, trademark and provenance boundaries |
+| `docs/partnerships/` | Prospective collaboration briefs with explicit non-endorsement boundaries |
+| `docs/proposals/` | Government/industry capability proposal packages |
 | `.github/` | CI, CodeQL and repository quality gates |
 
 ## Run ZYRA
