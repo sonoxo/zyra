@@ -10,6 +10,7 @@ import { registerContractOpsProposalRoutes } from "./contractops-proposals";
 import { registerContractOpsPackageRoutes } from "./contractops-package";
 import { registerNxyzHorizonsRoutes } from "./nxyz-horizons";
 import { registerNxyzMicrosoftLayerRoutes } from "./nxyz-microsoft-layer";
+import { registerWarRoomRoutes } from "./war-room";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -172,6 +173,7 @@ app.use((req, res, next) => {
   registerContractOpsPackageRoutes(app);
   registerNxyzHorizonsRoutes(app);
   registerNxyzMicrosoftLayerRoutes(app);
+  registerWarRoomRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -218,6 +220,7 @@ app.use((req, res, next) => {
         "nxyz-contractops-package-builder",
         "nxyz-horizons-intel-gateway",
         "nxyz-microsoft-oss-layer",
+        "aegis-war-room",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
