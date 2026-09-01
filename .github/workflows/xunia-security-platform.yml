@@ -1,0 +1,34 @@
+name: XUNIA Security Platform
+
+on:
+  pull_request:
+    paths:
+      - "server/xunia-security-platform.ts"
+      - "server/xunia-security-routes.ts"
+      - "server/xunia-security-platform.test.ts"
+      - "client/src/pages/xunia-security.tsx"
+      - "client/src/App.tsx"
+      - "server/index.ts"
+      - ".github/workflows/xunia-security-platform.yml"
+  push:
+    branches: [main]
+    paths:
+      - "server/xunia-security-platform.ts"
+      - "server/xunia-security-routes.ts"
+      - "client/src/pages/xunia-security.tsx"
+
+permissions:
+  contents: read
+
+jobs:
+  security-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx tsx --test server/xunia-security-platform.test.ts
