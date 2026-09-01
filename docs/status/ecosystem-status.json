@@ -11,6 +11,7 @@
     {"id":"ZYRA","label":"ZYRA","role":"policy_security_approval_execution_audit","state":"implemented"},
     {"id":"XUNIA","label":"XUNIA","role":"apps_agents_orchestration","state":"developing"},
     {"id":"NXYZ","label":"NXYZ","role":"ontology_evidence_intelligence_integration","state":"multiple_implemented_integrations"},
+    {"id":"GITHUB_CLOUD","label":"ZYRA GitHub Cloud","role":"cloud_control_compute_registry_evidence_audit","state":"implemented_repo_workflows"},
     {"id":"ZYRA_EYES","label":"ZYRA Eyes","role":"binary_perception_to_action","state":"implemented_simulation_and_local_adapter"},
     {"id":"US_CZ","label":"US-CZ","role":"civilian_ethical_legal_policy_boundary","state":"policy_v1_1"}
   ],
@@ -18,15 +19,16 @@
     {"id":"protect","label":"Protect Something","readiness":"strong","routes_to":["security_scans","pentest","cloud_security","container_security","attack_surface","secrets","vulnerabilities"]},
     {"id":"see","label":"See With ZYRA","readiness":"strong_demo_hook","routes_to":["ZYRA_EYES","VA","RVIA"]},
     {"id":"investigate","label":"Investigate Something","readiness":"strong","routes_to":["NXYZ","threat_intel","cve_intelligence","security_graph","evidence"]},
-    {"id":"build","label":"Build Something","readiness":"beginner_entry_implemented","routes_to":["XUNIA","repositories","integrations","agents"]},
-    {"id":"mission","label":"Run a Mission","readiness":"mission_home_router_implemented","routes_to":["RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ"]},
+    {"id":"build","label":"Build Something","readiness":"beginner_entry_implemented","routes_to":["XUNIA","repositories","integrations","agents","GITHUB_CLOUD"]},
+    {"id":"mission","label":"Run a Mission","readiness":"mission_home_router_implemented","routes_to":["RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ","GITHUB_CLOUD"]},
     {"id":"federal","label":"Government / Contracting","readiness":"advanced","routes_to":["NXYZ_CONTRACTOPS","governed_prototypes","proposal_evidence"]}
   ],
   "capability_domains": {
     "security":["security_scans","ai_pentesting","cloud_security","container_security","vulnerability_management","secrets_scanning","attack_surface","attack_paths","sbom","bug_bounty"],
     "intelligence":["threat_intel","cve_intelligence","threat_hunting","dark_web_surfaces","security_data_lake","security_graph","caasm","asset_intelligence","nxyz_evidence","horizons_path"],
     "operations_governance":["incident_response","risk_register","soar","compliance","devsecops","reports","vendor_risk","audit_logs","platform_metrics","team_admin","api_keys","enterprise"],
-    "agentic":["VA","RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ","US_CZ","ZYRA_EYES"],
+    "agentic":["VA","RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ","GITHUB_CLOUD","US_CZ","ZYRA_EYES"],
+    "cloud_control_plane":["github_actions_compute","ghcr_container_registry","git_service_registry","actions_evidence_artifacts","workflow_audit_history","policy_gated_mission_routing"],
     "federal_external":["NXYZ_CONTRACTOPS","PALANTIR_FOUNDRY_AIP_BRIDGE","MICROSOFT_OSS_LAYER","C4ADS_HORIZONS_PATH","USSF_SSC_PROSPECTIVE_COLLABORATION"]
   },
   "beginner_health": {
@@ -43,6 +45,7 @@
   },
   "build_board": [
     {"priority":"P0","id":"mission_home","label":"Mission Home","status":"implemented","goal":"One primary mission input with Protect, Build, Investigate, See, Government/Contracting and Run Operation entry points."},
+    {"priority":"P1","id":"github_cloud_control_plane","label":"GitHub Cloud Control Plane","status":"implemented","goal":"Use GitHub Actions, GHCR, Git, and Actions artifacts as an immediately usable cloud-style execution, registry, evidence, and audit plane."},
     {"priority":"P1","id":"beginner_mode","label":"Beginner Mode","status":"partial","goal":"Progressive disclosure with a mission-first surface while preserving the advanced dashboard below it."},
     {"priority":"P2","id":"first_mission_demo","label":"First Mission Demo","status":"partial","goal":"Fast safe result with ZYRA Eyes plus additional sample missions."},
     {"priority":"P3","id":"mission_history","label":"Mission History","status":"planned","goal":"Unified timeline of intent, routing, authorization, evidence, result and follow-up."},
@@ -50,7 +53,7 @@
     {"priority":"P5","id":"daily_command_center","label":"Daily Command Center","status":"planned","goal":"Explain what changed and recommend one next mission."},
     {"priority":"P6","id":"rvia_mission_router","label":"RVIA Mission Router","status":"architecture_defined","goal":"One user interface that routes missions across the ecosystem."}
   ],
-  "retention_assets":["mission_history","projects","agents","intelligence","evidence","recommendations"],
+  "retention_assets":["mission_history","projects","agents","intelligence","evidence","recommendations","github_actions_artifacts","ghcr_images"],
   "status_language": ["planned","implemented","ci_verified","deployed","platform_access","authorized_action","third_party_approved"],
   "rules": [
     "Do not equate implementation with deployment.",
