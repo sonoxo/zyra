@@ -3,282 +3,235 @@
     <img src="docs/assets/zyra-credential-pathway.svg" width="560" alt="ZYRA Application Credential — open credential page" />
   </a>
 </p>
-<p align="center"><strong><a href="ZYRA.README.md">Open ZYRA Credential Pathway</a></strong></p>
 
-<!-- VZN-8088 -->
-<p align="center"><img src="docs/assets/vzn-8088-universal.svg" width="100%" alt="Beginner-friendly Zyra function map: type a mission, Zyra reads it, chooses an operation, calls Foundry, and shows the result" /></p>
-
-<h1 align="center">Zyra</h1>
-<p align="center"><strong>Tell Zyra what you want done. Zyra turns it into a real software operation and shows you what happened.</strong></p>
+<h1 align="center">ZYRA // NXYZ</h1>
+<p align="center"><strong>Governed agentic software, evidence-backed credentials, ontology-driven operations, and human-controlled execution.</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/VIRGINIA-VYBE%20CODE-8d6bff?style=for-the-badge" alt="Virginia" />
   <img src="https://img.shields.io/badge/VAL3M-AGENTIC%20COMPUTE-ff4fd8?style=for-the-badge" alt="VAL3M" />
-  <img src="https://img.shields.io/badge/PALANTIR-ONTOLOGY%20API%20v2-9cff57?style=for-the-badge" alt="Ontology" />
+  <img src="https://img.shields.io/badge/NXYZ-GOVERNED%20ECOSYSTEM-2df6ff?style=for-the-badge" alt="NXYZ governed ecosystem" />
+  <img src="https://img.shields.io/badge/EVIDENCE-PROVENANCE%20FIRST-9cff57?style=for-the-badge" alt="Evidence provenance first" />
 </p>
 
-## Start here — no jargon
-
-If you have never built software before, this is the idea:
-
-**You type a mission → Zyra reads it → Zyra chooses the correct supported job → Zyra connects to Foundry → the job runs → you see the result.**
-
-That is the main function of the `apps/zyra-live-implement/` module on this branch.
-
-### A real example
-
-You type:
-
-```text
-/VAL3M
-AGENTS 24
-LIST ONTOLOGIES
-STOP WHEN green
-```
-
-In normal English, that means:
-
-> Use VAL3M mode, accept up to 24 planner lanes, ask Foundry for the available Ontologies, and keep the mission's stop condition set to “green.”
-
-Zyra then turns those words into structured steps, runs the supported operation through the server, and returns the result to the browser.
-
-## The complete Zyra stop command
-
-When you want to stop the **Zyra Live Implement runtime**, type:
-
-```text
-/RICHMONDVA3LM
-```
-
-The full stack signature is also recognized:
-
-```text
-/RICHMONDVA3LM - GPT - DOUG - 3LM - XUNIABOT - ZYRA - PALANTIR
-```
-
-Beginner meaning:
-
-**RICHMONDVA3LM = send the final result, then turn this Zyra runtime off.**
-
-What happens:
-
-1. Zyra recognizes the shutdown mission before any normal mission steps are run.
-2. The shutdown mission becomes one `SHUTDOWN_ZYRA` step.
-3. Zyra sends a final shutdown result to the browser.
-4. After that response is delivered, the HTTP server closes.
-5. The Foundry gateway inside this Zyra process goes offline with it.
-
-This command stops **the Zyra process controlled by this app and its bridge connection**. It does not power off Palantir's external platform or unrelated external services.
-
-The browser includes a **LOAD SHUTDOWN COMMAND** button. It only loads `/RICHMONDVA3LM` into the mission box so a beginner can review it first; the user still presses **RUN THE MISSION** to execute the stop.
-
-## What happens after you press the button?
+## External credential & ecosystem provenance
 
 <p align="center">
-  <img src="docs/assets/zyra-ecosystem-flow.svg" width="100%" alt="Beginner repository map showing the app screen, API, parser, executor, Foundry connection, and returned result" />
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Palantir-Foundry%20%2F%20AIP-101010?style=for-the-badge&logo=palantir&logoColor=white" alt="Palantir — credential issuer, Foundry and AIP integration ecosystem" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Google-Credentials-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google — external credential issuer" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/IBM-Credentials-052FAD?style=for-the-badge&logo=ibm&logoColor=white" alt="IBM — external credential and training issuer" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Red%20Hat-Training-EE0000?style=for-the-badge&logo=redhat&logoColor=white" alt="Red Hat — external training issuer" /></a>
+</p>
+<p align="center">
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Replit-Builder%20Evidence-F26207?style=for-the-badge&logo=replit&logoColor=white" alt="Replit — builder credential evidence and development ecosystem" /></a>
+  <a href="docs/NXYZ-MICROSOFT-OSS-LAYER.md"><img src="https://img.shields.io/badge/Microsoft-OSS%20Layer-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" alt="Microsoft — open source ecosystem layer" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions"><img src="https://img.shields.io/badge/GitHub-Code%20%2B%20CI-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub — repository and CI provenance" /></a>
+</p>
+<p align="center">
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Coursera-Verification-0056D2?style=for-the-badge&logo=coursera&logoColor=white" alt="Coursera — credential verification platform" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Credly-Digital%20Badges-FF6B00?style=for-the-badge&logo=credly&logoColor=white" alt="Credly — digital credential evidence platform" /></a>
 </p>
 
-1. **You type the job.** The mission box lives in `apps/zyra-live-implement/public/index.html`.
-2. **Zyra reads your words.** `parseVirginia()` converts them into steps the program can understand.
-3. **Zyra chooses the operation.** `executeStep()` matches each step to a supported job.
-4. **Zyra connects to Foundry.** The server-side `foundry()` function makes the authenticated request.
-5. **Foundry performs the requested Ontology operation.** The current code can list Ontologies, list object types, list objects, and apply configured Ontology actions.
-6. **You see the result.** Zyra returns structured JSON to the evidence panel in the browser.
-7. **The health check tells you whether the runtime is ready.** `GET /api/health` reports whether Foundry configuration is present and whether Zyra is shutting down.
+> **Compliance boundary:** the logos above identify documented credential issuers, verification services, software ecosystems, or repository infrastructure. Their presence does **not** mean those companies sponsor, partner with, certify, approve, employ, authorize, or endorse ZYRA/NXYZ. External platform permissions remain controlled by the external platform.
 
-### The whole path in one line
-
-```text
-YOU
-  ↓
-VIRGINIA MISSION
-  ↓
-Zyra reads it
-  ↓
-Zyra chooses the job
-  ↓
-Foundry Ontology API
-  ↓
-RESULT / EVIDENCE
-```
-
-For shutdown, the path is even simpler:
-
-```text
-/RICHMONDVA3LM
-  ↓
-SHUTDOWN_ZYRA
-  ↓
-FINAL RESULT
-  ↓
-ZYRA SERVER OFFLINE
-```
-
-## What are these words?
-
-| Word | Beginner meaning |
-|---|---|
-| **VIRGINIA** | The simple command language you type into Zyra. |
-| **VAL3M** | A Zyra execution mode selected with `/VAL3M`. |
-| **RICHMONDVA3LM** | The dedicated command for stopping this Zyra Live Implement runtime. |
-| **Mission** | The instructions you give Zyra. |
-| **Parser** | The part that translates your typed instructions into structured steps. |
-| **API** | A doorway one piece of software uses to talk to another. |
-| **Ontology** | Foundry's structured model of real business objects, their data, relationships, and actions. |
-| **Object type** | A kind of thing in the Ontology, such as a customer, order, asset, or project. |
-| **Action** | An allowed operation that can change or trigger something in the Ontology. |
-| **Evidence** | The result Zyra gives back so you can see what actually happened. |
-| **Foundry token** | A server-side credential used to authenticate the Foundry request. It is not placed in the browser. |
-
-## What can this branch actually do right now?
-
-The checked-in `zyra-live-implement` code currently supports these VIRGINIA operations:
-
-| What you want | VIRGINIA operation | What the server does |
+| Organization | Relationship to ZYRA | Evidence/status |
 |---|---|---|
-| See available Ontologies | `LIST ONTOLOGIES` | `GET /api/v2/ontologies` |
-| See the types of things in an Ontology | `LIST OBJECT_TYPES <ontology>` | `GET /api/v2/ontologies/{ontology}/objectTypes` |
-| Read objects of a specific type | `LIST OBJECTS <ontology> <objectType>` | `GET /api/v2/ontologies/{ontology}/objects/{objectType}` |
-| Run a configured Ontology action | `APPLY <ontology> <action> <parameters>` | `POST /api/v2/ontologies/{ontology}/actions/{action}/apply` |
-| Stop this Zyra runtime | `/RICHMONDVA3LM` | returns a shutdown result, then closes the Zyra HTTP server |
-| Keep a plain instruction in the mission | any unmatched line | stores it as a `NOTE` step |
+| **Palantir** | Credential issuer + Foundry/AIP integration ecosystem + separately tracked platform access | Issuer-verifiable Palantir Learn/Skilljar records are documented in [`ZYRA.README.md`](ZYRA.README.md); Foundry/AIP code and ontology contracts are checked in. |
+| **Google** | External credential issuer | Google Cybersecurity, Google AI, and Business Intelligence evidence is documented in the credential ledger. |
+| **IBM** | External credential/training issuer | IBM Quantum Machine Learning / Credly and IBM SkillsBuild evidence are documented in the credential ledger. |
+| **Red Hat** | External training issuer | System Administration I training evidence is retained at its recorded evidence tier. |
+| **Replit** | Builder evidence + development ecosystem | Level 3 Proficient Builder badge artifact is recorded as supplied evidence; use of the ecosystem does not imply endorsement. |
+| **Coursera** | Verification / learning platform | Public verification references support multiple credential records. |
+| **Credly** | Digital credential evidence source | Credly profiles and badge records are tracked separately from authorization. |
+| **Microsoft** | Open-source software ecosystem | NXYZ Microsoft layer references Microsoft Agent Framework, MarkItDown, and optional GraphRAG patterns. This is not represented as a Microsoft credential. |
+| **GitHub** | Repository, CI, security and provenance infrastructure | Commit history, Actions, CodeQL, source review, releases and evidence links provide repository provenance. |
 
-Planning and execution are available through:
+**External provenance policy:** [`docs/compliance/EXTERNAL-ECOSYSTEM.md`](docs/compliance/EXTERNAL-ECOSYSTEM.md)  
+**Machine-readable registry:** [`docs/compliance/external-ecosystem-registry.json`](docs/compliance/external-ecosystem-registry.json)  
+**Full credential ledger:** [`ZYRA.README.md`](ZYRA.README.md)
+
+---
+
+## What ZYRA does — beginner version
+
+<p align="center"><img src="docs/assets/vzn-8088-universal.svg" width="100%" alt="Beginner-friendly Zyra function map: type a mission, Zyra reads it, chooses an operation, calls Foundry, and shows the result" /></p>
+
+**You type a mission → ZYRA turns it into structured work → policy and authorization are checked → an approved system operation runs → evidence comes back.**
 
 ```text
-POST /api/virginia/plan
-POST /api/virginia/execute
+HUMAN MISSION
+     ↓
+ZYRA / NXYZ
+     ↓
+PARSER + POLICY
+     ↓
+ONTOLOGY / AGENT / TOOL LAYER
+     ↓
+AUTHORIZED OPERATION
+     ↓
+EVIDENCE + AUDIT
 ```
 
-## Where is everything in the repo?
+The repository keeps **capability**, **credential evidence**, **platform access**, and **authorization** as separate states. A badge can support a capability claim; it does not grant an external permission by itself.
 
-Think of the repository like a building:
+## Ecosystem architecture
 
-| Folder | Beginner meaning | What lives there |
+```mermaid
+flowchart LR
+    H[Human operator] --> Z[ZYRA / NXYZ]
+    C[Credential Evidence] --> P[Provenance Layer]
+    G[GitHub / CI] --> P
+    M[Microsoft OSS Layer] --> Z
+    P --> Z
+    Z --> O[Ontology + Evidence]
+    O --> F[Palantir Foundry / AIP]
+    O --> CO[NXYZ ContractOps]
+    O --> D[GPT-DOUG-LLM]
+    F --> R[Result / Audit]
+    CO --> R
+    D --> R
+    R --> H
+```
+
+### Named ecosystem roles
+
+```text
+PALANTIR   → Ontology / Foundry / AIP integration + credential evidence
+MICROSOFT  → optional OSS agent/document intelligence layer
+GOOGLE     → cybersecurity / AI / BI credential evidence
+IBM        → quantum / data-science credential evidence
+RED HAT    → systems administration training evidence
+REPLIT     → builder evidence + development ecosystem
+GITHUB     → source / CI / CodeQL / provenance
+COURSERA   → issuer verification links
+CREDLY     → digital badge evidence
+```
+
+---
+
+## Products in the ecosystem
+
+| Product / layer | Purpose | State |
 |---|---|---|
-| `client/src/` | The front desk | Main React interface, pages and browser components |
-| `server/` | The back office | Main Express API, routes and backend services |
-| `shared/` | The rule book | Types and schemas shared by frontend and backend |
-| `apps/zyra-live-implement/` | The VIRGINIA control room | Mission terminal, parser, Foundry gateway, shutdown control and evidence UI |
-| `docs/` | The instruction room | Architecture, deployment and visual explanations |
-| `.github/` | The quality inspector | Automated repository checks and workflows |
+| **ZYRA Core** | Main React/TypeScript + Express/Postgres platform and governed operational shell | Implemented |
+| **VIRGINIA / VAL3M** | Beginner-readable mission language and execution planning | Implemented |
+| **Palantir Foundry Bridge** | Ontology API operations with server-side credentials and governed actions | Implemented / runtime configuration required |
+| **NXYZ ContractOps** | Federal-readiness, evidence matching, bid scoring, proposal review and package export | Implemented source; database migration required per deployment |
+| **NXYZ Microsoft Layer** | Optional Microsoft OSS document + agent orchestration planning layer | Implemented contract/API; adapters remain explicit configuration |
+| **NXYZ Horizons** | Intelligence gateway for the C4ADS Horizons integration path | Implemented source; external access/configuration dependent |
+| **GPT-DOUG-LLM** | Reasoning/orchestration consumer of ZYRA evidence and ontology contracts | Separate ecosystem repository |
 
-## Live Implement files — beginner map
+### ContractOps
+
+Open: [`products/nxyz-contractops/README.md`](products/nxyz-contractops/README.md)
 
 ```text
-apps/zyra-live-implement/
-│
-├── public/index.html
-│   └── The screen you use: type a mission, plan it, execute it, see results.
-│
-├── src/virginia.ts
-│   └── The translator: turns your mission into structured steps and recognizes /RICHMONDVA3LM.
-│
-└── server.ts
-    ├── /api/health              → tells you whether the app is ready
-    ├── /api/virginia/plan       → shows what Zyra thinks your mission means
-    ├── /api/virginia/execute    → runs the mission
-    ├── SHUTDOWN_ZYRA            → returns final evidence, then closes the server
-    └── Foundry routes           → talk to Palantir Ontology API v2
+REAL OPPORTUNITY
+   ↓
+REQUIREMENTS
+   ↓
+ZYRA EVIDENCE
+   ↓
+ADVISORY SCORE
+   ↓
+HUMAN BID / NO BID
+   ↓
+PROPOSAL + REVIEW
+   ↓
+MARKDOWN / JSON PACKAGE
+   ↓
+HUMAN SUBMISSION
 ```
 
-## Before live Foundry calls work
+Government portal submission remains human-controlled.
 
-The server needs these environment variables:
+### Microsoft OSS layer
 
-| Variable | Meaning |
+Open: [`products/nxyz-microsoft-layer/README.md`](products/nxyz-microsoft-layer/README.md)
+
+```text
+DOCUMENT / WORK ITEM
+   ↓
+MARKITDOWN ROLE
+   ↓
+NORMALIZED CONTEXT
+   ↓
+OPTIONAL GRAPH CONTEXT
+   ↓
+MICROSOFT AGENT FRAMEWORK ROLE
+   ↓
+NXYZ / ZYRA GOVERNANCE
+```
+
+This layer is provider-optional and does not claim Microsoft partnership or authorization.
+
+---
+
+## Live Implement — supported Foundry operations
+
+The checked-in `apps/zyra-live-implement/` module supports:
+
+| Mission | Operation |
 |---|---|
-| `FOUNDRY_BASE_URL` | The base address of the Foundry environment |
-| `FOUNDRY_TOKEN` | The server-side authentication token |
+| `LIST ONTOLOGIES` | `GET /api/v2/ontologies` |
+| `LIST OBJECT_TYPES <ontology>` | `GET /api/v2/ontologies/{ontology}/objectTypes` |
+| `LIST OBJECTS <ontology> <objectType>` | `GET /api/v2/ontologies/{ontology}/objects/{objectType}` |
+| `APPLY <ontology> <action> <parameters>` | `POST /api/v2/ontologies/{ontology}/actions/{action}/apply` |
+| `/RICHMONDVA3LM` | Returns final evidence and stops the controlled ZYRA Live Implement runtime |
 
-If they are missing, the code reports that Foundry is not configured instead of pretending a live call worked.
+`/RICHMONDVA3LM` stops the local ZYRA process controlled by the app. It does not power off Palantir or unrelated external infrastructure.
 
-Never commit real secrets to the repository.
+## Repository map
 
-## Run the main Zyra app
+| Path | Role |
+|---|---|
+| `client/src/` | React interface and product screens |
+| `server/` | Express APIs, policy gates and backend services |
+| `shared/` | Shared types, schemas, ontology contracts and evidence models |
+| `apps/zyra-live-implement/` | VIRGINIA mission terminal and Foundry gateway |
+| `products/` | Market-facing product modules and product READMEs |
+| `docs/credentials/` | Credential evidence and repository credential program |
+| `docs/compliance/` | External ecosystem, trademark and provenance boundaries |
+| `.github/` | CI, CodeQL and repository quality gates |
 
-You need Node.js 20+ and PostgreSQL 15+.
+## Run ZYRA
+
+Requirements: Node.js 20+ and PostgreSQL 15+.
 
 ```bash
 git clone https://github.com/sonoxo/zyra.git
 cd zyra
 npm install
 cp .env.example .env
+npm run db:push
 npm run dev
 ```
 
-Add your own `DATABASE_URL` and `SESSION_SECRET` to `.env`, then initialize the database:
-
-```bash
-npm run db:push
-```
-
-Open `http://localhost:5000`.
-
-## For developers — exact function map
-
-This section is the technical version of the beginner graphics above.
-
-| Function shown in the graphics | Concrete implementation |
-|---|---|
-| Mission terminal | `apps/zyra-live-implement/public/index.html` |
-| Mission planning | `POST /api/virginia/plan` in `apps/zyra-live-implement/server.ts` |
-| Mission execution | `POST /api/virginia/execute` in `apps/zyra-live-implement/server.ts` |
-| VIRGINIA parser | `parseVirginia()` in `apps/zyra-live-implement/src/virginia.ts` |
-| Execution switch | `executeStep()` in `apps/zyra-live-implement/server.ts` |
-| Complete Zyra stop | `/RICHMONDVA3LM` → `SHUTDOWN_ZYRA` → `beginShutdown()` |
-| Foundry gateway | `foundry()` in `apps/zyra-live-implement/server.ts` |
-| Ontology discovery | `GET /api/v2/ontologies` |
-| Object-type discovery | `GET /api/v2/ontologies/{ontology}/objectTypes` |
-| Object retrieval | `GET /api/v2/ontologies/{ontology}/objects/{objectType}` |
-| Ontology action application | `POST /api/v2/ontologies/{ontology}/actions/{action}/apply` |
-| Health state | `GET /api/health` |
-| Evidence returned | `{ mission, results, completed, stopWhen }` |
-
-```mermaid
-flowchart TD
-    A["You type a VIRGINIA mission"] --> B["POST /api/virginia/plan or /execute"]
-    B --> C["parseVirginia() translates it"]
-    C --> D{"Mission type"}
-    D -->|Normal mission| E["executeStep() chooses the operation"]
-    E --> F["foundry() makes the authenticated request"]
-    F --> G["Palantir Foundry Ontology API v2"]
-    G --> H["JSON result"]
-    H --> I["Browser evidence panel"]
-    D -->|RICHMONDVA3LM| J["SHUTDOWN_ZYRA"]
-    J --> K["Return final shutdown result"]
-    K --> L["beginShutdown() closes Zyra server"]
-```
+Never commit real tokens, passwords, private keys, API secrets, or restricted data.
 
 ## Verification language
 
-Zyra keeps these states separate:
+ZYRA deliberately distinguishes:
 
-- **Code implemented** = the source exists in the repository.
-- **CI verified** = the automated repository checks passed for that commit.
-- **Foundry configured** = the runtime has the required Foundry URL and token.
-- **Deployment verified** = a real deployed environment completed its smoke test.
-- **Third-party approved** = the third party explicitly reviewed or approved it.
+- **Implemented** — source exists in the repository.
+- **CI verified** — automated repository checks passed for the referenced commit.
+- **Credential evidence** — a credential or training artifact exists at the stated evidence tier.
+- **Platform access** — an external account/entitlement is separately recorded.
+- **Authorized action** — the current runtime permission/policy allows the action.
+- **Deployment verified** — a target deployment completed its own smoke test.
+- **Third-party approved** — the third party explicitly reviewed/approved it.
 
-A graphic saying a function exists means the checked-in code implements that function. It does **not** automatically mean a live Foundry tenant is configured or a deployment has been smoke-tested.
+These states are not interchangeable.
 
-## Main Zyra stack
+## Security & trust
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Interface | React + TypeScript + Vite | What users see and interact with |
-| API | Express + TypeScript | Handles backend requests and workflows |
-| Shared contracts | Zod + Drizzle types | Keeps frontend and backend data aligned |
-| Data | PostgreSQL + Drizzle ORM | Stores durable application data |
-| Verification | GitHub Actions, tests and CodeQL | Checks committed changes |
+ZYRA is designed for authorized defensive security, governed automation, evidence preservation, and human-controlled high-impact actions. Sensitive credentials remain server-side and restricted actions should fail closed when authorization is absent.
 
-Detailed references: [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Deployment](docs/DEPLOYMENT.md)
+Report vulnerabilities privately using [`SECURITY.md`](SECURITY.md).
 
-## Security
+## Trademark notice
 
-Zyra is designed for authorized defensive security work. Sensitive credentials stay server-side, and restricted operations should remain governed by authenticated permissions and configured system policy.
-
-Report vulnerabilities privately using [SECURITY.md](SECURITY.md).
+Microsoft, Google, IBM, Red Hat, Palantir, Replit, GitHub, Coursera, Credly, and all other third-party names, product names, marks, and logos are property of their respective owners. Their appearance here identifies the documented evidence source, software ecosystem, verification platform, or infrastructure relationship described above. **No third-party sponsorship, partnership, certification of ZYRA/NXYZ, or endorsement is implied unless explicitly documented by that third party.**
 
 ## License
 
@@ -288,4 +241,4 @@ Licensed under the [Business Source License 1.1](LICENSE), converting to Apache 
 
 ---
 
-<p align="center"><strong>Beginner first. Real functions. Developer details underneath.</strong></p>
+<p align="center"><strong>Evidence first. External claims stay scoped. Human authorization stays in control.</strong></p>
