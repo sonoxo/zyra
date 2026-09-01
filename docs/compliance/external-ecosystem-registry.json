@@ -1,0 +1,67 @@
+{
+  "schema": "zyra.external-ecosystem-registry/v1",
+  "purpose": "Public provenance registry for external credential issuers, verification platforms, software ecosystems, and repository infrastructure referenced by ZYRA.",
+  "rules": {
+    "logoImpliesEndorsement": false,
+    "credentialImpliesAuthorization": false,
+    "trainingImpliesGovernmentEligibility": false,
+    "platformAccessControlledExternally": true
+  },
+  "organizations": [
+    {
+      "name": "Palantir",
+      "relationships": ["CREDENTIAL_ISSUER", "SOFTWARE_ECOSYSTEM", "PLATFORM_ACCESS"],
+      "evidence": ["ZYRA.README.md", "shared/ontology", "docs"],
+      "claimBoundary": "Credential issuer and integration target; no endorsement or unrestricted Foundry access implied."
+    },
+    {
+      "name": "Google",
+      "relationships": ["CREDENTIAL_ISSUER"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "External credential issuer; credentials do not grant unrelated authorization."
+    },
+    {
+      "name": "Coursera",
+      "relationships": ["VERIFICATION_PLATFORM"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "Verification and learning platform; no partnership implied."
+    },
+    {
+      "name": "IBM",
+      "relationships": ["CREDENTIAL_ISSUER"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "External credential/training issuer."
+    },
+    {
+      "name": "Credly",
+      "relationships": ["VERIFICATION_PLATFORM"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "Digital credential evidence source."
+    },
+    {
+      "name": "Red Hat",
+      "relationships": ["CREDENTIAL_ISSUER"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "External training issuer; evidence state remains as recorded in the ledger."
+    },
+    {
+      "name": "Replit",
+      "relationships": ["CREDENTIAL_ISSUER", "SOFTWARE_ECOSYSTEM"],
+      "evidence": ["ZYRA.README.md"],
+      "claimBoundary": "Badge/training evidence and development ecosystem reference; no endorsement implied."
+    },
+    {
+      "name": "Microsoft",
+      "relationships": ["SOFTWARE_ECOSYSTEM"],
+      "evidence": ["docs/NXYZ-MICROSOFT-OSS-LAYER.md", "products/nxyz-microsoft-layer"],
+      "claimBoundary": "Open-source ecosystem reference; not a Microsoft credential or endorsement."
+    },
+    {
+      "name": "GitHub",
+      "relationships": ["REPOSITORY_PROVENANCE", "SOFTWARE_ECOSYSTEM"],
+      "evidence": ["repository commit history", ".github/workflows"],
+      "claimBoundary": "Repository and CI/provenance infrastructure; not a credential issuer for the listed ZYRA training records."
+    }
+  ],
+  "trademarkNotice": "All third-party names and marks are property of their respective owners. Inclusion identifies an evidence source, platform, verification service, or software ecosystem relationship only. No sponsorship, partnership, certification of ZYRA, or endorsement is implied unless explicitly documented by the third party."
+}
