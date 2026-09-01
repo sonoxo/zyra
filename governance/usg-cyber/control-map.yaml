@@ -1,0 +1,197 @@
+schema_version: 1
+name: xunia-government-cyber-control-map
+purpose: >-
+  Internal defensive mapping between XUNIA control domains and public government
+  frameworks. This is a crosswalk, not a certification statement.
+
+status_values:
+  - not_applicable
+  - not_implemented
+  - planned
+  - partially_implemented
+  - implemented_unverified
+  - verified
+
+controls:
+  - id: XUNIA-GOV-001
+    title: Cybersecurity governance
+    objective: Establish accountable cybersecurity risk governance and documented ownership.
+    mappings:
+      - source: nist-csf-2.0
+        reference: GOVERN
+      - source: nist-sp800-53r5
+        reference: PM / PL families
+    evidence:
+      - security policy
+      - system owner
+      - control owner register
+      - risk register
+
+  - id: XUNIA-IAM-001
+    title: Per-request identity authorization
+    objective: Authenticate identities and enforce least privilege for every privileged request.
+    mappings:
+      - source: nist-sp800-207
+        reference: zero-trust access model
+      - source: nsa-zig-2026
+        reference: User pillar / privileged access / conditional access
+      - source: nist-sp800-53r5
+        reference: AC / IA families
+    evidence:
+      - identity-provider configuration
+      - role policy
+      - privileged-access review
+      - denied-access test
+
+  - id: XUNIA-AGENT-001
+    title: Agent least privilege
+    objective: Restrict each AI agent to explicitly allowed tools, resources, and data scopes.
+    mappings:
+      - source: nist-sp800-207
+        reference: least privilege / per-request decisions
+      - source: nist-ai-rmf-1.0
+        reference: GOVERN / MAP / MANAGE
+      - source: nist-ai-600-1
+        reference: generative AI risk management
+    evidence:
+      - agent capability manifest
+      - tool allowlist
+      - resource scope
+      - human approval rules
+      - audit trail
+
+  - id: XUNIA-DATA-001
+    title: Data classification and handling
+    objective: Label public, internal, sensitive-local, and rejected-restricted content and enforce handling rules.
+    mappings:
+      - source: nist-sp800-53r5
+        reference: AC / MP / SC families
+      - source: nist-sp800-171r3
+        reference: CUI protection requirements when explicitly in scope
+    evidence:
+      - data inventory
+      - classification labels
+      - storage policy
+      - egress policy
+
+  - id: XUNIA-LOG-001
+    title: Security audit logging
+    objective: Record security-relevant activity with integrity, attribution, retention, and review.
+    mappings:
+      - source: nist-sp800-53r5
+        reference: AU family
+      - source: nsa-zig-2026
+        reference: visibility / analytics-aligned activities
+    evidence:
+      - audit schema
+      - immutable or tamper-evident log controls
+      - retention configuration
+      - review records
+
+  - id: XUNIA-VULN-001
+    title: Vulnerability prioritization
+    objective: Prioritize remediation using exploitability, exposure, business impact, and CISA KEV status.
+    mappings:
+      - source: cisa-kev
+        reference: catalog membership
+      - source: cisa-cpg
+        reference: vulnerability-management practices
+      - source: nist-sp800-53r5
+        reference: RA / SI families
+    evidence:
+      - vulnerability inventory
+      - KEV match output
+      - remediation SLA
+      - patch evidence
+
+  - id: XUNIA-HARDEN-001
+    title: Technology hardening
+    objective: Apply relevant secure configuration requirements to deployed technology.
+    mappings:
+      - source: disa-stig-srg
+        reference: product-specific public STIG/SRG where applicable
+      - source: nist-sp800-53r5
+        reference: CM family
+    evidence:
+      - technology inventory
+      - applicable STIG/SRG profile
+      - automated or manual check results
+      - approved deviations
+    note: Mapping to a STIG does not mean DISA approval.
+
+  - id: XUNIA-SSDLC-001
+    title: Secure software development lifecycle
+    objective: Integrate security practices throughout design, development, build, release, and maintenance.
+    mappings:
+      - source: nist-sp800-218
+        reference: SSDF v1.1 production baseline
+      - source: nist-sp800-53r5
+        reference: SA / SR families
+      - source: platform-one-bigbang
+        reference: public DevSecOps architectural concepts
+    evidence:
+      - code review
+      - dependency scan
+      - secret scan
+      - SBOM or component inventory
+      - signed release or provenance record
+
+  - id: XUNIA-IR-001
+    title: Incident response lifecycle
+    objective: Prepare, detect, analyze, contain, eradicate, recover, and learn from cybersecurity incidents.
+    mappings:
+      - source: nist-sp800-61r3
+        reference: CSF 2.0 incident-response community profile
+      - source: nist-csf-2.0
+        reference: DETECT / RESPOND / RECOVER
+    evidence:
+      - incident plan
+      - severity matrix
+      - exercise record
+      - incident timeline
+      - lessons-learned record
+
+  - id: XUNIA-AI-001
+    title: AI model governance
+    objective: Maintain model inventory, intended use, limitations, evaluations, provenance, monitoring, and human oversight.
+    mappings:
+      - source: nist-ai-rmf-1.0
+        reference: GOVERN / MAP / MEASURE / MANAGE
+      - source: nist-ai-600-1
+        reference: generative AI profile
+    evidence:
+      - model card
+      - risk register
+      - evaluation report
+      - deployment approval
+      - monitoring record
+
+  - id: XUNIA-WF-001
+    title: Cyber workforce role ontology
+    objective: Represent required cyber functions using public work-role, task, KSA, and proficiency concepts rather than personal rosters.
+    mappings:
+      - source: dcwf
+        reference: 7 workforce elements / 74 work roles
+      - source: dodm-8140.03
+        reference: qualification and proficiency concepts
+    evidence:
+      - role catalog
+      - task/KSA mappings
+      - training or assessment mapping
+    privacy_rule: Do not store private military personnel information.
+
+  - id: XUNIA-CUI-001
+    title: CUI profile activation gate
+    objective: Prevent the system from claiming or assuming CUI handling capability merely because NIST 800-171 is mapped.
+    mappings:
+      - source: nist-sp800-171r3
+        reference: full applicable requirement set when contractually in scope
+      - source: nist-sp800-171ar3
+        reference: assessment procedures
+    evidence:
+      - documented legal/contractual scope
+      - approved system boundary
+      - applicable safeguarding environment
+      - completed assessment evidence
+    default_status: not_applicable
+    hard_rule: No CUI ingestion without separately documented authorization and handling architecture.
