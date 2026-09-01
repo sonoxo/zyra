@@ -9,7 +9,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts server/nxyz-horizons.test.ts server/nxyz-microsoft-layer.test.ts",
+    "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/zyra-eyes.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts server/nxyz-horizons.test.ts server/nxyz-microsoft-layer.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
@@ -89,7 +89,7 @@
     "@replit/vite-plugin-dev-banner": "^0.1.1",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@tailwindcss/typography": "^0.5.15",
-    "@tailwindcss/vite": "^4.1.18",
+    "@tailwindcss/vite": "^4.7.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "^5.0.0",
     "@types/express-serve-static-core": "5.0.7",
