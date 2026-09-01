@@ -5,7 +5,20 @@
 </p>
 
 <h1 align="center">ZYRA // NXYZ</h1>
+
+<p align="center">
+  <a href="https://github.com/sonoxo/zyra">
+    <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=25&pause=900&color=8D6BFF&center=true&vCenter=true&width=860&lines=Hi+there%2C+I'm+Sonoxo;Governed+Agentic+Software;Evidence-Backed+Credentials;Ontology-Driven+Operations;Human-Controlled+Execution" alt="ZYRA typing header" />
+  </a>
+</p>
+
 <p align="center"><strong>Governed agentic software, evidence-backed credentials, ontology-driven operations, and human-controlled execution.</strong></p>
+
+<p align="center">
+  <img src="https://komarev.com/ghpvc/?username=sonoxo&label=PROFILE%20VIEWS&color=8d6bff&style=for-the-badge" alt="Profile Views" />
+  <img src="https://img.shields.io/badge/STATUS-ACTIVE-2df6ff?style=for-the-badge" alt="Status" />
+  <img src="https://img.shields.io/badge/CLEARANCE-AUTHORIZATION%20REQUIRED-ff4fd8?style=for-the-badge" alt="Clearance" />
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/VIRGINIA-VYBE%20CODE-8d6bff?style=for-the-badge" alt="Virginia" />
@@ -13,6 +26,67 @@
   <img src="https://img.shields.io/badge/NXYZ-GOVERNED%20ECOSYSTEM-2df6ff?style=for-the-badge" alt="NXYZ governed ecosystem" />
   <img src="https://img.shields.io/badge/EVIDENCE-PROVENANCE%20FIRST-9cff57?style=for-the-badge" alt="Evidence provenance first" />
 </p>
+
+<p align="center">
+  <a href="#-about-me"><strong>ABOUT</strong></a> ·
+  <a href="#-tech--security-stack"><strong>STACK</strong></a> ·
+  <a href="#ecosystem-architecture"><strong>ARCHITECTURE</strong></a> ·
+  <a href="#products-in-the-ecosystem"><strong>PRODUCTS</strong></a> ·
+  <a href="#run-zyra"><strong>RUN ZYRA</strong></a> ·
+  <a href="#security--trust"><strong>SECURITY</strong></a>
+</p>
+
+---
+
+## 🛡️ About Me
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Operator Focus
+
+- 🔭 I’m currently working on **penetration testing & threat intelligence**.
+- 🌱 I’m currently learning **advanced malware analysis and reverse engineering**.
+- ⚡ Fun fact: **I break things to make them stronger.**
+
+</td>
+<td width="50%" valign="top">
+
+### ZYRA Mission
+
+```text
+MISSION → POLICY → ONTOLOGY → ACTION → EVIDENCE
+```
+
+ZYRA is built around **authorized defensive security**, **governed automation**, **evidence preservation**, and **human-controlled execution**.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🧰 Tech & Security Stack
+
+| Layer | Stack |
+|---|---|
+| **Languages** | Python · Bash · C++ · Go · PowerShell |
+| **Security Tools** | Wireshark · Burp Suite · Metasploit · Nmap · Ghidra · Splunk |
+| **Platforms** | Linux · Windows Server · Docker · AWS Security |
+| **ZYRA Core** | React · TypeScript · Express · PostgreSQL |
+| **Governance** | Policy gates · Ontology contracts · Evidence models · Human authorization |
+
+---
+
+## 📊 GitHub Stats
+
+<p align="center">
+  <img width="49%" src="https://github-readme-stats.vercel.app/api?username=sonoxo&show_icons=true&hide_border=true&bg_color=0D1117&title_color=8D6BFF&icon_color=2DF6FF&text_color=C9D1D9" alt="GitHub Stats" />
+  <img width="49%" src="https://streak-stats.demolab.com?user=sonoxo&hide_border=true&background=0D1117&ring=8D6BFF&fire=FF4FD8&currStreakLabel=2DF6FF&sideLabels=C9D1D9&dates=8B949E&currStreakNum=C9D1D9&sideNums=C9D1D9" alt="GitHub Streak" />
+</p>
+
+---
 
 ## External credential & ecosystem provenance
 
