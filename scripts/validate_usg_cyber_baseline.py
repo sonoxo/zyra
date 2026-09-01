@@ -3,8 +3,8 @@
 
 This validator intentionally performs no network access and does not download
 standards. It checks that the governance bundle is present, fail-closed source
-policy is enabled, authoritative source IDs are registered, URLs are HTTPS, and
-obvious secret material has not been committed into the baseline directory.
+policy is enabled, authoritative source IDs are registered, OSCAL release pins
+are explicit, URLs are HTTPS, and obvious secret material has not been committed.
 """
 
 from __future__ import annotations
@@ -21,11 +21,15 @@ REQUIRED_FILES = [
     ROOT / "docs/government-cyber/SAFETY-BOUNDARIES.md",
     ROOT / "docs/government-cyber/IMPLEMENTATION-BASELINE.md",
     ROOT / "docs/government-cyber/SOURCE-PROVENANCE.md",
+    ROOT / "docs/government-cyber/OSCAL-EVIDENCE-ENGINE.md",
     ROOT / "governance/usg-cyber/sources.yaml",
     ROOT / "governance/usg-cyber/control-map.yaml",
     ROOT / "governance/usg-cyber/agent-policy.yaml",
     ROOT / "governance/usg-cyber/workforce-schema.json",
     ROOT / "governance/usg-cyber/model-governance.yaml",
+    ROOT / "governance/usg-cyber/oscal-release-lock.json",
+    ROOT / "governance/usg-cyber/evidence-index.json",
+    ROOT / "governance/usg-cyber/control-evidence.schema.json",
 ]
 
 REQUIRED_SOURCE_IDS = {
@@ -59,6 +63,16 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def load_json(path: Path) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"invalid JSON in {path.relative_to(ROOT)}: {exc}")
+    if not isinstance(value, dict):
+        fail(f"expected JSON object in {path.relative_to(ROOT)}")
+    return value
+
+
 def main() -> int:
     missing = [str(p.relative_to(ROOT)) for p in REQUIRED_FILES if not p.is_file()]
     if missing:
@@ -77,22 +91,32 @@ def main() -> int:
         if fragment not in source_text:
             fail(f"source registry safety policy missing or weakened: {fragment}")
 
+    required_release_fragments = [
+        'content_release: "5.2.0"',
+        "latest_verified_release: v1.2.3",
+        "content_release: v1.5.0",
+        "content_oscal_version: v1.2.2",
+    ]
+    for fragment in required_release_fragments:
+        if fragment not in source_text:
+            fail(f"source registry release pin missing or stale: {fragment}")
+
     registered_ids = set(re.findall(r"^\s*- id:\s*([^\s#]+)", source_text, flags=re.MULTILINE))
     missing_ids = sorted(REQUIRED_SOURCE_IDS - registered_ids)
     if missing_ids:
         fail("required authoritative source IDs are missing: " + ", ".join(missing_ids))
 
-    urls = re.findall(r"^\s*(?:url|content_url|downloads_url):\s*(\S+)", source_text, flags=re.MULTILINE)
+    urls = re.findall(
+        r"^\s*(?:url|content_url|downloads_url|release_url):\s*(\S+)",
+        source_text,
+        flags=re.MULTILINE,
+    )
     insecure_urls = [url for url in urls if not url.startswith("https://")]
     if insecure_urls:
         fail("non-HTTPS source URL(s): " + ", ".join(insecure_urls))
 
     schema_path = ROOT / "governance/usg-cyber/workforce-schema.json"
-    try:
-        schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        fail(f"invalid workforce schema JSON: {exc}")
-
+    schema = load_json(schema_path)
     if schema.get("additionalProperties") is not False:
         fail("workforce schema must remain closed to undeclared top-level fields")
 
@@ -110,6 +134,33 @@ def main() -> int:
     if absent_guards:
         fail("workforce schema lost personnel-data guards: " + ", ".join(absent_guards))
 
+    lock = load_json(ROOT / "governance/usg-cyber/oscal-release-lock.json")
+    if lock.get("oscal_schema", {}).get("release") != "v1.2.3":
+        fail("OSCAL schema lock must pin v1.2.3")
+    if lock.get("oscal_content", {}).get("release") != "v1.5.0":
+        fail("OSCAL content lock must pin v1.5.0")
+    for section in ("oscal_schema", "oscal_content"):
+        digest = lock.get(section, {}).get("asset", {}).get("sha256", "")
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            fail(f"{section} release asset must have a lowercase SHA-256 digest")
+    policy = lock.get("ingestion_policy", {})
+    required_lock_flags = {
+        "public_authoritative_only": True,
+        "require_https_for_remote": True,
+        "verify_digest_when_pinned": True,
+        "vendor_full_control_prose": False,
+        "copy_party_records": False,
+        "fail_closed_on_provenance_error": True,
+    }
+    for key, expected in required_lock_flags.items():
+        if policy.get(key) is not expected:
+            fail(f"OSCAL ingestion policy missing or weakened: {key}={expected}")
+
+    load_json(ROOT / "governance/usg-cyber/evidence-index.json")
+    evidence_schema = load_json(ROOT / "governance/usg-cyber/control-evidence.schema.json")
+    if evidence_schema.get("additionalProperties") is not False:
+        fail("control evidence schema must remain closed to undeclared top-level fields")
+
     governed_files = [p for p in REQUIRED_FILES if p.suffix in {".md", ".yaml", ".json"}]
     for path in governed_files:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -117,8 +168,11 @@ def main() -> int:
             if pattern.search(text):
                 fail(f"possible secret/private key committed in {path.relative_to(ROOT)}")
 
-    print(f"USG cyber baseline validation passed: {len(REQUIRED_FILES)} required files, "
-          f"{len(registered_ids)} registered sources, {len(urls)} HTTPS source URLs.")
+    print(
+        f"USG cyber baseline validation passed: {len(REQUIRED_FILES)} required files, "
+        f"{len(registered_ids)} registered sources, {len(urls)} HTTPS source URLs, "
+        "OSCAL v1.2.3 / content v1.5.0 pinned."
+    )
     return 0
 
 

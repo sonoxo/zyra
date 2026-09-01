@@ -1,0 +1,15 @@
+{
+  "catalog": {
+    "uuid": "4fc0f814-bd1f-4bc5-bd43-e4f91cbf2680",
+    "metadata": {
+      "title": "XUNIA Synthetic OSCAL CI Fixture",
+      "last-modified": "2026-09-01T15:00:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.2.3"
+    },
+    "controls": [
+      {"id": "xunia-test-1", "title": "Synthetic control identifier only"},
+      {"id": "xunia-test-2", "title": "Synthetic control identifier only"}
+    ]
+  }
+}

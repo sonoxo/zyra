@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "system": "ZYRA/XUNIA/GPT-Doug-LLM/Virginia-LLM",
+  "statement": "Internal evidence tracking only. This file is not a certification, authorization, ATO, CMMC assessment, FedRAMP status, or government endorsement.",
+  "controls": [
+    {
+      "control_id": "XUNIA-GOV-001",
+      "status": "implemented_unverified",
+      "artifacts": [
+        {"path": "docs/government-cyber/IMPLEMENTATION-BASELINE.md", "kind": "policy"},
+        {"path": "governance/usg-cyber/sources.yaml", "kind": "source-registry"}
+      ]
+    },
+    {
+      "control_id": "XUNIA-IAM-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-AGENT-001",
+      "status": "implemented_unverified",
+      "artifacts": [
+        {"path": "governance/usg-cyber/agent-policy.yaml", "kind": "policy"}
+      ]
+    },
+    {
+      "control_id": "XUNIA-DATA-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-LOG-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-VULN-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-HARDEN-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-SSDLC-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-IR-001",
+      "status": "not_assessed",
+      "artifacts": []
+    },
+    {
+      "control_id": "XUNIA-AI-001",
+      "status": "implemented_unverified",
+      "artifacts": [
+        {"path": "governance/usg-cyber/model-governance.yaml", "kind": "policy"}
+      ]
+    },
+    {
+      "control_id": "XUNIA-WF-001",
+      "status": "implemented_unverified",
+      "artifacts": [
+        {"path": "governance/usg-cyber/workforce-schema.json", "kind": "schema"}
+      ]
+    },
+    {
+      "control_id": "XUNIA-CUI-001",
+      "status": "not_applicable",
+      "rationale": "No authorized CUI system boundary or contractual CUI handling scope is asserted by this public repository.",
+      "artifacts": []
+    }
+  ]
+}

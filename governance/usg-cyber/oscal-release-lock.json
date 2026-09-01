@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-09-01",
+  "oscal_schema": {
+    "repository": "https://github.com/usnistgov/OSCAL",
+    "release": "v1.2.3",
+    "published_at": "2026-08-07T03:33:33Z",
+    "release_url": "https://github.com/usnistgov/OSCAL/releases/tag/v1.2.3",
+    "asset": {
+      "name": "oscal-1.2.3.zip",
+      "url": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal-1.2.3.zip",
+      "sha256": "eefb4ec5b1383d3b15fca27e0b63bc84b8661d6ee17e4f92acb437606e9ee982"
+    }
+  },
+  "oscal_content": {
+    "repository": "https://github.com/usnistgov/oscal-content",
+    "release": "v1.5.0",
+    "commit": "78650f02ad9321bb7b817846f8fbd4f2bcd620de",
+    "published_at": "2026-05-13T16:29:20Z",
+    "release_url": "https://github.com/usnistgov/oscal-content/releases/tag/v1.5.0",
+    "asset": {
+      "name": "oscal-content-1.5.0.zip",
+      "url": "https://github.com/usnistgov/oscal-content/releases/download/v1.5.0/oscal-content-1.5.0.zip",
+      "sha256": "2fe26ac1087f49736e75be84f2b23333050e2227fac51f899b2ca4bd5e1109f4"
+    },
+    "content_oscal_version": "1.2.2",
+    "note": "Content release version and OSCAL schema version are tracked separately. Do not silently rewrite source content to a newer OSCAL syntax."
+  },
+  "ingestion_policy": {
+    "public_authoritative_only": true,
+    "require_https_for_remote": true,
+    "verify_digest_when_pinned": true,
+    "vendor_full_control_prose": false,
+    "copy_party_records": false,
+    "fail_closed_on_provenance_error": true
+  }
+}
