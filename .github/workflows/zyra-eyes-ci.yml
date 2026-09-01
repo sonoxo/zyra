@@ -2,7 +2,7 @@ name: ZYRA Eyes CI
 
 on:
   push:
-    branches: [main, "feature/**"]
+    branches: [main, "feature/**", "feat/**"]
     paths:
       - "server/zyra-eyes.ts"
       - "server/zyra-eyes.test.ts"
@@ -51,7 +51,15 @@ jobs:
           python-version: "3.12"
 
       - name: Python syntax check
-        run: python -m py_compile apps/zyra-eyes-plugin/zyra_eyes.py
+        run: |
+          python -m py_compile apps/zyra-eyes-plugin/zyra_eyes.py
+          python -m py_compile apps/zyra-eyes-plugin/zyra_gaze.py
+
+      - name: Gaze safety invariants
+        run: |
+          grep -q 'NATIVE_SENTINEL = "I_OWN_AND_AUTHORIZE_THIS_MACHINE"' apps/zyra-eyes-plugin/zyra_gaze.py
+          grep -q 'PyAutoGUI' apps/zyra-eyes-plugin/zyra_gaze.py
+          grep -q 'Native gaze control requires --approve' apps/zyra-eyes-plugin/zyra_gaze.py
 
       - name: Policy invariants
         run: |
