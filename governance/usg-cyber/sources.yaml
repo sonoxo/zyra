@@ -1,0 +1,190 @@
+schema_version: 1
+registry_name: xunia-usg-cyber-source-registry
+last_reviewed: 2026-09-01
+policy:
+  authoritative_public_only: true
+  allow_authenticated_sources: false
+  allow_cui_or_classified: false
+  allow_personnel_rosters: false
+  fail_closed_on_uncertain_provenance: true
+
+sources:
+  - id: nist-csf-2.0
+    authority: NIST
+    title: NIST Cybersecurity Framework 2.0
+    status: final
+    published: 2024-02-26
+    url: https://www.nist.gov/cyberframework
+    use: enterprise cyber-risk taxonomy and organizational profile
+
+  - id: nist-sp800-53r5
+    authority: NIST
+    title: Security and Privacy Controls for Information Systems and Organizations
+    revision: "5"
+    content_release: "5.1"
+    status: final
+    url: https://csrc.nist.gov/projects/risk-management/sp800-53-controls/downloads
+    use: primary control catalog
+
+  - id: nist-sp800-53ar5
+    authority: NIST
+    title: Assessing Security and Privacy Controls in Information Systems and Organizations
+    revision: "5"
+    status: final
+    url: https://csrc.nist.gov/pubs/sp/800/53/a/r5/final
+    use: assessment procedures and evidence design
+
+  - id: nist-sp800-53b
+    authority: NIST
+    title: Control Baselines for Information Systems and Organizations
+    status: final
+    url: https://csrc.nist.gov/pubs/sp/800/53/b/upd1/final
+    use: baseline tailoring reference
+
+  - id: nist-sp800-171r3
+    authority: NIST
+    title: Protecting Controlled Unclassified Information in Nonfederal Systems and Organizations
+    revision: "3"
+    status: final
+    published: 2024-05
+    url: https://csrc.nist.gov/pubs/sp/800/171/r3/final
+    use: optional CUI-oriented requirements profile; does not authorize XUNIA to handle CUI
+
+  - id: nist-sp800-171ar3
+    authority: NIST
+    title: Assessing Security Requirements for Controlled Unclassified Information
+    revision: "3"
+    status: final
+    url: https://csrc.nist.gov/pubs/sp/800/171/a/r3/final
+    use: assessment methodology for 800-171 profile
+
+  - id: nist-sp800-61r3
+    authority: NIST
+    title: Incident Response Recommendations and Considerations for Cybersecurity Risk Management
+    revision: "3"
+    status: final
+    published: 2025-04
+    url: https://csrc.nist.gov/pubs/sp/800/61/r3/final
+    use: incident response lifecycle aligned to CSF 2.0
+
+  - id: nist-sp800-207
+    authority: NIST
+    title: Zero Trust Architecture
+    status: final
+    url: https://csrc.nist.gov/pubs/sp/800/207/final
+    use: zero-trust architecture model
+
+  - id: nist-sp800-218
+    authority: NIST
+    title: Secure Software Development Framework Version 1.1
+    status: final
+    published: 2022-02
+    url: https://csrc.nist.gov/pubs/sp/800/218/final
+    use: production secure-SDLC baseline
+
+  - id: nist-sp800-218r1-ipd
+    authority: NIST
+    title: Secure Software Development Framework Version 1.2
+    revision: "1"
+    status: draft-watch-only
+    published: 2025-12-17
+    url: https://csrc.nist.gov/pubs/sp/800/218/r1/ipd
+    use: future-change monitoring only; MUST NOT replace final SSDF requirements until finalized
+
+  - id: nist-oscal
+    authority: NIST
+    title: Open Security Controls Assessment Language
+    status: active
+    latest_verified_release: v1.2.2
+    release_date: 2026-04-30
+    url: https://github.com/usnistgov/OSCAL
+    content_url: https://github.com/usnistgov/oscal-content
+    use: machine-readable catalogs, profiles, implementation plans, assessments, and results
+
+  - id: nist-ai-rmf-1.0
+    authority: NIST
+    title: AI Risk Management Framework 1.0
+    status: final-under-revision
+    url: https://www.nist.gov/itl/ai-risk-management-framework
+    use: AI governance lifecycle
+
+  - id: nist-ai-600-1
+    authority: NIST
+    title: Artificial Intelligence Risk Management Framework - Generative Artificial Intelligence Profile
+    status: final
+    published: 2024-07-26
+    source_updated: 2026-04-08
+    url: https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence
+    use: generative-AI risk controls and model governance
+
+  - id: cisa-kev
+    authority: CISA
+    title: Known Exploited Vulnerabilities Catalog
+    status: continuously-updated
+    url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+    use: defensive vulnerability-remediation prioritization
+
+  - id: cisa-cpg
+    authority: CISA
+    title: Cross-Sector Cybersecurity Performance Goals
+    status: active
+    url: https://www.cisa.gov/cybersecurity-performance-goals
+    use: high-impact minimum cybersecurity practices
+
+  - id: cisa-github
+    authority: CISA
+    title: CISA official GitHub organization
+    status: verified-public-org
+    url: https://github.com/cisagov
+    use: provenance-approved public software and guidance discovery
+
+  - id: nsa-zig-2026
+    authority: NSA
+    title: Zero Trust Implementation Guidelines
+    status: active-phased-guidance
+    first_release: 2026-01-14
+    phase_one_two_release: 2026-01-30
+    resource_page_release: 2026-05-28
+    url: https://www.nsa.gov/Cybersecurity/ZIG/
+    use: defensive zero-trust implementation sequencing
+
+  - id: nsa-github
+    authority: NSA
+    title: National Security Agency official GitHub organization
+    status: official-public-org
+    url: https://github.com/NationalSecurityAgency
+    use: provenance-approved public open-source discovery
+
+  - id: disa-stig-srg
+    authority: DISA
+    title: Security Technical Implementation Guides and Security Requirements Guides
+    status: continuously-updated
+    url: https://public.cyber.mil/stigs/
+    downloads_url: https://public.cyber.mil/stigs/downloads/
+    use: technology-specific defensive hardening and assessment guidance
+    ingestion_rule: public-only; do not retrieve CAC-only or restricted material
+
+  - id: dcwf
+    authority: DoD-CIO
+    title: DoD/DoW Cyber Workforce Framework
+    status: active
+    work_role_count: 74
+    workforce_element_count: 7
+    url: https://dodcio.defense.gov/Cyber-Workforce/DCWF.aspx
+    use: role-task-KSA workforce ontology only; no personnel roster ingestion
+
+  - id: dodm-8140.03
+    authority: DoD-CIO
+    title: Cyberspace Workforce Qualification and Management Program
+    status: current-policy-reference
+    published: 2023-02-15
+    url: https://dodcio.defense.gov/Portals/0/Documents/Library/DoDM-8140-03.pdf
+    use: qualification and proficiency model for public cyber-workforce ontology
+
+  - id: platform-one-bigbang
+    authority: DoD-Platform-One
+    title: Big Bang public GitHub mirror
+    status: public-mirror
+    url: https://github.com/DoD-Platform-One/bigbang
+    canonical_note: GitHub mirror identifies government Repo1 as canonical upstream
+    use: DevSecOps architecture reference; do not claim deployment or approval merely by mapping to it

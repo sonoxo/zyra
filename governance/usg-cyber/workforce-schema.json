@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xunia.local/schemas/usg-cyber-workforce-role.schema.json",
+  "title": "XUNIA Public Cyber Workforce Role",
+  "description": "Schema for public DCWF/8140-style role metadata. This intentionally models work, qualifications, and provenance—not individual military personnel.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role_id", "title", "source_id", "workforce_element", "tasks", "ksas"],
+  "properties": {
+    "role_id": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "const": "dcwf"},
+    "workforce_element": {"type": "string", "minLength": 1},
+    "definition": {"type": "string"},
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text"],
+        "properties": {
+          "id": {"type": "string"},
+          "text": {"type": "string"}
+        }
+      }
+    },
+    "ksas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "text"],
+        "properties": {
+          "id": {"type": "string"},
+          "kind": {"enum": ["knowledge", "skill", "ability"]},
+          "text": {"type": "string"}
+        }
+      }
+    },
+    "proficiency": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "qualification_references": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "xunia_agent_analog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed_defensive_functions": {"type": "array", "items": {"type": "string"}},
+        "required_human_approval": {"type": "array", "items": {"type": "string"}},
+        "prohibited_functions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_url", "retrieved_at"],
+      "properties": {
+        "source_url": {"type": "string", "format": "uri"},
+        "retrieved_at": {"type": "string", "format": "date"},
+        "source_revision": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+      }
+    }
+  },
+  "not": {
+    "anyOf": [
+      {"required": ["person_name"]},
+      {"required": ["dod_id"]},
+      {"required": ["cac_identifier"]},
+      {"required": ["home_address"]},
+      {"required": ["private_phone"]},
+      {"required": ["private_email"]},
+      {"required": ["nonpublic_location"]},
+      {"required": ["nonpublic_schedule"]}
+    ]
+  }
+}

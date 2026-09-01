@@ -1,0 +1,32 @@
+name: USG Cyber Baseline
+
+on:
+  pull_request:
+    paths:
+      - 'docs/government-cyber/**'
+      - 'governance/usg-cyber/**'
+      - 'scripts/validate_usg_cyber_baseline.py'
+      - '.github/workflows/usg-cyber-baseline.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/government-cyber/**'
+      - 'governance/usg-cyber/**'
+      - 'scripts/validate_usg_cyber_baseline.py'
+      - '.github/workflows/usg-cyber-baseline.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate public-source cyber governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate baseline
+        run: python3 scripts/validate_usg_cyber_baseline.py
