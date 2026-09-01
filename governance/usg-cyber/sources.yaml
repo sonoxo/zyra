@@ -21,8 +21,9 @@ sources:
     authority: NIST
     title: Security and Privacy Controls for Information Systems and Organizations
     revision: "5"
-    content_release: "5.1"
+    content_release: "5.2.0"
     status: final
+    release_date: 2025-08-27
     url: https://csrc.nist.gov/projects/risk-management/sp800-53-controls/downloads
     use: primary control catalog
 
@@ -30,16 +31,20 @@ sources:
     authority: NIST
     title: Assessing Security and Privacy Controls in Information Systems and Organizations
     revision: "5"
+    content_release: "5.2.0"
     status: final
+    release_date: 2025-08-27
     url: https://csrc.nist.gov/pubs/sp/800/53/a/r5/final
     use: assessment procedures and evidence design
 
   - id: nist-sp800-53b
     authority: NIST
     title: Control Baselines for Information Systems and Organizations
+    content_release: "5.2.0"
     status: final
+    release_date: 2025-08-27
     url: https://csrc.nist.gov/pubs/sp/800/53/b/upd1/final
-    use: baseline tailoring reference
+    use: baseline tailoring reference; 5.2.0 changed the release number for consistency without baseline changes
 
   - id: nist-sp800-171r3
     authority: NIST
@@ -95,10 +100,14 @@ sources:
     authority: NIST
     title: Open Security Controls Assessment Language
     status: active
-    latest_verified_release: v1.2.2
-    release_date: 2026-04-30
+    latest_verified_release: v1.2.3
+    release_date: 2026-08-07
     url: https://github.com/usnistgov/OSCAL
     content_url: https://github.com/usnistgov/oscal-content
+    content_release: v1.5.0
+    content_release_date: 2026-05-13
+    content_oscal_version: v1.2.2
+    lock_file: governance/usg-cyber/oscal-release-lock.json
     use: machine-readable catalogs, profiles, implementation plans, assessments, and results
 
   - id: nist-ai-rmf-1.0
