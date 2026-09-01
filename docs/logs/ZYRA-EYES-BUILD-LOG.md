@@ -24,6 +24,10 @@ This ledger records repository-level changes for the ZYRA Eyes / Daredevil Binar
 | ZYE-018 | 2026-09-01 | Whole-ecosystem beginner map added | `docs/ECOSYSTEM-BEGINNER.md` |
 | ZYE-019 | 2026-09-01 | Main README updated with VA/RVIA/ZYRA Eyes architecture, product state table, CI badge, run instructions and repository map | `README.md` |
 | ZYE-020 | 2026-09-01 | Final head verification observed GitHub checks running; Job Readiness Contract completed successfully while Registry Quality and CodeQL were still in progress at observation time | commit `2dd176009005654e5d3e36eee8a3a775eb8b8e0a` |
+| ZYE-021 | 2026-09-01 | Added animated flagship SVG that visualizes SEE → RVIA CORE → GOVERN/ACT with scan motion, binary flow, subsystem pulses, policy state, action vector and evidence verification | `docs/assets/zyra-eyes-rvia-animated.svg` |
+| ZYE-022 | 2026-09-01 | Embedded the animated showcase at the top of the ZYRA Eyes documentation and added a visual-first explanation plus bragging-rights demo language | `docs/ZYRA-EYES-RVIA.md` |
+| ZYE-023 | 2026-09-01 | Rebuilt `/zyra-eyes` opening experience as a cinematic animated runtime with binary rain, live sensor scan, RVIA orbital core, four subsystem nodes, authorization stages and operating-loop visualization | `client/src/pages/zyra-eyes.tsx` |
+| ZYE-024 | 2026-09-01 | Added visible product metrics to the showcase: 6 visible stages, 4 core systems, 1 human gate and 0 authorization bypasses | `client/src/pages/zyra-eyes.tsx` |
 
 ## Runtime evidence flow
 
@@ -53,10 +57,11 @@ TRANSITIONS ┘
 | Approval | One-time exact-action tokens + local per-run approval | Implemented |
 | Privacy | No raw screenshot audit; no plaintext typed-text audit | Implemented |
 | CI | Node typecheck/tests + Python syntax + policy invariant checks | Implemented |
-| UI | `/zyra-eyes` simulator | Implemented |
+| UI | `/zyra-eyes` interactive simulator + animated flagship runtime showcase | Implemented |
+| Docs visual | Animated perception→reasoning→governance→action SVG | Implemented |
 | Ontology | `rvia:vision-control` | Implemented |
 | Governance | US-CZ v1.1 | Implemented |
-| Documentation | Main README + beginner guide + plugin runbook | Implemented |
+| Documentation | Main README + beginner guide + plugin runbook + animated showcase | Implemented |
 
 ## Logging policy
 
