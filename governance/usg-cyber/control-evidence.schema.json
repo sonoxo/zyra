@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sonoxo/zyra/governance/usg-cyber/control-evidence.schema.json",
+  "title": "XUNIA Public Cyber Control Evidence Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "system", "statement", "controls"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "system": {"type": "string", "minLength": 1},
+    "statement": {"type": "string", "minLength": 1},
+    "controls": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/control"}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["policy", "schema", "configuration", "test-result", "scan-result", "audit-record", "source-registry", "other"]
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["automated_test", "human_review"]},
+        "reference": {"type": "string"}
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "status", "artifacts"],
+      "properties": {
+        "control_id": {"type": "string", "pattern": "^XUNIA-[A-Z0-9-]+$"},
+        "status": {
+          "enum": ["not_assessed", "not_applicable", "planned", "partially_implemented", "implemented_unverified", "verified"]
+        },
+        "rationale": {"type": "string"},
+        "artifacts": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact"}
+        },
+        "verification": {"$ref": "#/$defs/verification"}
+      }
+    }
+  },
+  "description": "Public-repository evidence metadata only. Do not put secrets, CUI, classified information, military personnel rosters, private contact data, credentials, tokens, or raw sensitive logs in this index."
+}
