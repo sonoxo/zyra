@@ -1,0 +1,203 @@
+policy:
+  id: nxyz:us-cz-ethical-scope
+  version: 1.0.0
+  effective: 2026-09-01
+  status: OWNER_GOVERNANCE_BASELINE
+  meaning: >-
+    US-CZ is an internal shorthand for United States Citizen / Civilian Scope.
+    It is not a government status, clearance, license, or grant of authority.
+
+  appliesTo:
+    - ZYRA
+    - XUNIA
+    - NXYZ
+    - RVIA
+
+  precedence:
+    rule: STRICTER_RULE_WINS
+    sources:
+      - applicable_law
+      - written_authorization
+      - contract
+      - platform_terms
+      - rules_of_engagement
+      - data_handling_policy
+      - this_policy
+
+  principles:
+    - AUTHORITY_BEFORE_ACCESS
+    - LAWFUL_PURPOSE
+    - DATA_MINIMIZATION
+    - HUMAN_CONTROL_FOR_CONSEQUENTIAL_ACTIONS
+    - SOURCE_PROVENANCE
+    - NO_GUILT_BY_DATA
+    - NO_AUTHORITY_INFLATION
+    - FAIL_CLOSED_ON_MATERIAL_UNCERTAINTY
+    - AUDITABILITY
+    - REVERSIBILITY_WHERE_PRACTICAL
+
+  zones:
+    US_CZ_GREEN:
+      defaultExecution: ALLOW
+      examples:
+        - OWNED_SYSTEM_SECURITY_TESTING
+        - ISOLATED_LAB_RESEARCH
+        - EXPRESSLY_AUTHORIZED_CTF_OR_BUG_BOUNTY
+        - PUBLIC_SOURCE_RESEARCH_WITHOUT_ACCESS_BYPASS
+        - DEFENSIVE_THREAT_INTELLIGENCE
+        - SYNTHETIC_DATA_DEMONSTRATION
+        - SOFTWARE_DEVELOPMENT_AND_CI
+        - EVIDENCE_PROVENANCE
+        - READ_ONLY_AI_ASSISTANCE
+
+    US_CZ_CONTROLLED:
+      defaultExecution: REQUIRE_REVIEW
+      requirements:
+        - IDENTIFIED_ACCOUNTABLE_REQUESTOR
+        - LAWFUL_PURPOSE
+        - DOCUMENTED_AUTHORIZATION
+        - DEFINED_SCOPE
+        - DATA_CLASSIFICATION_REVIEW
+        - PRIVACY_REVIEW_WHEN_APPLICABLE
+        - EXPORT_AND_SANCTIONS_REVIEW_WHEN_APPLICABLE
+        - TECHNICAL_SAFETY_CONTROLS
+        - HUMAN_APPROVAL_WHEN_HIGH_IMPACT
+        - AUDIT_AND_POSTCONDITION_REVIEW
+      examples:
+        - THIRD_PARTY_PENETRATION_TEST
+        - GOVERNMENT_OR_DEFENSE_DEPLOYMENT
+        - CRITICAL_INFRASTRUCTURE_DEPLOYMENT
+        - SENSITIVE_PERSONAL_DATA_PROCESSING
+        - THIRD_PARTY_ACCOUNT_WRITE
+        - MALWARE_DETONATION_OUTSIDE_OWNED_LAB
+        - CONSEQUENTAL_PERSON_LEVEL_ANALYSIS
+        - EXPORT_CONTROLLED_TECHNOLOGY_TRANSFER
+        - SANCTIONS_EXPOSURE
+        - CUI_PROCESSING
+        - EXTERNAL_AUTOMATED_SUBMISSION
+
+    PROHIBITED_US_CZ:
+      defaultExecution: DENY
+      actions:
+        - UNAUTHORIZED_COMPUTER_ACCESS
+        - CREDENTIAL_THEFT
+        - PHISHING_FOR_UNAUTHORIZED_ACCESS
+        - SESSION_OR_TOKEN_THEFT
+        - AUTHENTICATION_BYPASS_WITHOUT_AUTHORIZATION
+        - UNAUTHORIZED_COMMUNICATION_INTERCEPTION
+        - UNAUTHORIZED_STORED_COMMUNICATION_ACCESS
+        - UNAUTHORIZED_MALWARE_DEPLOYMENT
+        - RANSOMWARE
+        - BOTNET_OPERATION
+        - THIRD_PARTY_DATA_DESTRUCTION
+        - CONTROL_EVASION
+        - SANCTIONS_EVASION
+        - EXPORT_CONTROL_EVASION
+        - BULK_DOXXING
+        - STALKING_OR_HARASSMENT
+        - AUTOMATED_GUILT_OR_CRIMINALITY_SCORING
+        - AUTOMATED_CLEARANCE_OR_LOYALTY_INFERENCE
+        - GOVERNMENT_IMPERSONATION
+        - FALSE_CLEARANCE_OR_ATO_CLAIM
+        - UNAPPROVED_CLASSIFIED_OR_CUI_INGESTION
+        - UNAUTHORIZED_IRREVERSIBLE_HIGH_IMPACT_ACTION
+
+  agenticActionClasses:
+    READ_ONLY:
+      default: ALLOW_SUBJECT_TO_SOURCE_POLICY
+    ANALYSIS_ONLY:
+      default: ALLOW_WITH_UNCERTAINTY_DISCLOSURE
+    PROPOSAL_ONLY:
+      default: HUMAN_DECIDES_EXECUTION
+    REVERSIBLE_WRITE:
+      default: REQUIRE_AUTHORIZATION_AND_AUDIT
+    EXTERNAL_WRITE:
+      default: REQUIRE_EXPLICIT_OWNER_AUTHORIZATION
+    HIGH_IMPACT_WRITE:
+      default: REQUIRE_EXPLICIT_AUTHORIZATION_HUMAN_APPROVAL_POLICY_GATE_POSTCONDITION
+
+  governmentBoundary:
+    publicGovernmentData: PERMITTED_SUBJECT_TO_SOURCE_AND_PRIVACY_POLICY
+    cui: APPROVED_ENVIRONMENT_AND_AUTHORIZATION_REQUIRED
+    classified: PROHIBITED_IN_ORDINARY_CIVILIAN_INFRASTRUCTURE
+    authorityClaims:
+      governmentEmployment: DOCUMENTATION_REQUIRED
+      militaryCommandAuthority: DOCUMENTATION_REQUIRED
+      lawEnforcementAuthority: DOCUMENTATION_REQUIRED
+      intelligenceCommunityAuthority: DOCUMENTATION_REQUIRED
+      securityClearance: DOCUMENTATION_REQUIRED
+      authorityToOperate: DOCUMENTATION_REQUIRED
+      governmentPartnership: DOCUMENTATION_REQUIRED
+      contractAward: DOCUMENTATION_REQUIRED
+
+  publicRecordControls:
+    - PRESERVE_PROCEDURAL_STATUS
+    - PRESUMPTION_OF_INNOCENCE_WHEN_APPLICABLE
+    - ALLEGATION_IS_NOT_FINDING
+    - PUBLIC_AVAILABILITY_DOES_NOT_AUTHORIZE_ABUSIVE_PROFILING
+    - PERSON_LEVEL_REPLICATION_DISABLED_BY_DEFAULT
+    - CORROBORATE_BEFORE_CONSEQUENTIAL_USE
+
+  exportAndSanctions:
+    uncertainApplicabilityState: BLOCKED_PENDING_EXPORT_REVIEW
+    checks:
+      - ITEM_OR_TECHNOLOGY_JURISDICTION
+      - CLASSIFICATION_WHEN_REQUIRED
+      - DESTINATION
+      - END_USER
+      - END_USE
+      - EAR_OR_ITAR_APPLICABILITY
+      - OFAC_AND_RESTRICTED_PARTY_SCREENING
+      - LICENSE_OR_EXCEPTION_WHEN_REQUIRED
+
+  professionalScope:
+    systemRole: ASSISTIVE_TOOL_UNLESS_SEPARATELY_LICENSED_OR_AUTHORIZED
+    specialReviewDomains:
+      - LEGAL
+      - MEDICAL
+      - ENGINEERING
+      - ACCOUNTING_AUDIT
+      - INVESTMENT_SECURITIES
+      - PRIVATE_INVESTIGATION
+      - REGULATED_SECURITY_SERVICES
+      - CREDIT_EMPLOYMENT_TENANT_SCREENING
+      - GOVERNMENT_CERTIFICATIONS
+
+  decisionGate:
+    questions:
+      - WHO_REQUESTED_THIS
+      - WHAT_ACTION_WILL_OCCUR
+      - WHICH_SYSTEMS_DATA_OR_PEOPLE_ARE_AFFECTED
+      - WHO_OWNS_OR_CONTROLS_THEM
+      - WHAT_IS_THE_AUTHORIZATION_BASIS
+      - WHAT_JURISDICTIONS_AND_CONTRACTS_APPLY
+      - IS_REGULATED_OR_SENSITIVE_DATA_INVOLVED
+      - CAN_THE_ACTION_MATERIALLY_HARM_RIGHTS_SAFETY_PROPERTY_REPUTATION_OR_ACCESS
+      - IS_HUMAN_APPROVAL_REQUIRED
+      - WHAT_EVIDENCE_PROVES_SCOPE_AUTHORIZATION_EXECUTION_AND_OUTCOME
+    insufficientAnswerState: BLOCKED_PENDING_REVIEW
+
+  runtimeStates:
+    - US_CZ_GREEN
+    - US_CZ_CONTROLLED
+    - BLOCKED_PENDING_AUTHORIZATION
+    - BLOCKED_PENDING_PRIVACY_REVIEW
+    - BLOCKED_PENDING_EXPORT_REVIEW
+    - BLOCKED_PENDING_LEGAL_REVIEW
+    - PROHIBITED_US_CZ
+
+  references:
+    cfaa:
+      citation: 18_USC_1030
+      url: https://www.justice.gov/jm/jm-9-48000-computer-fraud
+    storedCommunications:
+      citation: 18_USC_2701
+      url: https://uscode.house.gov/view.xhtml?req=(title:18%20section:2701%20edition:prelim)
+    ftcPrivacySecurity:
+      url: https://www.ftc.gov/business-guidance/privacy-security
+    bis:
+      url: https://www.bis.gov/guidance-frequently-asked-questions
+    ofac:
+      url: https://ofac.treasury.gov/recent-actions/20190502_33
+    nistAiRmf:
+      url: https://www.nist.gov/itl/ai-risk-management-framework
