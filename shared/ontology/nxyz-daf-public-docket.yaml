@@ -1,0 +1,181 @@
+ontology:
+  id: nxyz:daf-public-docket
+  version: 1.0.0
+  status: OWNER_IMPLEMENTATION
+  ownerSystem: NXYZ
+  projectLayer: PUBLIC_SOURCE_INTELLIGENCE
+
+  purpose: >-
+    Model the Department of the Air Force public military-justice docket as a
+    governed public-source event feed with explicit provenance, schedule-staleness,
+    presumption-of-innocence, privacy, and source-migration controls.
+
+  handling:
+    sourceClassificationContext: PUBLIC_SOURCE
+    officialClassificationDetermination: NONE_CLAIMED
+    personLevelIndexingDefault: DISABLED
+    automatedAdverseDecisionUse: PROHIBITED
+
+  sources:
+    dafPublicDocket:
+      url: https://legalassistance.law.af.mil/AMJAMS/PublicDocket/docket.html
+      publisher: Department of the Air Force
+      evidenceClass: OFFICIAL_PUBLIC_SOURCE
+      retrievedAt: 2026-09-01
+      rowIngestionState: NOT_VALIDATED
+      schemaState: OBSERVED
+      migrationRisk: ELEVATED
+    afjagHome:
+      url: https://www.afjag.af.mil/
+      evidenceClass: OFFICIAL_PUBLIC_REFERENCE
+    afjagDcsmTransition:
+      url: https://www.afjag.af.mil/Post/Article-Display/Article/4318822/jaj-message/
+      evidenceClass: OFFICIAL_PUBLIC_REFERENCE
+
+  classes:
+    - PublicDocketSource
+    - PublicDocketSnapshot
+    - PublicDocketEvent
+    - PreliminaryHearingEvent
+    - CourtMartialCaseEvent
+    - TrialResultEvent
+    - InstallationReference
+    - HearingLocation
+    - SourceProvenance
+    - VerificationState
+    - SourceMigrationSignal
+    - PublicAffairsConfirmation
+
+  relations:
+    snapshotOf:
+      domain: PublicDocketSnapshot
+      range: PublicDocketSource
+    eventDerivedFrom:
+      domain: PublicDocketEvent
+      range: SourceProvenance
+    eventAtInstallation:
+      domain: PublicDocketEvent
+      range: InstallationReference
+    eventAtLocation:
+      domain: PublicDocketEvent
+      range: HearingLocation
+    eventHasVerification:
+      domain: PublicDocketEvent
+      range: VerificationState
+    sourceHasMigrationSignal:
+      domain: PublicDocketSource
+      range: SourceMigrationSignal
+    eventConfirmedBy:
+      domain: PublicDocketEvent
+      range: PublicAffairsConfirmation
+
+  publicSchema:
+    preliminaryHearing:
+      observedFields:
+        - projectedStartDate
+        - baseResponsible
+        - hearingLocation
+        - rank
+        - firstName
+        - lastName
+    case:
+      observedFields:
+        - projectedStartDate
+        - base
+        - location
+        - rank
+        - firstName
+        - lastName
+    completedOrResult:
+      observedFields:
+        - trialEndDate
+        - base
+        - location
+        - rank
+        - firstName
+        - lastName
+
+  normalizedEvent:
+    preferredFields:
+      - sourceUrl
+      - retrievedAt
+      - sourceSystem
+      - eventType
+      - eventDate
+      - baseOrInstallation
+      - hearingLocation
+      - verificationState
+      - sourceRecordHash
+      - sourceSnapshotHash
+      - presumptionOfInnocence
+    optionalSensitiveFields:
+      - rank
+      - firstName
+      - lastName
+    sensitiveFieldRule: >-
+      Person-level identifiers may be processed only when needed for a legitimate,
+      authorized analytic purpose. They must not be replicated into the public
+      repository by default.
+
+  verificationStates:
+    SCHEMA_ONLY:
+      meaning: Public source structure observed; no person-level row validated.
+    PUBLIC_RECORD_OBSERVED:
+      meaning: A record was observed on the official public source.
+    SCHEDULE_UNCONFIRMED:
+      meaning: A schedule was observed but remains subject to source delay/change.
+    PA_CONFIRMED:
+      meaning: Servicing installation Public Affairs confirmed relevant details.
+    SUPERSEDED:
+      meaning: Later official public source state replaced or changed the record.
+
+  interpretationControls:
+    - PRESUMPTION_OF_INNOCENCE_REQUIRED
+    - PUBLIC_DOCKET_APPEARANCE_IS_NOT_GUILT
+    - SCHEDULES_MAY_CHANGE_WITHOUT_NOTICE
+    - SOURCE_UPDATES_MAY_LAG
+    - NO_CLEARANCE_STATUS_INFERENCE
+    - NO_TRUSTWORTHINESS_INFERENCE
+    - NO_FORCE_READINESS_INFERENCE_FROM_DOCKET_VOLUME
+    - NO_AUTOMATED_ADVERSE_PERSONNEL_DECISION
+    - MINIMIZE_PERSON_LEVEL_IDENTIFIERS
+    - RETAIN_SOURCE_AND_RETRIEVAL_PROVENANCE
+
+  migrationControls:
+    legacySystem: AMJAMS
+    successorSystemReference: DCMS
+    policy: >-
+      Treat the current URL and schema as a versioned source interface. Detect
+      source, DOM, API, schema, and platform changes rather than assuming the
+      AMJAMS public endpoint is permanent.
+    requiredSignals:
+      - source_reachable
+      - page_title_changed
+      - schema_changed
+      - row_feed_changed
+      - redirect_detected
+      - dcms_reference_detected
+
+  allowedAnalytics:
+    - PUBLIC_DOCKET_EVENT_CHANGE_TRACKING
+    - INSTALLATION_LEVEL_AGGREGATION
+    - SOURCE_STALENESS_MONITORING
+    - SCHEDULE_CHANGE_DETECTION
+    - PUBLIC_SOURCE_PROVENANCE_ANALYSIS
+
+  prohibitedAnalytics:
+    - GUILT_SCORING
+    - CRIMINAL_PROPENSITY_SCORING
+    - PERSONNEL_TRUSTWORTHINESS_SCORING
+    - SECURITY_CLEARANCE_INFERENCE
+    - MISSION_READINESS_INFERENCE_FROM_PERSON_LEVEL_DOCKET_ACTIVITY
+    - BULK_PUBLIC_PERSON_DOSSIER_GENERATION
+
+  implementationState:
+    sourceAssessment: IMPLEMENTED
+    ontologyContract: IMPLEMENTED
+    schemaDiscovery: IMPLEMENTED
+    rowExtractor: NOT_IMPLEMENTED
+    sourceChangeDetector: NOT_IMPLEMENTED
+    dcmsMigrationDetector: NOT_IMPLEMENTED
+    publicAffairsConfirmationWorkflow: NOT_IMPLEMENTED
