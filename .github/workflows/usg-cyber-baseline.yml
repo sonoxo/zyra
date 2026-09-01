@@ -6,6 +6,9 @@ on:
       - 'docs/government-cyber/**'
       - 'governance/usg-cyber/**'
       - 'scripts/validate_usg_cyber_baseline.py'
+      - 'scripts/oscal_ingest.py'
+      - 'scripts/compliance_evidence.py'
+      - 'tests/fixtures/oscal/**'
       - '.github/workflows/usg-cyber-baseline.yml'
   push:
     branches:
@@ -14,6 +17,9 @@ on:
       - 'docs/government-cyber/**'
       - 'governance/usg-cyber/**'
       - 'scripts/validate_usg_cyber_baseline.py'
+      - 'scripts/oscal_ingest.py'
+      - 'scripts/compliance_evidence.py'
+      - 'tests/fixtures/oscal/**'
       - '.github/workflows/usg-cyber-baseline.yml'
 
 permissions:
@@ -30,3 +36,21 @@ jobs:
 
       - name: Validate baseline
         run: python3 scripts/validate_usg_cyber_baseline.py
+
+      - name: Validate control evidence index
+        run: python3 scripts/compliance_evidence.py
+
+      - name: Smoke-test safe OSCAL ingestion
+        run: |
+          python3 scripts/oscal_ingest.py \
+            tests/fixtures/oscal/minimal-catalog.json \
+            --out /tmp/xunia-oscal-manifest.json
+          python3 - <<'PY'
+          import json
+          manifest = json.load(open('/tmp/xunia-oscal-manifest.json', encoding='utf-8'))
+          assert manifest['oscal']['model'] == 'catalog'
+          assert manifest['index']['control_id_count'] == 2
+          assert manifest['privacy']['full_document_vendored'] is False
+          assert manifest['privacy']['party_records_copied'] is False
+          assert manifest['privacy']['control_prose_copied'] is False
+          PY
