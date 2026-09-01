@@ -24,12 +24,26 @@ const base: SecurityEngagementManifest = {
 
 const now = new Date("2026-09-01T12:00:00.000Z");
 
-test("PENTEST plan combines passive, discovery and safe-active free tools", () => {
+test("PENTEST URL plan combines only compatible web/network tools", () => {
   const plan = buildSecurityPlan(base, now);
   assert.equal(plan.destructiveActions, "DENIED");
   assert.deepEqual(
     plan.steps.map((step) => step.tool.id),
-    ["nmap", "nuclei", "owasp-zap", "syft"],
+    ["nmap", "nuclei", "owasp-zap"],
+  );
+});
+
+test("source path plan selects SBOM and source-analysis adapters only", () => {
+  const plan = buildSecurityPlan({
+    ...base,
+    mode: "ASSESS",
+    targets: [{ type: "path", value: "/workspace/repository" }],
+    exclusions: [],
+    allowedChecks: ["supply-chain.vulnerability", "supply-chain.sbom", "supply-chain.cve", "source.secrets", "source.sast", "dependency.osv", "iac.misconfiguration"],
+  }, now);
+  assert.deepEqual(
+    plan.steps.map((step) => step.tool.id),
+    ["trivy", "syft", "grype", "gitleaks", "semgrep", "osv-scanner", "checkov"],
   );
 });
 
