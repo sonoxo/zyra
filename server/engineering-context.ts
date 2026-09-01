@@ -1,6 +1,9 @@
 export const ENGINEERING_GUIDE_SOURCES = [
   "https://learn.palantir.com/data-engineer-guide/1388785",
   "https://learn.palantir.com/application-developer-guide/1481796",
+  "https://www.palantir.com/docs/foundry/ai-fde/overview/",
+  "https://www.palantir.com/docs/foundry/ai-fde/modes-capabilities/",
+  "https://www.youtube.com/watch?v=e90qUUh8_us",
 ] as const;
 
 export const ENGINEERING_STACK_STAGES = [
@@ -40,10 +43,83 @@ export const ENGINEERING_FLEET = [
   { id: "observer", mission: "Track lineage, evidence, unresolved risk, status, and claimed completion." },
 ] as const;
 
+export const AI_FDE_MIGRATION_STAGES = [
+  "PLAN",
+  "CONNECT",
+  "INTERPRET",
+  "ENHANCE",
+  "STANDARDIZE",
+  "VERIFY",
+  "DEPLOY",
+] as const;
+
+export const AI_FDE_VALIDATION_LOOP = [
+  "VERIFY",
+  "DIAGNOSE",
+  "REPAIR_PROPOSAL",
+  "RE_RUN",
+  "VERIFY",
+] as const;
+
+export const AI_FDE_DEFAULT_MAX_REPAIR_CYCLES = 3;
+
+export const AI_FDE_MIGRATION_FLEET = [
+  {
+    id: "source-scout",
+    mission: "Discover source assets, owners, provenance, constraints, and required outcomes without mutating them.",
+    authority: "read-only",
+  },
+  {
+    id: "schema-cartographer",
+    mission: "Profile schemas, keys, relationships, nullability, distributions, and lineage.",
+    authority: "read-only",
+  },
+  {
+    id: "code-interpreter",
+    mission: "Interpret source code, business logic, dependencies, and transformation behavior.",
+    authority: "read-only",
+  },
+  {
+    id: "mapping-engineer",
+    mission: "Map source concepts into canonical ontology, contracts, standards, and target semantics.",
+    authority: "proposal-only",
+  },
+  {
+    id: "transform-builder",
+    mission: "Generate versioned migration transforms and artifacts inside branch/local write boundaries.",
+    authority: "branch-local-write",
+  },
+  {
+    id: "verifier",
+    mission: "Run reconciliation, quality checks, evaluations, lineage checks, and policy checks.",
+    authority: "test-execution",
+  },
+  {
+    id: "diagnostician",
+    mission: "Root-cause failed verification and generate bounded repair proposals.",
+    authority: "proposal-only",
+  },
+  {
+    id: "sme-gateway",
+    mission: "Record authorized human decisions for ambiguous, sensitive, or high-impact mappings.",
+    authority: "human-decision-recording",
+  },
+  {
+    id: "release-controller",
+    mission: "Verify rollback, downstream impact, approvals, and evidence before promotion.",
+    authority: "approval-gated-write",
+  },
+  {
+    id: "auditor",
+    mission: "Append provenance, tool-use evidence, decisions, unresolved risk, and completion proof.",
+    authority: "append-evidence",
+  },
+] as const;
+
 const DATA_TERMS = ["data", "dataset", "pipeline", "ingestion", "transform", "etl", "streaming", "batch", "schema"];
 const APP_TERMS = ["app", "application", "frontend", "backend", "ui", "widget", "workflow", "react", "api"];
 const ONTOLOGY_TERMS = ["ontology", "object", "objects", "link", "links", "semantic", "action"];
-const HIGH_IMPACT_TERMS = ["production", "deploy", "release", "delete", "migrate", "payment", "credential", "external action"];
+const HIGH_IMPACT_TERMS = ["production", "deploy", "release", "delete", "migrate", "migration", "payment", "credential", "external action"];
 
 function escapeRegex(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -95,6 +171,36 @@ export function engineeringMissionPlan(objective: string) {
   };
 }
 
+export function aiFdeMigrationMissionPlan(objective: string) {
+  return {
+    objective: objective.trim(),
+    implementation: "clean-room" as const,
+    stages: [...AI_FDE_MIGRATION_STAGES],
+    validationLoop: [...AI_FDE_VALIDATION_LOOP],
+    maxRepairCycles: AI_FDE_DEFAULT_MAX_REPAIR_CYCLES,
+    roles: [...AI_FDE_MIGRATION_FLEET],
+    branchRequired: true,
+    approvalRequired: true,
+    contextPolicy: {
+      strategy: "minimum-viable-context" as const,
+      typedContextRequired: true,
+      implicitBroadAccess: false,
+      credentialMaterialInPrompt: false,
+    },
+    phaseGates: [
+      "discovery inventory reviewed",
+      "schema and source logic interpreted",
+      "canonical mappings reviewed",
+      "transforms versioned",
+      "reconciliation and evaluations pass",
+      "sensitive-data and permission controls pass",
+      "unresolved ambiguity resolved or explicitly accepted by an authorized human",
+      "rollback and downstream impact reviewed",
+      "deployment evidence recorded",
+    ],
+  };
+}
+
 export function buildEngineeringSystemContext(scope = "general engineering"): string {
   return [
     "Use the Zyra/XUNIA clean-room Palantir Engineering Stack for relevant engineering work.",
@@ -102,10 +208,14 @@ export function buildEngineeringSystemContext(scope = "general engineering"): st
     `Stages: ${ENGINEERING_STACK_STAGES.join(" -> ")}.`,
     `Decision loop: ${ENGINEERING_DECISION_LOOP.join(" -> ")}.`,
     `Bounded specialist fleet: ${ENGINEERING_FLEET.map(role => role.id).join(", ")}.`,
-    "Ground work in explicit data/schema/ontology/action/tool/UI contracts, lineage, quality gates, and evidence.",
-    "Give LLMs only the context and tools required for the workflow; distinguish read from write access.",
+    `For migration work use the AI FDE migration stages: ${AI_FDE_MIGRATION_STAGES.join(" -> ")}.`,
+    `Migration verification is closed-loop but bounded: ${AI_FDE_VALIDATION_LOOP.join(" -> ")}; maximum default repair cycles ${AI_FDE_DEFAULT_MAX_REPAIR_CYCLES}.`,
+    "Give each agent minimum viable context and only the tools/capabilities required by its current role; do not infer broad access.",
+    "Ground work in explicit data/schema/ontology/action/tool/UI contracts, lineage, quality gates, evaluations, and evidence.",
+    "Distinguish read, proposal, branch-local write, approval-gated write, and external-effect authority.",
     "Consequential writes and releases stay approval-gated, reversible, and auditable.",
+    "Prefer branch proposals, checkpointed phase gates, evaluation-driven repair, and human/SME escalation over silent authority expansion.",
     "Prefer the lowest-complexity application surface that satisfies the workflow.",
-    "Do not claim Palantir affiliation, certification, tenant access, or proprietary implementation details.",
+    "Do not claim Palantir affiliation, certification, tenant access, proprietary source code, model weights, or private implementation details.",
   ].join(" ");
 }
