@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "controlPlane": "ZYRA_GITHUB_CLOUD_V1",
+  "provider": "github",
+  "regionModel": "github-hosted-runners",
+  "runtime": {
+    "compute": "github-actions",
+    "containerRegistry": "ghcr",
+    "evidenceStore": "actions-artifacts",
+    "auditLog": "actions-run-history",
+    "sourceOfTruth": "git"
+  },
+  "services": [
+    {
+      "id": "nxyz-control",
+      "name": "NXYZ Control Plane",
+      "kind": "control-plane",
+      "source": "services/nxyz-gcp",
+      "container": "ghcr.io/sonoxo/zyra/nxyz-control",
+      "capabilities": ["registry", "evidence", "provenance", "policy-gated-orchestration"],
+      "state": "implemented"
+    },
+    {
+      "id": "zyra-core",
+      "name": "ZYRA Core",
+      "kind": "policy-security-runtime",
+      "source": "server",
+      "capabilities": ["security", "approval", "audit", "mission-routing"],
+      "state": "implemented"
+    },
+    {
+      "id": "xunia",
+      "name": "XUNIA",
+      "kind": "builder-orchestrator",
+      "source": "client",
+      "capabilities": ["apps", "agents", "integrations"],
+      "state": "developing"
+    },
+    {
+      "id": "gpt-doug",
+      "name": "GPT-Doug",
+      "kind": "reasoning-planning",
+      "source": "ecosystem",
+      "capabilities": ["planning", "reasoning", "mission-decomposition"],
+      "state": "ecosystem-role"
+    },
+    {
+      "id": "nxyz-horizons",
+      "name": "NXYZ Horizons Evidence Gateway",
+      "kind": "evidence-gateway",
+      "source": "server/nxyz-horizons.ts",
+      "capabilities": ["evidence-normalization", "provenance", "verification-state", "stable-hashing"],
+      "state": "implemented"
+    }
+  ],
+  "policy": {
+    "defaultExecutionMode": "advisory",
+    "externalSideEffects": "blocked-unless-explicitly-added-and-authorized",
+    "humanApprovalRequiredForConsequentialActions": true,
+    "godModeBypassesPolicy": false
+  }
+}
