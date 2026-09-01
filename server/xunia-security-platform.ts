@@ -1,8 +1,9 @@
 export type SecurityMode = "ASSESS" | "PENTEST" | "SIMULATE";
 export type ToolRisk = "PASSIVE" | "DISCOVERY" | "SAFE_ACTIVE" | "LAB_ACTIVE";
+export type EngagementTargetType = "url" | "host" | "cidr" | "path" | "image" | "cloud";
 
 export interface EngagementTarget {
-  type: "url" | "host" | "cidr";
+  type: EngagementTargetType;
   value: string;
 }
 
@@ -28,6 +29,7 @@ export interface SecurityTool {
   check: string;
   risk: ToolRisk;
   freeOpenSource: true;
+  targetTypes: EngagementTargetType[];
   phases: Array<"recon" | "assessment" | "validation" | "supply-chain" | "cloud">;
 }
 
@@ -47,21 +49,32 @@ export interface SecurityPlan {
 }
 
 export const SECURITY_TOOL_CATALOG: readonly SecurityTool[] = [
-  { id: "nmap", name: "Nmap", check: "service.discovery", risk: "DISCOVERY", freeOpenSource: true, phases: ["recon", "assessment"] },
-  { id: "nuclei", name: "Nuclei", check: "web.templates", risk: "SAFE_ACTIVE", freeOpenSource: true, phases: ["assessment", "validation"] },
-  { id: "owasp-zap", name: "OWASP ZAP", check: "web.baseline", risk: "PASSIVE", freeOpenSource: true, phases: ["assessment"] },
-  { id: "trivy", name: "Trivy", check: "supply-chain.vulnerability", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "syft", name: "Syft", check: "supply-chain.sbom", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "grype", name: "Grype", check: "supply-chain.cve", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "gitleaks", name: "Gitleaks", check: "source.secrets", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "semgrep", name: "Semgrep Community", check: "source.sast", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "osv-scanner", name: "OSV-Scanner", check: "dependency.osv", risk: "PASSIVE", freeOpenSource: true, phases: ["supply-chain"] },
-  { id: "checkov", name: "Checkov", check: "iac.misconfiguration", risk: "PASSIVE", freeOpenSource: true, phases: ["cloud", "supply-chain"] },
-  { id: "prowler", name: "Prowler", check: "cloud.posture", risk: "PASSIVE", freeOpenSource: true, phases: ["cloud", "assessment"] },
+  { id: "nmap", name: "Nmap", check: "service.discovery", risk: "DISCOVERY", freeOpenSource: true, targetTypes: ["url", "host", "cidr"], phases: ["recon", "assessment"] },
+  { id: "nuclei", name: "Nuclei", check: "web.templates", risk: "SAFE_ACTIVE", freeOpenSource: true, targetTypes: ["url"], phases: ["assessment", "validation"] },
+  { id: "owasp-zap", name: "OWASP ZAP", check: "web.baseline", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["url"], phases: ["assessment"] },
+  { id: "trivy", name: "Trivy", check: "supply-chain.vulnerability", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path", "image"], phases: ["supply-chain"] },
+  { id: "syft", name: "Syft", check: "supply-chain.sbom", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path", "image"], phases: ["supply-chain"] },
+  { id: "grype", name: "Grype", check: "supply-chain.cve", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path", "image"], phases: ["supply-chain"] },
+  { id: "gitleaks", name: "Gitleaks", check: "source.secrets", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path"], phases: ["supply-chain"] },
+  { id: "semgrep", name: "Semgrep Community", check: "source.sast", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path"], phases: ["supply-chain"] },
+  { id: "osv-scanner", name: "OSV-Scanner", check: "dependency.osv", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path"], phases: ["supply-chain"] },
+  { id: "checkov", name: "Checkov", check: "iac.misconfiguration", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["path"], phases: ["cloud", "supply-chain"] },
+  { id: "prowler", name: "Prowler", check: "cloud.posture", risk: "PASSIVE", freeOpenSource: true, targetTypes: ["cloud"], phases: ["cloud", "assessment"] },
 ] as const;
 
 function normalized(target: EngagementTarget): string {
-  return target.value.trim().toLowerCase().replace(/\/$/, "");
+  const trimmed = target.value.trim();
+  if (target.type === "url") {
+    try {
+      const url = new URL(trimmed);
+      const path = url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "");
+      return `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${path}`;
+    } catch {
+      return trimmed.replace(/\/$/, "");
+    }
+  }
+  if (target.type === "host" || target.type === "cidr" || target.type === "cloud") return trimmed.toLowerCase();
+  return trimmed;
 }
 
 function targetMatches(scope: EngagementTarget, requested: EngagementTarget): boolean {
@@ -102,6 +115,7 @@ export function buildSecurityPlan(manifest: SecurityEngagementManifest, now = ne
     if (excluded) continue;
 
     for (const tool of SECURITY_TOOL_CATALOG) {
+      if (!tool.targetTypes.includes(target.type)) continue;
       if (!manifest.allowedChecks.includes(tool.check)) continue;
       if (!riskAllowed(manifest.mode, tool.risk)) continue;
       steps.push({ order: order++, tool, target, status: "PLANNED" });
