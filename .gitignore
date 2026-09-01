@@ -12,3 +12,5 @@ vite.config.ts.*
 .vite
 .turbo
 tmp/
+gha-creds-*.json
+.nxyz-api-key
