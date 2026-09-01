@@ -11,6 +11,7 @@ on:
       - "shared/ontology/rvia-vision-control.yaml"
       - "shared/policy/us-cz-ethical-scope.yaml"
       - "docs/ZYRA-EYES-RVIA.md"
+      - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
       - ".github/workflows/zyra-eyes-ci.yml"
   pull_request:
     branches: [main, develop]
@@ -22,6 +23,7 @@ on:
       - "shared/ontology/rvia-vision-control.yaml"
       - "shared/policy/us-cz-ethical-scope.yaml"
       - "docs/ZYRA-EYES-RVIA.md"
+      - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
 
 permissions:
   contents: read
@@ -54,12 +56,21 @@ jobs:
         run: |
           python -m py_compile apps/zyra-eyes-plugin/zyra_eyes.py
           python -m py_compile apps/zyra-eyes-plugin/zyra_gaze.py
+          python -m py_compile apps/zyra-eyes-plugin/zyra_system_controller.py
 
       - name: Gaze safety invariants
         run: |
           grep -q 'NATIVE_SENTINEL = "I_OWN_AND_AUTHORIZE_THIS_MACHINE"' apps/zyra-eyes-plugin/zyra_gaze.py
           grep -q 'PyAutoGUI' apps/zyra-eyes-plugin/zyra_gaze.py
           grep -q 'Native gaze control requires --approve' apps/zyra-eyes-plugin/zyra_gaze.py
+
+      - name: System controller safety invariants
+        run: |
+          grep -q 'NATIVE_SENTINEL = "I_OWN_AND_AUTHORIZE_THIS_MACHINE"' apps/zyra-eyes-plugin/zyra_system_controller.py
+          grep -q 'Native system control requires --approve' apps/zyra-eyes-plugin/zyra_system_controller.py
+          grep -q 'Remote control is intentionally out of scope' apps/zyra-eyes-plugin/zyra_system_controller.py
+          grep -q 'PyAutoGUI corner failsafe is enabled' apps/zyra-eyes-plugin/zyra_system_controller.py
+          grep -q 'dwell timing is too short for safe use' apps/zyra-eyes-plugin/zyra_system_controller.py
 
       - name: Policy invariants
         run: |
