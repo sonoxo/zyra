@@ -18,8 +18,8 @@
     {"id":"protect","label":"Protect Something","readiness":"strong","routes_to":["security_scans","pentest","cloud_security","container_security","attack_surface","secrets","vulnerabilities"]},
     {"id":"see","label":"See With ZYRA","readiness":"strong_demo_hook","routes_to":["ZYRA_EYES","VA","RVIA"]},
     {"id":"investigate","label":"Investigate Something","readiness":"strong","routes_to":["NXYZ","threat_intel","cve_intelligence","security_graph","evidence"]},
-    {"id":"build","label":"Build Something","readiness":"needs_unified_beginner_flow","routes_to":["XUNIA","repositories","integrations","agents"]},
-    {"id":"mission","label":"Run a Mission","readiness":"highest_priority_ux_build","routes_to":["RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ"]},
+    {"id":"build","label":"Build Something","readiness":"beginner_entry_implemented","routes_to":["XUNIA","repositories","integrations","agents"]},
+    {"id":"mission","label":"Run a Mission","readiness":"mission_home_router_implemented","routes_to":["RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ"]},
     {"id":"federal","label":"Government / Contracting","readiness":"advanced","routes_to":["NXYZ_CONTRACTOPS","governed_prototypes","proposal_evidence"]}
   ],
   "capability_domains": {
@@ -33,17 +33,17 @@
     "capability_depth":"very_strong",
     "beginner_documentation":"strong",
     "visual_hook":"strong",
-    "first_use_ux":"needs_simplification",
-    "mission_first_home":"priority_build",
-    "product_hierarchy":"too_many_modules_at_once",
+    "first_use_ux":"mission_first_entry_implemented",
+    "mission_first_home":"implemented",
+    "product_hierarchy":"improving_with_mission_first_progressive_disclosure",
     "cross_product_continuity":"developing",
     "personal_knowledge_accumulation":"priority",
     "daily_return_loop":"priority",
     "ecosystem_progress":"priority"
   },
   "build_board": [
-    {"priority":"P0","id":"mission_home","label":"Mission Home","status":"next","goal":"One primary mission input with Protect, Build, Investigate, See and Run Mission entry points."},
-    {"priority":"P1","id":"beginner_mode","label":"Beginner Mode","status":"next","goal":"Progressive disclosure with My ZYRA, Explore and Advanced navigation."},
+    {"priority":"P0","id":"mission_home","label":"Mission Home","status":"implemented","goal":"One primary mission input with Protect, Build, Investigate, See, Government/Contracting and Run Operation entry points."},
+    {"priority":"P1","id":"beginner_mode","label":"Beginner Mode","status":"partial","goal":"Progressive disclosure with a mission-first surface while preserving the advanced dashboard below it."},
     {"priority":"P2","id":"first_mission_demo","label":"First Mission Demo","status":"partial","goal":"Fast safe result with ZYRA Eyes plus additional sample missions."},
     {"priority":"P3","id":"mission_history","label":"Mission History","status":"planned","goal":"Unified timeline of intent, routing, authorization, evidence, result and follow-up."},
     {"priority":"P4","id":"ecosystem_progress","label":"Ecosystem Progress","status":"planned","goal":"Evidence-backed user progress based on real accomplishments."},
