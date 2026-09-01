@@ -25,8 +25,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/VIRGINIA-VYBE%20CODE-8d6bff?style=for-the-badge" alt="Virginia" />
-  <img src="https://img.shields.io/badge/VAL3M-AGENTIC%20COMPUTE-ff4fd8?style=for-the-badge" alt="VAL3M" />
+  <img src="https://img.shields.io/badge/VA-VIRGINIA%20RUNTIME-8d6bff?style=for-the-badge" alt="VA Virginia runtime" />
+  <img src="https://img.shields.io/badge/RVIA-UNIFIED%20RUNTIME-ff4fd8?style=for-the-badge" alt="RVIA unified runtime" />
   <img src="https://img.shields.io/badge/NXYZ-GOVERNED%20ECOSYSTEM-2df6ff?style=for-the-badge" alt="NXYZ governed ecosystem" />
   <img src="https://img.shields.io/badge/EVIDENCE-PROVENANCE%20FIRST-9cff57?style=for-the-badge" alt="Evidence provenance first" />
 </p>
@@ -39,12 +39,14 @@
   <a href="https://github.com/sonoxo/zyra/actions/workflows/baseline-assurance-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/baseline-assurance-ci.yml/badge.svg?branch=main" alt="Baseline Assurance" /></a>
   <a href="https://github.com/sonoxo/zyra/actions/workflows/tsc-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/tsc-ci.yml/badge.svg?branch=main" alt="TypeScript CI" /></a>
   <a href="https://github.com/sonoxo/zyra/actions/workflows/zyra-live-implement.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/zyra-live-implement.yml/badge.svg?branch=main" alt="ZYRA Live Implement" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/zyra-eyes-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/zyra-eyes-ci.yml/badge.svg?branch=main" alt="ZYRA Eyes CI" /></a>
 </p>
 
 <p align="center">
   <a href="#-about-me"><strong>ABOUT</strong></a> ·
   <a href="#-tech--security-stack"><strong>STACK</strong></a> ·
   <a href="#ecosystem-architecture"><strong>ARCHITECTURE</strong></a> ·
+  <a href="#va--rvia--zyra-eyes"><strong>VA / RVIA / EYES</strong></a> ·
   <a href="#products-in-the-ecosystem"><strong>PRODUCTS</strong></a> ·
   <a href="#ussf--space-systems-command-prospective-collaboration"><strong>USSF / SSC</strong></a> ·
   <a href="#run-zyra"><strong>RUN ZYRA</strong></a> ·
@@ -86,11 +88,11 @@ ZYRA is built around **authorized defensive security**, **governed automation**,
 
 | Layer | Stack |
 |---|---|
-| **Languages** | Python · Bash · C++ · Go · PowerShell |
+| **Languages** | VA / Virginia Runtime · Python · Bash · C++ · Go · PowerShell |
 | **Security Tools** | Wireshark · Burp Suite · Metasploit · Nmap · Ghidra · Splunk |
 | **Platforms** | Linux · Windows Server · Docker · AWS Security |
 | **ZYRA Core** | React · TypeScript · Express · PostgreSQL |
-| **Governance** | Policy gates · Ontology contracts · Evidence models · Human authorization |
+| **Governance** | US-CZ · Policy gates · Ontology contracts · Evidence models · Human authorization |
 
 ---
 
@@ -147,44 +149,60 @@ ZYRA is built around **authorized defensive security**, **governed automation**,
 
 **You type a mission → ZYRA turns it into structured work → policy and authorization are checked → an approved system operation runs → evidence comes back.**
 
+**Always-readable ecosystem guide:** [`docs/ECOSYSTEM-BEGINNER.md`](docs/ECOSYSTEM-BEGINNER.md)
+
 ```text
 HUMAN MISSION
      ↓
-ZYRA / NXYZ
+VA / VIRGINIA RUNTIME
      ↓
-PARSER + POLICY
+RVIA
      ↓
-ONTOLOGY / AGENT / TOOL LAYER
+GPT-DOUG-LLM-MAX + ZYRA + XUNIA + NXYZ
+     ↓
+POLICY / ONTOLOGY / AGENT / TOOL LAYER
      ↓
 AUTHORIZED OPERATION
      ↓
 EVIDENCE + AUDIT
 ```
 
-The repository keeps **capability**, **credential evidence**, **platform access**, and **authorization** as separate states. A badge can support a capability claim; it does not grant an external permission by itself.
+The repository keeps **capability**, **credential evidence**, **platform access**, **authorization**, and **human approval** as separate states. A badge or runtime profile can support a capability claim; it does not grant an external permission by itself.
 
 ## Ecosystem architecture
 
 ```mermaid
 flowchart LR
-    H[Human operator] --> Z[ZYRA / NXYZ]
+    H[Human operator] --> VA[VA / Virginia language]
+    VA --> RVIA[RVIA unified runtime]
+    RVIA --> D[GPT-DOUG-LLM-MAX reasoning role]
+    RVIA --> Z[ZYRA policy + execution]
+    RVIA --> X[XUNIA apps + agents]
+    RVIA --> N[NXYZ ontology + evidence]
     C[Credential Evidence] --> P[Provenance Layer]
     G[GitHub / CI] --> P
     M[Microsoft OSS Layer] --> Z
     P --> Z
-    Z --> O[Ontology + Evidence]
+    N --> O[Ontology + Evidence]
     O --> F[Palantir Foundry / AIP]
     O --> CO[NXYZ ContractOps]
-    O --> D[GPT-DOUG-LLM]
+    D --> Z
+    X --> Z
     F --> R[Result / Audit]
     CO --> R
-    D --> R
+    Z --> R
     R --> H
 ```
 
 ### Named ecosystem roles
 
 ```text
+VA         → Virginia runtime / compact mission and sensory representation
+RVIA       → unified GPT-DOUG-LLM-MAX + ZYRA + XUNIA + NXYZ orchestration layer
+ZYRA       → policy / security / approval / audit / authorized execution
+XUNIA      → apps / agents / orchestration
+NXYZ       → ontology / evidence / intelligence / integration
+GOD_MODE   → maximum owner-authorized profile; NEVER a policy or permission bypass
 PALANTIR   → Ontology / Foundry / AIP integration + credential evidence
 MICROSOFT  → optional OSS agent/document intelligence layer
 GOOGLE     → cybersecurity / AI / BI credential evidence
@@ -196,6 +214,44 @@ COURSERA   → issuer verification links
 CREDLY     → digital badge evidence
 ```
 
+## VA / RVIA / ZYRA Eyes
+
+**ZYRA Eyes** is the local perception-to-action project inspired by the question: *what if a Daredevil-like runtime could read the computer as binary signals?*
+
+```text
+SCREEN PIXELS
+    ↓
+VA BINARY GRID 000101101...
+    ↓
+RVIA PERCEPTION + PLAN
+    ↓
+ZYRA / US-CZ POLICY GATE
+    ↓
+HUMAN APPROVAL
+    ↓
+SIMULATION (DEFAULT)
+    OR
+LOCAL OWNED-MACHINE PLUGIN
+    ↓
+AUDIT EVIDENCE
+```
+
+| Component | State | Purpose |
+|---|---|---|
+| `server/zyra-eyes.ts` | Implemented | Binary vision, metrics, planning, one-time approval and API audit |
+| `client/src/pages/zyra-eyes.tsx` | Implemented | Beginner-facing binary simulation console at `/zyra-eyes` |
+| `apps/zyra-eyes-plugin/` | Implemented | Local screenshot / mouse / keyboard adapter; native mode disabled by default |
+| `shared/ontology/rvia-vision-control.yaml` | Implemented | VA/RVIA perception and control ontology |
+| `shared/policy/us-cz-ethical-scope.yaml` | Implemented | US-CZ runtime rules; GOD_MODE cannot override them |
+| `.github/workflows/zyra-eyes-ci.yml` | Implemented | Dedicated TypeScript/Python/policy quality gate |
+| `docs/logs/ZYRA-EYES-BUILD-LOG.md` | Implemented | Permanent build/change ledger |
+
+**Guide:** [`docs/ZYRA-EYES-RVIA.md`](docs/ZYRA-EYES-RVIA.md)  
+**Local plugin:** [`apps/zyra-eyes-plugin/README.md`](apps/zyra-eyes-plugin/README.md)  
+**Ethical scope:** [`ETHICAL_SCOPE.md`](ETHICAL_SCOPE.md)
+
+> `GOD_MODE` is an internal name for the maximum configured owner-authorized profile. It cannot bypass authentication, platform controls, third-party authorization, applicable law, or the US-CZ policy gate.
+
 ---
 
 ## Products in the ecosystem
@@ -203,12 +259,14 @@ CREDLY     → digital badge evidence
 | Product / layer | Purpose | State |
 |---|---|---|
 | **ZYRA Core** | Main React/TypeScript + Express/Postgres platform and governed operational shell | Implemented |
-| **VIRGINIA / VAL3M** | Beginner-readable mission language and execution planning | Implemented |
+| **VA / VIRGINIA** | Compact runtime/programming language for mission and sensory representations | Implemented contract / evolving syntax |
+| **RVIA** | Unified GPT-DOUG-LLM-MAX + ZYRA + XUNIA + NXYZ orchestration runtime | Implemented architecture / component-dependent runtime |
+| **ZYRA Eyes** | Binary visual perception, simulation and explicitly approved local device-control adapter | Implemented; native mode off by default |
 | **Palantir Foundry Bridge** | Ontology API operations with server-side credentials and governed actions | Implemented / runtime configuration required |
 | **NXYZ ContractOps** | Federal-readiness, evidence matching, bid scoring, proposal review and package export | Implemented source; database migration required per deployment |
 | **NXYZ Microsoft Layer** | Optional Microsoft OSS document + agent orchestration planning layer | Implemented contract/API; adapters remain explicit configuration |
 | **NXYZ Horizons** | Intelligence gateway for the C4ADS Horizons integration path | Implemented source; external access/configuration dependent |
-| **GPT-DOUG-LLM** | Reasoning/orchestration consumer of ZYRA evidence and ontology contracts | Separate ecosystem repository |
+| **GPT-DOUG-LLM-MAX role** | Internal reasoning/orchestration role consuming ZYRA/NXYZ evidence and contracts | Owner ecosystem role; external model/provider access remains separately scoped |
 
 ## USSF / Space Systems Command prospective collaboration
 
@@ -305,15 +363,17 @@ The checked-in `apps/zyra-live-implement/` module supports:
 
 | Path | Role |
 |---|---|
-| `client/src/` | React interface and product screens |
+| `client/src/` | React interface and product screens, including `/zyra-eyes` |
 | `server/` | Express APIs, policy gates and backend services |
 | `shared/` | Shared types, schemas, ontology contracts and evidence models |
 | `apps/zyra-live-implement/` | VIRGINIA mission terminal and Foundry gateway |
+| `apps/zyra-eyes-plugin/` | Local ZYRA Eyes screenshot and explicitly approved mouse/keyboard adapter |
 | `products/` | Market-facing product modules and product READMEs |
 | `docs/credentials/` | Credential evidence and repository credential program |
 | `docs/compliance/` | External ecosystem, trademark and provenance boundaries |
 | `docs/partnerships/` | Prospective collaboration briefs with explicit non-endorsement boundaries |
 | `docs/proposals/` | Government/industry capability proposal packages |
+| `docs/logs/` | Public-safe build/change ledgers; never secrets or restricted runtime data |
 | `.github/` | CI, CodeQL and repository quality gates |
 
 ## Run ZYRA
@@ -329,7 +389,18 @@ npm run db:push
 npm run dev
 ```
 
-Never commit real tokens, passwords, private keys, API secrets, or restricted data.
+ZYRA Eyes simulation console: `/zyra-eyes` after sign-in.
+
+Local plugin simulation:
+
+```bash
+python3 -m pip install -r apps/zyra-eyes-plugin/requirements.txt
+python3 apps/zyra-eyes-plugin/zyra_eyes.py --capture --goal brightest
+```
+
+Native local control remains off unless the machine owner explicitly enables the sentinel documented in [`apps/zyra-eyes-plugin/README.md`](apps/zyra-eyes-plugin/README.md).
+
+Never commit real tokens, passwords, private keys, API secrets, raw screenshots containing private data, or restricted data.
 
 ## Verification language
 
@@ -340,6 +411,7 @@ ZYRA deliberately distinguishes:
 - **Credential evidence** — a credential or training artifact exists at the stated evidence tier.
 - **Platform access** — an external account/entitlement is separately recorded.
 - **Authorized action** — the current runtime permission/policy allows the action.
+- **Human approved** — an accountable person approved the exact consequential action where required.
 - **Deployment verified** — a target deployment completed its own smoke test.
 - **Third-party approved** — the third party explicitly reviewed/approved it.
 
@@ -348,6 +420,8 @@ These states are not interchangeable.
 ## Security & trust
 
 ZYRA is designed for authorized defensive security, governed automation, evidence preservation, and human-controlled high-impact actions. Sensitive credentials remain server-side and restricted actions should fail closed when authorization is absent.
+
+VA, RVIA, and `GOD_MODE` are owner-defined software/runtime terms. They do not create government status, security clearance, third-party permission, or a right to bypass authentication or platform controls.
 
 Report vulnerabilities privately using [`SECURITY.md`](SECURITY.md).
 
