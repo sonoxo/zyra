@@ -74,9 +74,11 @@ COMMANDS = (
     "DRAG",
     "TAB",
     "ENTER",
+    "ESC",
     "SPACE",
     "APP",
     "BACK",
+    "FWD",
     "PAUSE",
 )
 
@@ -581,6 +583,7 @@ def perform_command(
     key_actions = {
         "TAB": lambda: pyautogui.press("tab"),
         "ENTER": lambda: pyautogui.press("enter"),
+        "ESC": lambda: pyautogui.press("esc"),
         "SPACE": lambda: pyautogui.press("space"),
     }
     if command in key_actions:
@@ -601,6 +604,14 @@ def perform_command(
         else:
             action = lambda: pyautogui.hotkey("alt", "left")
         simulate_or_run(native, "BACK", action)
+        return
+
+    if command == "FWD":
+        if sys.platform == "darwin":
+            action = lambda: pyautogui.hotkey("command", "]")
+        else:
+            action = lambda: pyautogui.hotkey("alt", "right")
+        simulate_or_run(native, "FORWARD", action)
 
 
 def update_dwell(
