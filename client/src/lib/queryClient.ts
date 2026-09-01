@@ -177,7 +177,7 @@ export const getQueryFn: <T>(options: {
     const url = queryKey.join("/") as string;
 
     const previewData = getUiPreviewData(url);
-    if (previewData !== undefined) return previewData as T;
+    if (previewData !== undefined) return previewData as any;
 
     const doFetch = () =>
       fetch(url, {
