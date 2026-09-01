@@ -16,7 +16,7 @@
       "name": "NXYZ Control Plane",
       "kind": "control-plane",
       "source": "services/nxyz-gcp",
-      "container": "ghcr.io/sonoxo/zyra/nxyz-control",
+      "container": "ghcr.io/sonoxo/zyra-nxyz-control",
       "capabilities": ["registry", "evidence", "provenance", "policy-gated-orchestration"],
       "state": "implemented"
     },
