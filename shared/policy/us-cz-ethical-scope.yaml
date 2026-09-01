@@ -1,6 +1,6 @@
 policy:
   id: nxyz:us-cz-ethical-scope
-  version: 1.0.0
+  version: 1.1.0
   effective: 2026-09-01
   status: OWNER_GOVERNANCE_BASELINE
   meaning: >-
@@ -12,6 +12,19 @@ policy:
     - XUNIA
     - NXYZ
     - RVIA
+
+  runtimeNaming:
+    VA: VIRGINIA_RUNTIME_LANGUAGE
+    RVIA: GPT_DOUG_LLM_MAX_ZYRA_XUNIA_NXYZ_UNIFIED_RUNTIME
+    GOD_MODE: MAXIMUM_OWNER_AUTHORIZED_CAPABILITY_PROFILE
+    godModeRules:
+      legalOverride: false
+      policyOverride: false
+      authenticationBypass: false
+      authorizationBypass: false
+      platformControlBypass: false
+      thirdPartyPermissionBypass: false
+      humanApprovalForConsequentialActions: true
 
   precedence:
     rule: STRICTER_RULE_WINS
@@ -49,6 +62,7 @@ policy:
         - SOFTWARE_DEVELOPMENT_AND_CI
         - EVIDENCE_PROVENANCE
         - READ_ONLY_AI_ASSISTANCE
+        - LOCAL_SIMULATED_VISION_CONTROL
 
     US_CZ_CONTROLLED:
       defaultExecution: REQUIRE_REVIEW
@@ -70,11 +84,12 @@ policy:
         - SENSITIVE_PERSONAL_DATA_PROCESSING
         - THIRD_PARTY_ACCOUNT_WRITE
         - MALWARE_DETONATION_OUTSIDE_OWNED_LAB
-        - CONSEQUENTAL_PERSON_LEVEL_ANALYSIS
+        - CONSEQUENTIAL_PERSON_LEVEL_ANALYSIS
         - EXPORT_CONTROLLED_TECHNOLOGY_TRANSFER
         - SANCTIONS_EXPOSURE
         - CUI_PROCESSING
         - EXTERNAL_AUTOMATED_SUBMISSION
+        - NATIVE_LOCAL_DESKTOP_CONTROL
 
     PROHIBITED_US_CZ:
       defaultExecution: DENY
@@ -101,6 +116,7 @@ policy:
         - FALSE_CLEARANCE_OR_ATO_CLAIM
         - UNAPPROVED_CLASSIFIED_OR_CUI_INGESTION
         - UNAUTHORIZED_IRREVERSIBLE_HIGH_IMPACT_ACTION
+        - STEALTH_REMOTE_DESKTOP_CONTROL
 
   agenticActionClasses:
     READ_ONLY:
