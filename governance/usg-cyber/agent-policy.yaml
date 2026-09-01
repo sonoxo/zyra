@@ -1,0 +1,127 @@
+schema_version: 1
+policy_id: xunia-government-cyber-agent-policy
+applies_to:
+  - zyra
+  - xunia
+  - gpt-doug-llm
+  - virginia-llm
+  - delegated-agents
+
+principles:
+  - least_privilege
+  - source_provenance
+  - public_authoritative_only
+  - human_accountability
+  - fail_closed
+  - auditable_actions
+  - data_minimization
+
+source_access:
+  allow:
+    - public_nist
+    - public_cisa
+    - public_nsa_cybersecurity
+    - public_disa_stig_srg
+    - public_dod_cio
+    - public_platform_one
+    - verified_public_government_github
+  deny:
+    - classified
+    - cui_without_explicit_authorized_scope
+    - fouo_or_other_controlled_markings
+    - cac_only
+    - authentication_gated_government_content
+    - leaked_or_stolen_content
+    - export_controlled_without_authorized_scope
+
+personnel_data:
+  default: deny
+  allow_fields:
+    - public_work_role_id
+    - public_work_role_title
+    - public_task
+    - public_ksa
+    - public_proficiency_metadata
+    - public_official_leadership_title_for_provenance
+  deny_fields:
+    - dod_id
+    - cac_identifier
+    - private_email
+    - private_phone
+    - home_address
+    - family_information
+    - nonpublic_location
+    - nonpublic_schedule
+    - medical_information
+    - financial_information
+    - nonpublic_unit_assignment
+
+agent_permissions:
+  default_tool_policy: deny
+  require_explicit_allowlist: true
+  require_resource_scope: true
+  require_audit_log: true
+  require_source_id_for_compliance_claims: true
+  prohibit_self_granting_permissions: true
+  prohibit_permission_inheritance_without_review: true
+
+human_approval_required_for:
+  - production_identity_policy_change
+  - production_network_boundary_change
+  - production_cryptographic_policy_change
+  - production_secret_rotation_that_can_interrupt_service
+  - deletion_of_compliance_evidence
+  - disabling_security_logging
+  - disabling_security_scanning
+  - changing_restricted_data_ingestion_policy
+
+compliance_claims:
+  prohibited_without_external_evidence:
+    - dod_approved
+    - dow_approved
+    - nsa_certified
+    - disa_certified
+    - fedramp_authorized
+    - cmmc_certified
+    - ato_granted
+    - military_approved
+  allowed_patterns:
+    - mapped_to
+    - aligned_with
+    - designed_with_reference_to
+    - internally_assessed_against
+
+retrieval:
+  store_full_source_text_by_default: false
+  preferred_storage:
+    - source_metadata
+    - source_url
+    - revision
+    - hash_when_downloaded
+    - normalized_control_id
+    - limited_excerpt_when_needed
+  revalidate_before_asserting_current: true
+
+secrets:
+  commit_to_git: false
+  place_in_embeddings: false
+  place_in_model_training_corpus: false
+  place_in_logs: false
+  redact_before_persistence: true
+
+security_testing:
+  allowed_contexts:
+    - owned_system
+    - explicitly_authorized_system
+    - isolated_lab
+    - defensive_validation
+    - education
+  rules:
+    - minimize_impact
+    - do_not_persist_on_third_party_systems
+    - do_not_exfiltrate_real_data
+    - record_authorization_scope
+    - prefer_non_destructive_checks
+
+on_policy_uncertainty:
+  action: stop_and_require_review
