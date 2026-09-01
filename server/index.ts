@@ -12,6 +12,7 @@ import { registerContractOpsPackageRoutes } from "./contractops-package";
 import { registerNxyzHorizonsRoutes } from "./nxyz-horizons";
 import { registerNxyzMicrosoftLayerRoutes } from "./nxyz-microsoft-layer";
 import { registerWarRoomRoutes } from "./war-room";
+import { registerXuniaSecurityRoutes } from "./xunia-security-routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -148,7 +149,7 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons", "/api/zyra-eyes"];
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons", "/api/zyra-eyes", "/api/xunia/security"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -176,6 +177,7 @@ app.use((req, res, next) => {
   registerNxyzHorizonsRoutes(app);
   registerNxyzMicrosoftLayerRoutes(app);
   registerWarRoomRoutes(app);
+  registerXuniaSecurityRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -224,6 +226,7 @@ app.use((req, res, next) => {
         "nxyz-horizons-intel-gateway",
         "nxyz-microsoft-oss-layer",
         "aegis-war-room",
+        "xunia-security-platform-v1",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);
