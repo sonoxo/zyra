@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">ZYRA NXYZ governed agentic terminal</title>
+  <desc id="desc">Animated terminal-style hero for ZYRA NXYZ showing mission, policy, ontology, action, and evidence flow.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080b13"/>
+      <stop offset="0.5" stop-color="#100b1b"/>
+      <stop offset="1" stop-color="#071118"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8d6bff"/>
+      <stop offset="0.5" stop-color="#ff4fd8"/>
+      <stop offset="1" stop-color="#2df6ff"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#2df6ff" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+    <clipPath id="screenClip"><rect x="36" y="66" width="1128" height="258" rx="14"/></clipPath>
+  </defs>
+
+  <rect width="1200" height="360" rx="24" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="24" fill="url(#grid)"/>
+  <rect x="1.5" y="1.5" width="1197" height="357" rx="22.5" fill="none" stroke="url(#accent)" stroke-width="3" opacity="0.9"/>
+
+  <g opacity="0.26" filter="url(#glow)">
+    <circle cx="120" cy="30" r="90" fill="#8d6bff"><animate attributeName="opacity" values=".15;.35;.15" dur="5s" repeatCount="indefinite"/></circle>
+    <circle cx="1080" cy="330" r="120" fill="#2df6ff"><animate attributeName="opacity" values=".12;.28;.12" dur="6s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <rect x="36" y="32" width="1128" height="292" rx="16" fill="#080c14" fill-opacity="0.88" stroke="#30384b"/>
+  <rect x="36" y="32" width="1128" height="34" rx="16" fill="#121827"/>
+  <rect x="36" y="50" width="1128" height="16" fill="#121827"/>
+  <circle cx="58" cy="49" r="5" fill="#ff5f57"/>
+  <circle cx="76" cy="49" r="5" fill="#febc2e"/>
+  <circle cx="94" cy="49" r="5" fill="#28c840"/>
+  <text x="600" y="54" text-anchor="middle" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" letter-spacing="2">ZYRA://NXYZ — GOVERNED RUNTIME</text>
+
+  <g clip-path="url(#screenClip)">
+    <rect x="36" y="66" width="1128" height="258" fill="#080c14"/>
+    <rect x="36" y="66" width="1128" height="258" fill="url(#grid)" opacity="0.8"/>
+    <rect x="36" y="66" width="1128" height="2" fill="url(#accent)" opacity="0.75">
+      <animate attributeName="y" values="66;322;66" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;.85;0" dur="7s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <text x="78" y="112" fill="#8d6bff" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="17" font-weight="700">$ zyra mission --mode governed</text>
+  <text x="78" y="142" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">operator@virginia:~  HUMAN INTENT RECEIVED</text>
+  <text x="78" y="168" fill="#2df6ff" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">[01] POLICY       authorization gate ........ PASS</text>
+  <text x="78" y="194" fill="#ff4fd8" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">[02] ONTOLOGY     mission contract .......... RESOLVED</text>
+  <text x="78" y="220" fill="#9cff57" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">[03] ACTION       controlled operation ....... READY</text>
+  <text x="78" y="246" fill="#f6c177" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14">[04] EVIDENCE     provenance + audit ......... ENABLED</text>
+  <text x="78" y="282" fill="#ffffff" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700">MISSION → POLICY → ONTOLOGY → ACTION → EVIDENCE</text>
+
+  <g transform="translate(720 105)">
+    <rect width="394" height="158" rx="14" fill="#0d1320" stroke="#29334a"/>
+    <text x="22" y="30" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" letter-spacing="1.5">SYSTEM TELEMETRY</text>
+    <text x="22" y="60" fill="#2df6ff" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">CORE</text>
+    <text x="104" y="60" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">ZYRA / NXYZ</text>
+    <text x="22" y="86" fill="#ff4fd8" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">MODE</text>
+    <text x="104" y="86" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">HUMAN CONTROLLED</text>
+    <text x="22" y="112" fill="#9cff57" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">TRUST</text>
+    <text x="104" y="112" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">EVIDENCE FIRST</text>
+    <circle cx="367" cy="29" r="5" fill="#9cff57">
+      <animate attributeName="opacity" values="1;.2;1" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <rect x="22" y="132" width="350" height="5" rx="2.5" fill="#1c2433"/>
+    <rect x="22" y="132" width="0" height="5" rx="2.5" fill="url(#accent)">
+      <animate attributeName="width" values="0;350;350;0" keyTimes="0;.45;.85;1" dur="5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <text x="78" y="310" fill="#6e7681" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11">AUTHORIZED DEFENSIVE SECURITY • GOVERNED AUTOMATION • AUDITABLE EXECUTION</text>
+</svg>
