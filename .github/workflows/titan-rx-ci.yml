@@ -1,0 +1,38 @@
+name: TITAN RX CI
+
+on:
+  pull_request:
+    paths:
+      - "shared/titan-rx-readiness.ts"
+      - "shared/titan-rx-assurance.ts"
+      - "client/src/pages/titan-rx.tsx"
+      - "script/titan-rx-verify.ts"
+      - "script/titan-rx-assurance-verify.ts"
+      - "client/src/App.tsx"
+      - ".github/workflows/titan-rx-ci.yml"
+  push:
+    branches:
+      - feature/tsc-defensive-systems-console
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Verify readiness model
+        run: npx tsx script/titan-rx-verify.ts
+      - name: Verify governed systems assurance
+        run: npx tsx script/titan-rx-assurance-verify.ts
+      - name: TypeScript check
+        run: npm run check
+      - name: Production build
+        run: npm run build
