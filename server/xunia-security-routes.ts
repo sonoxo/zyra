@@ -11,17 +11,17 @@ const DEFAULT_RUNTIME_URL = "http://127.0.0.1:8765";
 function runtimeBaseUrl(): string {
   const raw = process.env.XUNIA_RUNTIME_URL || DEFAULT_RUNTIME_URL;
   const parsed = new URL(raw);
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('XUNIA_RUNTIME_URL_PROTOCOL_DENIED');
-  const loopback = ['127.0.0.1', '::1', 'localhost'].includes(parsed.hostname);
-  if (!loopback && process.env.XUNIA_RUNTIME_ALLOW_REMOTE_PROXY !== '1') {
-    throw new Error('XUNIA_RUNTIME_REMOTE_PROXY_DENIED');
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("XUNIA_RUNTIME_URL_PROTOCOL_DENIED");
+  const loopback = ["127.0.0.1", "::1", "localhost"].includes(parsed.hostname);
+  if (!loopback && process.env.XUNIA_RUNTIME_ALLOW_REMOTE_PROXY !== "1") {
+    throw new Error("XUNIA_RUNTIME_REMOTE_PROXY_DENIED");
   }
-  return parsed.toString().replace(/\/$/, '');
+  return parsed.toString().replace(/\/$/, "");
 }
 
 function runtimeHeaders(json = false): Record<string, string> {
   const headers: Record<string, string> = {};
-  if (json) headers['Content-Type'] = 'application/json';
+  if (json) headers["Content-Type"] = "application/json";
   const token = process.env.XUNIA_LOCAL_TOKEN;
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
@@ -44,7 +44,7 @@ async function runtimeFetch(path: string, init: RequestInit = {}): Promise<globa
 async function relayJson(res: Response, upstream: globalThis.Response): Promise<void> {
   const text = await upstream.text();
   res.status(upstream.status);
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader("Cache-Control", "no-store");
   if (!text) {
     res.end();
     return;
@@ -57,13 +57,21 @@ async function relayJson(res: Response, upstream: globalThis.Response): Promise<
 }
 
 function runtimeUnavailable(res: Response, error: unknown): void {
-  const message = error instanceof Error ? error.message : 'XUNIA_RUNTIME_UNAVAILABLE';
+  const message = error instanceof Error ? error.message : "XUNIA_RUNTIME_UNAVAILABLE";
   res.status(503).json({
     message,
-    runtime: 'offline',
+    runtime: "offline",
     localOnly: true,
-    startCommand: 'python xunia_realtime_runtime.py',
+    startCommand: "python xunia_realtime_runtime.py",
   });
+}
+
+async function proxyGet(res: Response, path: string): Promise<void> {
+  try {
+    await relayJson(res, await runtimeFetch(path));
+  } catch (error) {
+    runtimeUnavailable(res, error);
+  }
 }
 
 export function registerXuniaSecurityRoutes(app: Express): void {
@@ -96,80 +104,97 @@ export function registerXuniaSecurityRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/xunia/security/runtime/health', requireAuth, async (_req: Request, res: Response) => {
-    try {
-      await relayJson(res, await runtimeFetch('/health'));
-    } catch (error) {
-      runtimeUnavailable(res, error);
-    }
+  app.get("/api/xunia/security/runtime/health", requireAuth, async (_req: Request, res: Response) => {
+    await proxyGet(res, "/health");
   });
 
-  app.get('/api/xunia/security/runtime/jobs', requireAuth, async (_req: Request, res: Response) => {
-    try {
-      await relayJson(res, await runtimeFetch('/v1/jobs'));
-    } catch (error) {
-      runtimeUnavailable(res, error);
-    }
+  app.get("/api/xunia/security/runtime/jobs", requireAuth, async (_req: Request, res: Response) => {
+    await proxyGet(res, "/v1/jobs");
   });
 
-  app.get('/api/xunia/security/runtime/jobs/:jobId', requireAuth, async (req: Request, res: Response) => {
-    try {
-      const jobId = encodeURIComponent(req.params.jobId);
-      await relayJson(res, await runtimeFetch(`/v1/jobs/${jobId}`));
-    } catch (error) {
-      runtimeUnavailable(res, error);
-    }
+  app.get("/api/xunia/security/runtime/jobs/:jobId", requireAuth, async (req: Request, res: Response) => {
+    await proxyGet(res, `/v1/jobs/${encodeURIComponent(req.params.jobId)}`);
   });
 
-  app.post('/api/xunia/security/runtime/jobs', requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/xunia/security/runtime/findings", requireAuth, async (_req: Request, res: Response) => {
+    await proxyGet(res, "/v1/findings");
+  });
+
+  app.get("/api/xunia/security/runtime/remediations", requireAuth, async (_req: Request, res: Response) => {
+    await proxyGet(res, "/v1/remediations");
+  });
+
+  app.get("/api/xunia/security/runtime/notifications", requireAuth, async (_req: Request, res: Response) => {
+    await proxyGet(res, "/v1/notifications");
+  });
+
+  app.post("/api/xunia/security/runtime/jobs", requireAuth, async (req: Request, res: Response) => {
     try {
       const manifest = req.body as SecurityEngagementManifest;
       buildSecurityPlan(manifest);
-      const upstream = await runtimeFetch('/v1/jobs', {
-        method: 'POST',
+      const upstream = await runtimeFetch("/v1/jobs", {
+        method: "POST",
         body: JSON.stringify({ manifest }),
       });
       await relayJson(res, upstream);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'XUNIA_RUNTIME_JOB_REJECTED';
-      if (message.includes('fetch') || message.includes('abort') || message.includes('RUNTIME_URL')) {
+      const message = error instanceof Error ? error.message : "XUNIA_RUNTIME_JOB_REJECTED";
+      if (message.includes("fetch") || message.includes("abort") || message.includes("RUNTIME_URL")) {
         runtimeUnavailable(res, error);
       } else {
-        res.status(400).json({ message, decision: 'DENIED' });
+        res.status(400).json({ message, decision: "DENIED" });
       }
     }
   });
 
-  app.post('/api/xunia/security/runtime/jobs/:jobId/cancel', requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/xunia/security/runtime/jobs/:jobId/cancel", requireAuth, async (req: Request, res: Response) => {
     try {
       const jobId = encodeURIComponent(req.params.jobId);
-      await relayJson(res, await runtimeFetch(`/v1/jobs/${jobId}/cancel`, { method: 'POST', body: '{}' }));
+      await relayJson(res, await runtimeFetch(`/v1/jobs/${jobId}/cancel`, { method: "POST", body: "{}" }));
     } catch (error) {
       runtimeUnavailable(res, error);
     }
   });
 
-  app.post('/api/xunia/security/runtime/jobs/:jobId/retest', requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/xunia/security/runtime/jobs/:jobId/retest", requireAuth, async (req: Request, res: Response) => {
     try {
       const jobId = encodeURIComponent(req.params.jobId);
-      await relayJson(res, await runtimeFetch(`/v1/jobs/${jobId}/retest`, { method: 'POST', body: '{}' }));
+      await relayJson(res, await runtimeFetch(`/v1/jobs/${jobId}/retest`, { method: "POST", body: "{}" }));
     } catch (error) {
       runtimeUnavailable(res, error);
     }
   });
 
-  app.post('/api/xunia/security/runtime/schedules', requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/xunia/security/runtime/findings/:findingId/resolve", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const findingId = encodeURIComponent(req.params.findingId);
+      await relayJson(res, await runtimeFetch(`/v1/findings/${findingId}/resolve`, { method: "POST", body: "{}" }));
+    } catch (error) {
+      runtimeUnavailable(res, error);
+    }
+  });
+
+  app.post("/api/xunia/security/runtime/findings/:findingId/retest", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const findingId = encodeURIComponent(req.params.findingId);
+      await relayJson(res, await runtimeFetch(`/v1/findings/${findingId}/retest`, { method: "POST", body: "{}" }));
+    } catch (error) {
+      runtimeUnavailable(res, error);
+    }
+  });
+
+  app.post("/api/xunia/security/runtime/schedules", requireAuth, async (req: Request, res: Response) => {
     try {
       const manifest = req.body?.manifest as SecurityEngagementManifest;
       buildSecurityPlan(manifest);
       const intervalSeconds = Number(req.body?.intervalSeconds);
-      if (!Number.isInteger(intervalSeconds) || intervalSeconds < 60) {
-        return res.status(400).json({ message: 'SCHEDULE_INTERVAL_MINIMUM_60_SECONDS' });
+      if (!Number.isInteger(intervalSeconds) || intervalSeconds < 60 || intervalSeconds > 2_592_000) {
+        return res.status(400).json({ message: "SCHEDULE_INTERVAL_OUT_OF_RANGE" });
       }
-      const upstream = await runtimeFetch('/v1/schedules', {
-        method: 'POST',
+      const upstream = await runtimeFetch("/v1/schedules", {
+        method: "POST",
         body: JSON.stringify({
-          name: String(req.body?.name || 'Zyra realtime schedule'),
+          name: String(req.body?.name || "Zyra realtime schedule"),
           intervalSeconds,
           manifest,
         }),
@@ -180,9 +205,9 @@ export function registerXuniaSecurityRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/xunia/security/runtime/events', requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/xunia/security/runtime/events", requireAuth, async (req: Request, res: Response) => {
     const controller = new AbortController();
-    req.on('close', () => controller.abort());
+    req.on("close", () => controller.abort());
     try {
       const upstream = await fetch(`${runtimeBaseUrl()}/v1/events`, {
         headers: runtimeHeaders(),
@@ -193,9 +218,9 @@ export function registerXuniaSecurityRoutes(app: Express): void {
         return;
       }
       res.status(200);
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
       res.flushHeaders();
       const reader = (upstream.body as any).getReader();
       while (!controller.signal.aborted) {
