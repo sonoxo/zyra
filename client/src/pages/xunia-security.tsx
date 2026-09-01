@@ -10,12 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type TargetType = "url" | "host" | "cidr" | "path" | "image" | "cloud";
+
 interface CatalogTool {
   id: string;
   name: string;
   check: string;
   risk: "PASSIVE" | "DISCOVERY" | "SAFE_ACTIVE" | "LAB_ACTIVE";
   freeOpenSource: true;
+  targetTypes: TargetType[];
   phases: string[];
 }
 
@@ -34,7 +37,7 @@ interface PlanResponse {
     mode: string;
     authorizationReference: string;
     destructiveActions: "DENIED";
-    steps: Array<{ order: number; tool: CatalogTool; target: { type: "url"; value: string }; status: "PLANNED" }>;
+    steps: Array<{ order: number; tool: CatalogTool; target: { type: TargetType; value: string }; status: "PLANNED" }>;
   };
 }
 
@@ -44,8 +47,18 @@ const modeCards = [
   { mode: "SIMULATE", icon: FlaskConical, description: "Lab-oriented security simulation" },
 ] as const;
 
+const targetPlaceholders: Record<TargetType, string> = {
+  url: "https://staging.example.com",
+  host: "app.staging.example.com",
+  cidr: "10.20.0.0/24",
+  path: "/workspace/repository",
+  image: "registry.example.com/app:staging",
+  cloud: "aws:security-audit-account",
+};
+
 export default function XuniaSecurityPage() {
   const [mode, setMode] = useState<"ASSESS" | "PENTEST" | "SIMULATE">("ASSESS");
+  const [targetType, setTargetType] = useState<TargetType>("url");
   const [target, setTarget] = useState("");
   const [authorizationReference, setAuthorizationReference] = useState("");
 
@@ -56,15 +69,17 @@ export default function XuniaSecurityPage() {
   const allowedChecks = useMemo(() => {
     if (!catalog) return [];
     return catalog.tools
+      .filter((tool) => tool.targetTypes.includes(targetType))
       .filter((tool) => mode !== "ASSESS" || tool.risk === "PASSIVE" || tool.risk === "DISCOVERY")
       .filter((tool) => mode !== "PENTEST" || tool.risk !== "LAB_ACTIVE")
       .map((tool) => tool.check);
-  }, [catalog, mode]);
+  }, [catalog, mode, targetType]);
 
   const createPlan = useMutation({
     mutationFn: async () => {
-      if (!target.trim()) throw new Error("Target URL is required");
+      if (!target.trim()) throw new Error("Authorized target is required");
       if (!authorizationReference.trim()) throw new Error("Authorization reference is required");
+      if (!allowedChecks.length) throw new Error("No compatible security tools are available for this target and mode");
       const now = new Date();
       const endsAt = new Date(now.getTime() + 60 * 60 * 1000);
       const body = {
@@ -74,7 +89,7 @@ export default function XuniaSecurityPage() {
         mode,
         startsAt: now.toISOString(),
         endsAt: endsAt.toISOString(),
-        targets: [{ type: "url", value: target.trim() }],
+        targets: [{ type: targetType, value: target.trim() }],
         exclusions: [],
         allowedChecks,
         maxRequestsPerSecond: 10,
@@ -103,17 +118,13 @@ export default function XuniaSecurityPage() {
         <LockKeyhole className="h-4 w-4" />
         <AlertTitle>Authorization enforced by design</AlertTitle>
         <AlertDescription>
-          Every plan requires an engagement window, explicit target scope, an authorization reference, and deny-by-default destructive controls.
+          Every plan requires an engagement window, explicit typed target scope, an authorization reference, and deny-by-default destructive controls.
         </AlertDescription>
       </Alert>
 
       <div className="grid gap-4 md:grid-cols-3">
         {modeCards.map(({ mode: value, icon: Icon, description }) => (
-          <Card
-            key={value}
-            className={mode === value ? "border-primary shadow-sm" : "cursor-pointer"}
-            onClick={() => setMode(value)}
-          >
+          <Card key={value} className={mode === value ? "border-primary shadow-sm" : "cursor-pointer"} onClick={() => setMode(value)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg"><Icon className="h-5 w-5" /> {value}</CardTitle>
               <CardDescription>{description}</CardDescription>
@@ -141,8 +152,22 @@ export default function XuniaSecurityPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="target">Authorized target URL</Label>
-              <Input id="target" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="https://staging.example.com" />
+              <Label htmlFor="target-type">Target class</Label>
+              <Select value={targetType} onValueChange={(value) => { setTargetType(value as TargetType); setTarget(""); }}>
+                <SelectTrigger id="target-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="url">Web URL</SelectItem>
+                  <SelectItem value="host">Host</SelectItem>
+                  <SelectItem value="cidr">CIDR</SelectItem>
+                  <SelectItem value="path">Local source path</SelectItem>
+                  <SelectItem value="image">Container image</SelectItem>
+                  <SelectItem value="cloud">Cloud context</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="target">Authorized target</Label>
+              <Input id="target" value={target} onChange={(event) => setTarget(event.target.value)} placeholder={targetPlaceholders[targetType]} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="authorization">Authorization reference</Label>
@@ -182,11 +207,11 @@ export default function XuniaSecurityPage() {
                 <div className="space-y-2">
                   {createPlan.data.plan.steps.map((step) => (
                     <div key={`${step.order}-${step.tool.id}`} className="flex items-center justify-between rounded-md border p-3 text-sm">
-                      <span><strong>{step.order}. {step.tool.name}</strong> · {step.tool.check}</span>
+                      <span><strong>{step.order}. {step.tool.name}</strong> · {step.tool.check} · {step.target.type}</span>
                       <Badge variant="secondary">{step.tool.risk}</Badge>
                     </div>
                   ))}
-                  {createPlan.data.plan.steps.length === 0 ? <p className="text-sm text-muted-foreground">No authorized tools matched this mode.</p> : null}
+                  {createPlan.data.plan.steps.length === 0 ? <p className="text-sm text-muted-foreground">No authorized tools matched this mode and target class.</p> : null}
                 </div>
               </div>
             ) : (
