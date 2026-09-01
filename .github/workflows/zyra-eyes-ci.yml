@@ -2,7 +2,7 @@ name: ZYRA Eyes CI
 
 on:
   push:
-    branches: [main, "feature/**", "feat/**"]
+    branches: [main, "feature/**", "feat/**", "fix/**"]
     paths:
       - "server/zyra-eyes.ts"
       - "server/zyra-eyes.test.ts"
@@ -12,6 +12,7 @@ on:
       - "shared/policy/us-cz-ethical-scope.yaml"
       - "docs/ZYRA-EYES-RVIA.md"
       - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
+      - "docs/ZYRA-EYES-SMOOTH-CURSOR.md"
       - ".github/workflows/zyra-eyes-ci.yml"
   pull_request:
     branches: [main, develop]
@@ -24,6 +25,7 @@ on:
       - "shared/policy/us-cz-ethical-scope.yaml"
       - "docs/ZYRA-EYES-RVIA.md"
       - "docs/ZYRA-EYES-SYSTEM-CONTROLLER.md"
+      - "docs/ZYRA-EYES-SMOOTH-CURSOR.md"
 
 permissions:
   contents: read
@@ -57,6 +59,7 @@ jobs:
           python -m py_compile apps/zyra-eyes-plugin/zyra_eyes.py
           python -m py_compile apps/zyra-eyes-plugin/zyra_gaze.py
           python -m py_compile apps/zyra-eyes-plugin/zyra_system_controller.py
+          python -m py_compile apps/zyra-eyes-plugin/zyra_smooth_controller.py
 
       - name: Gaze safety invariants
         run: |
@@ -71,6 +74,14 @@ jobs:
           grep -q 'Remote control is intentionally out of scope' apps/zyra-eyes-plugin/zyra_system_controller.py
           grep -q 'PyAutoGUI corner failsafe is enabled' apps/zyra-eyes-plugin/zyra_system_controller.py
           grep -q 'dwell timing is too short for safe use' apps/zyra-eyes-plugin/zyra_system_controller.py
+
+      - name: Smooth cursor invariants
+        run: |
+          grep -q 'One Euro adaptive gaze filter' apps/zyra-eyes-plugin/zyra_smooth_controller.py
+          grep -q 'CursorMotionEngine' apps/zyra-eyes-plugin/zyra_smooth_controller.py
+          grep -q 'rate_hz' apps/zyra-eyes-plugin/zyra_smooth_controller.py
+          grep -q 'require_native_authorization' apps/zyra-eyes-plugin/zyra_smooth_controller.py
+          grep -q 'PyAutoGUI corner failsafe' apps/zyra-eyes-plugin/zyra_smooth_controller.py
 
       - name: Policy invariants
         run: |
