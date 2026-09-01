@@ -16,14 +16,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-ALLOWED_HOSTS = {
-    "github.com",
-    "raw.githubusercontent.com",
-    "api.github.com",
-    "pages.nist.gov",
-    "csrc.nist.gov",
-    "www.nist.gov",
-}
+NIST_HOSTS = {"pages.nist.gov", "csrc.nist.gov", "www.nist.gov"}
 ALLOWED_ROOTS = {
     "catalog",
     "profile",
@@ -40,19 +33,45 @@ class IngestError(RuntimeError):
     pass
 
 
+def is_allowed_url(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or not parsed.hostname:
+        return False
+    host = parsed.hostname.lower()
+    path = parsed.path.lower()
+    if host in NIST_HOSTS:
+        return True
+    if host == "github.com":
+        return path.startswith(("/usnistgov/oscal/", "/usnistgov/oscal-content/"))
+    if host == "raw.githubusercontent.com":
+        return path.startswith(("/usnistgov/oscal/", "/usnistgov/oscal-content/"))
+    if host == "api.github.com":
+        return path.startswith(("/repos/usnistgov/oscal/", "/repos/usnistgov/oscal-content/"))
+    return False
+
+
+class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not is_allowed_url(newurl):
+            raise IngestError(f"redirect target is not allowlisted: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def read_source(locator: str) -> tuple[bytes, str]:
     parsed = urllib.parse.urlparse(locator)
     if parsed.scheme:
-        if parsed.scheme != "https":
-            raise IngestError("remote OSCAL sources must use HTTPS")
-        if parsed.hostname not in ALLOWED_HOSTS:
-            raise IngestError(f"remote host is not allowlisted: {parsed.hostname}")
+        if not is_allowed_url(locator):
+            raise IngestError("remote OSCAL source is not on the NIST OSCAL allowlist")
         req = urllib.request.Request(locator, headers={"User-Agent": "xunia-oscal-ingest/1"})
-        with urllib.request.urlopen(req, timeout=20) as response:
+        opener = urllib.request.build_opener(SafeRedirectHandler())
+        with opener.open(req, timeout=20) as response:
             data = response.read(MAX_BYTES + 1)
+            final_url = response.geturl()
+        if not is_allowed_url(final_url):
+            raise IngestError(f"final remote URL is not allowlisted: {final_url}")
         if len(data) > MAX_BYTES:
             raise IngestError("OSCAL source exceeds 50 MiB limit")
-        return data, locator
+        return data, final_url
 
     path = pathlib.Path(locator)
     if not path.is_file():
@@ -68,11 +87,21 @@ def sha256_hex(data: bytes) -> str:
 
 
 def iter_control_ids(node):
+    """Yield actual OSCAL control identifiers without treating arbitrary id fields as controls."""
     if isinstance(node, dict):
         for key, value in node.items():
-            if key in {"id", "control-id"} and isinstance(value, str):
+            if key == "control-id" and isinstance(value, str):
                 yield value.lower()
-            yield from iter_control_ids(value)
+            if key == "controls" and isinstance(value, list):
+                for control in value:
+                    if not isinstance(control, dict):
+                        continue
+                    control_id = control.get("id")
+                    if isinstance(control_id, str):
+                        yield control_id.lower()
+                    yield from iter_control_ids(control)
+            elif key != "controls":
+                yield from iter_control_ids(value)
     elif isinstance(node, list):
         for value in node:
             yield from iter_control_ids(value)
