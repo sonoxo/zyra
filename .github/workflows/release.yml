@@ -9,23 +9,25 @@ permissions:
   contents: write
 
 jobs:
+  preflight:
+    name: Release Preflight
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      run-tests: true
+      run-typecheck: true
+      run-audit: true
+      audit-level: "high"
+      run-build: true
+
   release:
     name: Create Release
+    needs: preflight
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - name: Build
-        run: npm run build
 
       - name: Generate changelog
         id: changelog
@@ -41,7 +43,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: |
             ## Changes

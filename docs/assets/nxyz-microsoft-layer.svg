@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720" role="img" aria-labelledby="title desc">
+  <title id="title">NXYZ Microsoft Open Source Layer</title>
+  <desc id="desc">Architecture showing Microsoft MarkItDown, Agent Framework, and optional GraphRAG reference feeding a governed NXYZ and ZYRA evidence and ontology layer, then ContractOps, GPT-DOUG-LLM, and optional Foundry.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset="0.55" stop-color="#11153a"/><stop offset="1" stop-color="#2b1452"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#72e5ff"/></marker>
+    <style>
+      .title{font:700 42px system-ui,-apple-system,Segoe UI,sans-serif;fill:#fff}.sub{font:500 17px system-ui,-apple-system,Segoe UI,sans-serif;fill:#c7d2fe}.label{font:700 18px system-ui,-apple-system,Segoe UI,sans-serif;fill:#fff}.small{font:500 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:#cbd5e1}.tiny{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#94a3b8;letter-spacing:.08em}.box{fill:#0b1226;stroke:#475569;stroke-width:1.4}.core{fill:#101737;stroke:url(#accent);stroke-width:2.4}.consumer{fill:#111827;stroke:#7c3aed;stroke-width:1.4}.line{stroke:#72e5ff;stroke-width:2.4;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1400" height="720" rx="28" fill="url(#bg)"/>
+  <circle cx="1200" cy="90" r="180" fill="#7c3aed" opacity=".09"/><circle cx="180" cy="660" r="220" fill="#22d3ee" opacity=".07"/>
+  <text x="70" y="80" class="title">NXYZ // MICROSOFT OPEN SOURCE LAYER</text>
+  <text x="70" y="112" class="sub">Document intelligence • explicit embeddings • optional graph context • governed agent orchestration</text>
+  <text x="70" y="150" class="tiny">INDEPENDENT INTEGRATION — NO MICROSOFT ENDORSEMENT OR AZURE ENTITLEMENT IMPLIED</text>
+
+  <rect x="70" y="215" width="300" height="125" rx="18" class="box"/>
+  <text x="95" y="252" class="label">MarkItDown</text>
+  <text x="95" y="280" class="small">Documents → structured Markdown</text>
+  <text x="95" y="305" class="small">PDF • DOCX • PPTX • XLSX • HTML</text>
+  <text x="95" y="327" class="tiny">ADAPTER READY</text>
+
+  <rect x="70" y="375" width="300" height="125" rx="18" class="box"/>
+  <text x="95" y="412" class="label">Agent Framework</text>
+  <text x="95" y="440" class="small">Production agent + workflow orchestration</text>
+  <text x="95" y="465" class="small">Human-in-loop • observability • workflows</text>
+  <text x="95" y="487" class="tiny">PREFERRED MICROSOFT ORCHESTRATION ADAPTER</text>
+
+  <rect x="70" y="535" width="300" height="110" rx="18" class="box"/>
+  <text x="95" y="572" class="label">GraphRAG reference</text>
+  <text x="95" y="600" class="small">Optional graph-context pattern only</text>
+  <text x="95" y="625" class="tiny">MAINTENANCE-MODE RESEARCH • NOT CORE</text>
+
+  <path d="M370 278 C445 278 455 310 515 310" class="line"/>
+  <path d="M370 438 C445 438 455 405 515 405" class="line"/>
+  <path d="M370 590 C445 590 455 500 515 500" class="line"/>
+
+  <rect x="515" y="235" width="410" height="330" rx="24" class="core" filter="url(#glow)"/>
+  <text x="550" y="282" class="label">NXYZ MICROSOFT LAYER</text>
+  <text x="550" y="312" class="small">1. Capture provenance</text>
+  <text x="550" y="343" class="small">2. Normalize documents when needed</text>
+  <text x="550" y="374" class="small">3. Build explicit embedding work order</text>
+  <text x="550" y="405" class="small">4. Add graph context only when requested</text>
+  <text x="550" y="436" class="small">5. Map agent workflows through adapters</text>
+  <text x="550" y="467" class="small">6. Bind results to ZYRA Ontology + Evidence</text>
+  <text x="550" y="498" class="small">7. Human policy gate before external impact</text>
+  <rect x="550" y="520" width="330" height="28" rx="14" fill="#22d3ee" opacity=".12"/>
+  <text x="575" y="539" class="tiny">NO IMPLICIT AZURE • NO SECRET COMMITS • PROVENANCE FIRST</text>
+
+  <path d="M925 400 C990 400 1005 400 1055 400" class="line"/>
+
+  <rect x="1055" y="215" width="275" height="105" rx="18" class="consumer"/>
+  <text x="1080" y="253" class="label">NXYZ ContractOps</text>
+  <text x="1080" y="281" class="small">Solicitation ingestion + evidence</text>
+  <text x="1080" y="302" class="tiny">HUMAN SUBMISSION CONTROL</text>
+
+  <rect x="1055" y="345" width="275" height="105" rx="18" class="consumer"/>
+  <text x="1080" y="383" class="label">GPT-DOUG-LLM</text>
+  <text x="1080" y="411" class="small">Reasoning + governed agent plans</text>
+  <text x="1080" y="432" class="tiny">TOOLS SUBJECT TO AUTHORIZATION</text>
+
+  <rect x="1055" y="475" width="275" height="105" rx="18" class="consumer"/>
+  <text x="1080" y="513" class="label">ZYRA / Foundry</text>
+  <text x="1080" y="541" class="small">Ontology, evidence, approved actions</text>
+  <text x="1080" y="562" class="tiny">EXTERNAL AUTHORIZATION REQUIRED</text>
+
+  <text x="70" y="690" class="tiny">MICROSOFT REPOSITORIES ARE OPEN-SOURCE INTEGRATION SOURCES. NXYZ REMAINS AN INDEPENDENT PROJECT.</text>
+</svg>

@@ -11,7 +11,7 @@ import {
   Users, ClipboardList, Rocket, Check, X, ListTodo,
   GraduationCap, Building, Eye, Map, Fish, Box,
   Cpu, GitFork, ScanSearch, Bot, DatabaseZap,
-  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck, Shield, Radio
+  Share2, Database, BarChart2, Layers, Clock, AlertTriangle, ShieldCheck, Shield, Radio, Briefcase
 } from "lucide-react";
 import zyraLogo from "@assets/ChatGPT_Image_Mar_30,_2026,_05_28_39_PM_1775166956477.png";
 import { useTheme } from "./ThemeProvider";
@@ -44,6 +44,13 @@ const navGroups = [
       { href: "/analytics", label: "Analytics", icon: BarChart3 },
       { href: "/posture", label: "Security Posture", icon: TrendingUp },
       { href: "/onboarding", label: "Getting Started", icon: Rocket },
+      { href: "/job-readiness", label: "Job Readiness", icon: Briefcase },
+    ],
+  },
+  {
+    label: "Federal",
+    items: [
+      { href: "/contractops", label: "NXYZ ContractOps", icon: Building2 },
     ],
   },
   {

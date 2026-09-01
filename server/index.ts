@@ -2,7 +2,14 @@ import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { registerRoutes } from "./routes";
-import { registerWarRoomRoutes } from "./war-room";
+import { registerBaselineAssuranceRoutes } from "./baseline-assurance";
+import { registerZyraShieldRoutes } from "./zyra-shield";
+import { registerManagedBrowserRoutes } from "./managed-browser";
+import { registerContractOpsRoutes } from "./contractops";
+import { registerContractOpsProposalRoutes } from "./contractops-proposals";
+import { registerContractOpsPackageRoutes } from "./contractops-package";
+import { registerNxyzHorizonsRoutes } from "./nxyz-horizons";
+import { registerNxyzMicrosoftLayerRoutes } from "./nxyz-microsoft-layer";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -139,7 +146,7 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env"];
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -157,8 +164,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  registerBaselineAssuranceRoutes(app);
+  registerZyraShieldRoutes(app);
+  registerManagedBrowserRoutes(app);
+  registerContractOpsRoutes(app);
+  registerContractOpsProposalRoutes(app);
+  registerContractOpsPackageRoutes(app);
+  registerNxyzHorizonsRoutes(app);
+  registerNxyzMicrosoftLayerRoutes(app);
   await registerRoutes(httpServer, app);
-  registerWarRoomRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     if (res.headersSent) {
@@ -196,7 +210,14 @@ app.use((req, res, next) => {
         process.env.STRIPE_SECRET_KEY ? "stripe" : null,
         process.env.BOOTSTRAP_SECRET ? "bootstrap" : null,
         process.env.HF_TOKEN ? "vision-ai" : null,
-        "aegis-war-room",
+        "bas-detection-assurance",
+        "zyra-shield",
+        "managed-profile-browser",
+        "nxyz-contractops",
+        "nxyz-contractops-proposals",
+        "nxyz-contractops-package-builder",
+        "nxyz-horizons-intel-gateway",
+        "nxyz-microsoft-oss-layer",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);

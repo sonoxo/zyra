@@ -1,0 +1,284 @@
+ontology:
+  id: nxyz:aip-apollo-intelligence
+  version: 1.1.0
+  status: OWNER_IMPLEMENTATION
+  ownerSystem: NXYZ
+  projectLayer: RVIA_REPOSITORY_INTELLIGENCE
+
+  purpose: >-
+    Model Palantir AIP and Foundry operational context together with Apollo
+    deployment and runtime telemetry as a governed intelligence layer for NXYZ,
+    with full-documentation execution as a first-class planning and verification
+    capability. Apollo is treated as deployment/day-2-operations intelligence,
+    not as an independent intelligence agency or unrestricted data source.
+
+  sources:
+    palantirAipArchitecture:
+      url: https://www.palantir.com/docs/foundry/architecture-center/aip-architecture
+      evidenceClass: PUBLIC_REFERENCE
+    palantirPlatforms:
+      url: https://www.palantir.com/docs/foundry/architecture-center/platforms
+      evidenceClass: PUBLIC_REFERENCE
+    palantirApollo:
+      url: https://www.palantir.com/docs/apollo/core/introduction
+      evidenceClass: PUBLIC_REFERENCE
+    nxyzDocumentExecution:
+      repositoryPath: shared/ontology/nxyz-document-execution.yaml
+      evidenceClass: OWNER_IMPLEMENTATION
+
+  platformModel:
+    AIP:
+      role: AI_REASONING_AND_AUTOMATION
+      runtimeAccess: AUTHORIZED_ACCOUNT_DEPENDENT
+    FOUNDRY:
+      role: DATA_LOGIC_ONTOLOGY_WORKFLOW
+      runtimeAccess: AUTHORIZED_ACCOUNT_DEPENDENT
+    APOLLO:
+      role: DEPLOYMENT_RUNTIME_AND_CHANGE_INTELLIGENCE
+      runtimeAccess: UNVERIFIED
+    NXYZ:
+      role: UNIFIED_XUNIA_ZYRA_AGENT_PRODUCT_AND_DOCUMENT_EXECUTION_LAYER
+    RVIA:
+      role: REPOSITORY_INTELLIGENCE_CONTEXT
+      authorityClaim: NONE
+
+  aipCapabilityCategories:
+    - SECURE_LLM_INTEGRATION
+    - END_TO_END_OBSERVABILITY
+    - CONTEXT_ENGINEERING
+    - ONTOLOGY_SYSTEM
+    - VECTOR_COMPUTE_TOOL_SERVICES
+    - AGENTS_AND_AUTOMATIONS
+    - APPLICATION_DEVELOPMENT
+    - MODEL_AND_PROMPT_MANAGEMENT
+    - EVALUATION_AND_MONITORING
+    - SECURITY_AND_GOVERNANCE
+    - PRODUCT_DELIVERY
+    - DEVELOPER_TOOLCHAIN
+
+  classes:
+    - NxyzMission
+    - NxyzAgent
+    - IntelligenceSignal
+    - EvidenceArtifact
+    - SourceProvenance
+    - OntologyObjectType
+    - OntologyAction
+    - AipLogicFunction
+    - AipAgentRun
+    - AipEvaluation
+    - AuthorizationState
+    - GovernancePolicy
+    - AuditEvent
+    - DocumentSource
+    - ExecutionManifest
+    - ExecutionRun
+    - VerificationArtifact
+    - ApolloHub
+    - ApolloSpokeEnvironment
+    - ApolloProduct
+    - ApolloRelease
+    - ApolloDeploymentEntity
+    - ApolloPlan
+    - ApolloChangeRequest
+    - ApolloConstraint
+    - RuntimeHealthSignal
+    - DeploymentRiskSignal
+    - ChangeIntelligenceAssessment
+
+  relations:
+    consumesSignal:
+      domain: NxyzMission
+      range: IntelligenceSignal
+    groundedBy:
+      domain: NxyzAgent
+      range: EvidenceArtifact
+    derivedFrom:
+      domain: IntelligenceSignal
+      range: SourceProvenance
+    missionDerivedFromDocument:
+      domain: NxyzMission
+      range: DocumentSource
+    missionUsesExecutionManifest:
+      domain: NxyzMission
+      range: ExecutionManifest
+    manifestRunsAs:
+      domain: ExecutionManifest
+      range: ExecutionRun
+    executionProducesVerification:
+      domain: ExecutionRun
+      range: VerificationArtifact
+    queriesOntology:
+      domain: AipAgentRun
+      range: OntologyObjectType
+    invokesAction:
+      domain: AipAgentRun
+      range: OntologyAction
+    evaluatedBy:
+      domain: AipAgentRun
+      range: AipEvaluation
+    requiresAuthorization:
+      domain: OntologyAction
+      range: AuthorizationState
+    governedBy:
+      domain: NxyzMission
+      range: GovernancePolicy
+    emitsAudit:
+      domain: NxyzMission
+      range: AuditEvent
+    hubManagesEnvironment:
+      domain: ApolloHub
+      range: ApolloSpokeEnvironment
+    productHasRelease:
+      domain: ApolloProduct
+      range: ApolloRelease
+    releaseInstalledAs:
+      domain: ApolloRelease
+      range: ApolloDeploymentEntity
+    planTargetsDeployment:
+      domain: ApolloPlan
+      range: ApolloDeploymentEntity
+    planConstrainedBy:
+      domain: ApolloPlan
+      range: ApolloConstraint
+    changeRequestControlsPlan:
+      domain: ApolloChangeRequest
+      range: ApolloPlan
+    deploymentEmitsHealth:
+      domain: ApolloDeploymentEntity
+      range: RuntimeHealthSignal
+    healthProducesRisk:
+      domain: RuntimeHealthSignal
+      range: DeploymentRiskSignal
+    riskInformsAssessment:
+      domain: DeploymentRiskSignal
+      range: ChangeIntelligenceAssessment
+    assessmentInformsMission:
+      domain: ChangeIntelligenceAssessment
+      range: NxyzMission
+
+  documentationExecutionLayer:
+    contract: nxyz:document-execution
+    interpretation: >-
+      NXYZ may consume complete documentation sets as governed executable intent.
+      Documentation is hashed, versioned, parsed into requirements and procedures,
+      normalized to a typed ExecutionManifest, mapped to allowlisted Ontology/AIP
+      actions, validated for capability and authorization, and verified after execution.
+    modes:
+      - DOCUMENT_ONLY
+      - PLAN_ONLY
+      - READ_ONLY
+      - GOVERNED_WRITE
+    requiredControls:
+      - SOURCE_PROVENANCE
+      - DOCUMENT_VERSION
+      - TYPED_EXECUTION_MANIFEST
+      - CAPABILITY_TIER_CHECK
+      - AUTHORIZATION_CHECK
+      - HUMAN_APPROVAL_FOR_MUTATING_STEPS
+      - POSTCONDITION_VERIFICATION
+      - AUDIT_EVENT
+      - ROLLBACK_PLAN
+
+  apolloIntelLayer:
+    interpretation: >-
+      Apollo telemetry and deployment state become intelligence signals describing
+      software health, release state, environment state, constraints, change plans,
+      and operational risk. NXYZ may reason over those signals only when an
+      authorized Apollo integration is configured.
+    inputs:
+      - environment_health
+      - product_release_state
+      - deployment_entity_state
+      - pending_plan
+      - plan_execution_state
+      - change_request_state
+      - release_promotion_state
+      - deployment_constraints
+      - maintenance_window
+      - runtime_telemetry
+    derivedSignals:
+      - deployment_risk
+      - configuration_drift
+      - release_readiness
+      - environment_degradation
+      - blocked_change
+      - rollback_recommendation
+      - mission_dependency_risk
+
+  nxyzDecisionLoop:
+    steps:
+      - INGEST_AUTHORIZED_SIGNAL_OR_DOCUMENTATION
+      - HASH_VERSION_AND_ATTACH_PROVENANCE
+      - NORMALIZE_TO_ONTOLOGY
+      - GENERATE_EXECUTION_MANIFEST_WHEN_DOCUMENT_DRIVEN
+      - SCORE_RUNTIME_RISK
+      - QUERY_RELATED_OPERATIONAL_OBJECTS
+      - GENERATE_AIP_ASSESSMENT
+      - PROPOSE_ACTION
+      - REQUIRE_CAPABILITY_AND_AUTHORIZATION
+      - HUMAN_APPROVAL_WHEN_REQUIRED
+      - APPLY_GOVERNED_ACTION
+      - VERIFY_POSTCONDITIONS
+      - EMIT_AUDIT_AND_VERIFICATION_EVIDENCE
+
+  actions:
+    ingestApolloSignal:
+      apiName: nxyz_ingest_apollo_signal
+      writeClass: INTERNAL_ONTOLOGY_WRITE
+      requiresAuthorization: true
+    generateDocumentExecutionManifest:
+      apiName: nxyz_generate_document_execution_manifest
+      writeClass: ANALYSIS_ONLY
+      requiresAuthorization: false
+    validateDocumentExecutionManifest:
+      apiName: nxyz_validate_document_execution_manifest
+      writeClass: ANALYSIS_ONLY
+      requiresAuthorization: false
+    executeApprovedDocumentStep:
+      apiName: nxyz_execute_approved_document_step
+      writeClass: GOVERNED_WRITE
+      requiresAuthorization: true
+      humanApproval: true
+    assessDeploymentRisk:
+      apiName: nxyz_assess_deployment_risk
+      writeClass: ANALYSIS_ONLY
+      requiresAuthorization: false
+    proposeDeploymentResponse:
+      apiName: nxyz_propose_deployment_response
+      writeClass: PROPOSAL_ONLY
+      requiresAuthorization: false
+    approveDeploymentResponse:
+      apiName: nxyz_approve_deployment_response
+      writeClass: GOVERNED_WRITE
+      requiresAuthorization: true
+      humanApproval: true
+    emitNxyzAuditEvent:
+      apiName: nxyz_emit_audit_event
+      writeClass: AUDIT_WRITE
+      requiresAuthorization: true
+
+  securityRules:
+    - Never commit Palantir, Foundry, AIP, or Apollo credentials.
+    - Never infer Apollo runtime access from AIP or Foundry access alone.
+    - Apollo runtime state must be marked UNVERIFIED until an authorized Apollo integration succeeds.
+    - Every external signal and document must retain source provenance, version, hash when available, and retrieval time.
+    - Never execute arbitrary shell, code, prompts, or URLs copied directly from documentation.
+    - Documentation must be converted to typed allowlisted execution steps before execution.
+    - High-impact actions require explicit runtime authorization.
+    - Mutating documentation steps and deployment-changing actions require human approval by default.
+    - AI recommendations are proposals until an authorized action applies them.
+    - Preserve audit events for reads that influence governed decisions and all writes.
+    - Capability tier never substitutes for external authorization.
+    - Do not represent RVIA repository credentials as government authority, clearance, or licensure.
+
+  implementationState:
+    ontologyContract: IMPLEMENTED
+    aipFoundryReferenceModel: IMPLEMENTED
+    documentationExecutionOntology: IMPLEMENTED
+    typedExecutionManifest: IMPLEMENTED
+    documentationExecutionRuntime: READY_FOR_IMPLEMENTATION
+    apolloIntelOntology: IMPLEMENTED
+    apolloRuntimeConnector: NOT_CONFIGURED
+    liveApolloTelemetry: UNVERIFIED
+    productionActionBinding: NOT_CONFIGURED

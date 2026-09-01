@@ -12,12 +12,13 @@ const REFRESH_TOKEN_EXPIRY = "7d";
 const tokenBlacklist = new Map<string, number>();
 
 const BLACKLIST_CLEANUP_INTERVAL = 60 * 60 * 1000;
-setInterval(() => {
+const blacklistCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [token, exp] of tokenBlacklist) {
     if (exp < now) tokenBlacklist.delete(token);
   }
 }, BLACKLIST_CLEANUP_INTERVAL);
+blacklistCleanupTimer.unref();
 
 export function blacklistToken(token: string): void {
   try {

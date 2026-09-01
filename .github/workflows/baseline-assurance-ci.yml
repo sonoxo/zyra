@@ -1,0 +1,29 @@
+name: Baseline Assurance CI
+
+on:
+  pull_request:
+    paths:
+      - "server/baseline-assurance.ts"
+      - "server/index.ts"
+      - "client/src/pages/baseline-assurance.tsx"
+      - "client/src/App.tsx"
+      - "script/baseline-assurance-verify.ts"
+      - ".github/workflows/baseline-assurance-ci.yml"
+  push:
+    branches:
+      - feature/bas-detection-assurance
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Baseline Assurance Contract
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    with:
+      node-version: "20"
+      run-tests: false
+      verify-command: "npx tsx script/baseline-assurance-verify.ts"
+      run-typecheck: false
+      run-audit: false
+      run-build: false

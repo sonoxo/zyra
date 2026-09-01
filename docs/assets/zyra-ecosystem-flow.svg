@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="980" viewBox="0 0 1500 980" role="img" aria-labelledby="title desc">
+<title id="title">Zyra beginner repository map</title>
+<desc id="desc">A beginner-friendly map of the real Zyra repository showing where the interface, API, shared rules, database layer, and VIRGINIA Live Implement module live and what each part does.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#030611"/><stop offset=".52" stop-color="#09162b"/><stop offset="1" stop-color="#1b0b33"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#43efff"/><stop offset="1" stop-color="#9a6dff"/></linearGradient>
+ <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M38 0H0V38" fill="none" stroke="#74a4ff" stroke-opacity=".055"/></pattern>
+ <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L0 6L9 3Z" fill="#5cf2ff"/></marker>
+ <style>
+  text{font-family:Inter,Segoe UI,Arial,sans-serif}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.eyebrow{font-size:13px;fill:#62f1ff;font-weight:800;letter-spacing:4px}.hero{font-size:52px;fill:#fff;font-weight:900}.sub{font-size:18px;fill:#aab8d5}.card{fill:#081226;stroke:#304b72;stroke-width:1.5}.core{fill:#0b1730;stroke:url(#edge);stroke-width:2}.green{fill:#071b1a;stroke:#78ffb2;stroke-width:2}.label{font-size:12px;fill:#5cefff;font-weight:800;letter-spacing:2px}.title{font-size:25px;fill:#fff;font-weight:900}.body{font-size:16px;fill:#d1dcf0}.code{font-size:12px;fill:#a8ff60}.tiny{font-size:11px;fill:#899dbe}.line{fill:none;stroke:#5cf2ff;stroke-width:3;stroke-opacity:.8;marker-end:url(#a)}
+ </style>
+</defs>
+<rect width="1500" height="980" rx="34" fill="url(#bg)"/><rect width="1500" height="980" rx="34" fill="url(#grid)"/>
+<text x="65" y="66" class="eyebrow">ZYRA // BEGINNER REPOSITORY MAP</text>
+<text x="65" y="125" class="hero">WHERE EVERYTHING LIVES — AND WHAT IT DOES</text>
+<text x="65" y="162" class="sub">Read the big words first. The green code underneath tells developers the exact folder or function.</text>
+
+<g transform="translate(65 220)"><rect width="315" height="180" rx="20" class="card"/><text x="20" y="32" class="label">1 // WHAT YOU SEE</text><text x="20" y="72" class="title">THE APP SCREEN</text><text x="20" y="106" class="body">Buttons, pages, forms, dashboards.</text><text x="20" y="136" class="body">This is the part people click and use.</text><text x="20" y="162" class="code mono">client/src/</text></g>
+<g transform="translate(410 220)"><rect width="315" height="180" rx="20" class="card"/><text x="20" y="32" class="label">2 // THE TRAFFIC COP</text><text x="20" y="72" class="title">THE API</text><text x="20" y="106" class="body">Receives requests and sends work</text><text x="20" y="130" class="body">to the correct backend service.</text><text x="20" y="162" class="code mono">server/</text></g>
+<g transform="translate(755 220)"><rect width="315" height="180" rx="20" class="card"/><text x="20" y="32" class="label">3 // THE RULE BOOK</text><text x="20" y="72" class="title">SHARED RULES</text><text x="20" y="106" class="body">Keeps the browser and server using</text><text x="20" y="130" class="body">the same data shapes and definitions.</text><text x="20" y="162" class="code mono">shared/  •  Zod + Drizzle</text></g>
+<g transform="translate(1100 220)"><rect width="335" height="180" rx="20" class="green"/><text x="20" y="32" class="label">4 // THE MEMORY</text><text x="20" y="72" class="title">THE DATABASE</text><text x="20" y="106" class="body">Stores durable application data</text><text x="20" y="130" class="body">so the system remembers state.</text><text x="20" y="162" class="code mono">PostgreSQL + Drizzle</text></g>
+<path class="line" d="M380 310H398"/><path class="line" d="M725 310H743"/><path class="line" d="M1070 310H1088"/>
+
+<g transform="translate(65 470)"><rect width="1370" height="390" rx="26" class="core"/><text x="28" y="38" class="label">SPECIAL TOOL INSIDE THIS REPO</text><text x="28" y="80" class="title">ZYRA LIVE IMPLEMENT = TYPE A MISSION AND LET ZYRA TURN IT INTO A REAL FOUNDRY OPERATION</text>
+
+<g transform="translate(28 125)"><rect width="245" height="180" rx="18" class="card"/><text x="16" y="30" class="label">A // YOU</text><text x="16" y="66" class="title">TYPE THE JOB</text><text x="16" y="98" class="body">Example:</text><text x="16" y="124" class="code mono">LIST ONTOLOGIES</text><text x="16" y="150" class="body">Zyra gets your mission.</text><text x="16" y="171" class="tiny mono">public/index.html</text></g>
+
+<g transform="translate(300 125)"><rect width="245" height="180" rx="18" class="card"/><text x="16" y="30" class="label">B // TRANSLATE</text><text x="16" y="66" class="title">READ THE JOB</text><text x="16" y="100" class="body">Plain text becomes steps</text><text x="16" y="124" class="body">the program understands.</text><text x="16" y="150" class="code mono">parseVirginia()</text><text x="16" y="171" class="tiny mono">src/virginia.ts</text></g>
+
+<g transform="translate(572 125)"><rect width="245" height="180" rx="18" class="card"/><text x="16" y="30" class="label">C // CHOOSE</text><text x="16" y="66" class="title">PICK THE ACTION</text><text x="16" y="100" class="body">Zyra decides which supported</text><text x="16" y="124" class="body">operation matches the mission.</text><text x="16" y="150" class="code mono">executeStep()</text><text x="16" y="171" class="tiny mono">server.ts</text></g>
+
+<g transform="translate(844 125)"><rect width="245" height="180" rx="18" class="card"/><text x="16" y="30" class="label">D // CONNECT</text><text x="16" y="66" class="title">CALL FOUNDRY</text><text x="16" y="100" class="body">The server makes the secure</text><text x="16" y="124" class="body">Palantir Ontology request.</text><text x="16" y="150" class="code mono">foundry()</text><text x="16" y="171" class="tiny mono">FOUNDRY_BASE_URL + TOKEN</text></g>
+
+<g transform="translate(1116 125)"><rect width="225" height="180" rx="18" class="green"/><text x="16" y="30" class="label">E // RESULT</text><text x="16" y="66" class="title">SHOW OUTPUT</text><text x="16" y="100" class="body">The answer comes back</text><text x="16" y="124" class="body">to the browser as evidence.</text><text x="16" y="150" class="code mono">mission + results</text><text x="16" y="171" class="tiny mono">/api/virginia/execute</text></g>
+
+<path class="line" d="M273 215H290"/><path class="line" d="M545 215H562"/><path class="line" d="M817 215H834"/><path class="line" d="M1089 215H1106"/>
+</g>
+
+<text x="65" y="910" class="title">BEGINNER SUMMARY: SCREEN → API → TRANSLATE → CHOOSE → FOUNDRY → RESULT</text>
+<text x="65" y="944" class="body">Developer detail: POST /api/virginia/execute → parseVirginia() → executeStep() → foundry() → Ontology API v2 → JSON evidence.</text>
+<text x="65" y="970" class="tiny">The large labels explain the purpose. The small green labels point to the actual implementation in this branch.</text>
+</svg>

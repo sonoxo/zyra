@@ -1,0 +1,199 @@
+ontology:
+  id: nxyz:document-execution
+  version: 1.0.0
+  status: OWNER_IMPLEMENTATION
+  ownerSystem: NXYZ
+  projectLayer: RVIA_REPOSITORY_INTELLIGENCE
+
+  purpose: >-
+    Convert complete technical, policy, operational, API, architecture, and runbook
+    documentation into governed execution plans that NXYZ can validate, simulate,
+    approve, execute through allowlisted tools and Ontology Actions, and audit.
+    Documentation is executable intent, not unrestricted code execution.
+
+  classes:
+    - DocumentSource
+    - DocumentVersion
+    - DocumentSection
+    - Requirement
+    - Procedure
+    - ProcedureStep
+    - ExecutionManifest
+    - ExecutionStep
+    - ToolBinding
+    - OntologyActionBinding
+    - CapabilityRequirement
+    - AuthorizationState
+    - ApprovalDecision
+    - ExecutionRun
+    - StepResult
+    - VerificationArtifact
+    - AuditEvent
+    - FailureCondition
+    - RollbackPlan
+
+  capabilityTiers:
+    CORE:
+      allows:
+        - READ_DOCUMENT
+        - PARSE_DOCUMENT
+        - EXTRACT_REQUIREMENT
+        - QUERY_ONTOLOGY
+        - GENERATE_PLAN
+    MAX:
+      inherits: CORE
+      allows:
+        - RUN_ALLOWLISTED_TOOL
+        - EXECUTE_READ_ONLY_WORKFLOW
+        - GENERATE_VERIFICATION
+    ALPHA:
+      inherits: MAX
+      allows:
+        - PROPOSE_ONTOLOGY_WRITE
+        - PROPOSE_EXTERNAL_ACTION
+        - ORCHESTRATE_MULTI_STEP_PLAN
+    GOD:
+      inherits: ALPHA
+      allows:
+        - SUPERVISE_CROSS_SYSTEM_EXECUTION
+        - APPROVE_POLICY_PERMITTED_AUTOMATION
+      restrictions:
+        - DOES_NOT_BYPASS_AUTHORIZATION
+        - DOES_NOT_OVERRIDE_HUMAN_APPROVAL_REQUIREMENTS
+        - DOES_NOT_GRANT_EXTERNAL_PERMISSIONS
+
+  relations:
+    versionOf:
+      domain: DocumentVersion
+      range: DocumentSource
+    containsSection:
+      domain: DocumentVersion
+      range: DocumentSection
+    sectionDefinesRequirement:
+      domain: DocumentSection
+      range: Requirement
+    sectionDefinesProcedure:
+      domain: DocumentSection
+      range: Procedure
+    procedureContainsStep:
+      domain: Procedure
+      range: ProcedureStep
+    manifestDerivedFrom:
+      domain: ExecutionManifest
+      range: DocumentVersion
+    manifestContainsStep:
+      domain: ExecutionManifest
+      range: ExecutionStep
+    executionStepUsesTool:
+      domain: ExecutionStep
+      range: ToolBinding
+    executionStepInvokesAction:
+      domain: ExecutionStep
+      range: OntologyActionBinding
+    executionStepRequiresCapability:
+      domain: ExecutionStep
+      range: CapabilityRequirement
+    executionStepRequiresAuthorization:
+      domain: ExecutionStep
+      range: AuthorizationState
+    executionStepRequiresApproval:
+      domain: ExecutionStep
+      range: ApprovalDecision
+    runUsesManifest:
+      domain: ExecutionRun
+      range: ExecutionManifest
+    runProducesResult:
+      domain: ExecutionRun
+      range: StepResult
+    resultProducesVerification:
+      domain: StepResult
+      range: VerificationArtifact
+    runEmitsAudit:
+      domain: ExecutionRun
+      range: AuditEvent
+    stepHasFailureCondition:
+      domain: ExecutionStep
+      range: FailureCondition
+    manifestHasRollbackPlan:
+      domain: ExecutionManifest
+      range: RollbackPlan
+
+  documentPipeline:
+    steps:
+      - INGEST_DOCUMENT
+      - HASH_AND_VERSION_SOURCE
+      - EXTRACT_SECTIONS
+      - CLASSIFY_REQUIREMENTS
+      - EXTRACT_PROCEDURES
+      - NORMALIZE_STEPS
+      - MAP_TO_ONTOLOGY_AND_TOOLS
+      - DETERMINE_CAPABILITY_TIER
+      - DETERMINE_AUTHORIZATION
+      - GENERATE_EXECUTION_MANIFEST
+      - VALIDATE_PRECONDITIONS
+      - SIMULATE_WHEN_SUPPORTED
+      - REQUEST_APPROVAL_FOR_WRITES
+      - EXECUTE_ALLOWLISTED_STEPS
+      - VERIFY_POSTCONDITIONS
+      - EMIT_AUDIT_AND_EVIDENCE
+      - ROLLBACK_IF_REQUIRED
+
+  executionModes:
+    DOCUMENT_ONLY:
+      description: Parse and reason over documentation without taking actions.
+    PLAN_ONLY:
+      description: Produce a complete typed execution manifest without executing it.
+    READ_ONLY:
+      description: Execute only non-mutating queries and verification steps.
+    GOVERNED_WRITE:
+      description: Execute approved write operations through explicit Ontology Actions or other allowlisted connectors.
+
+  manifestRequiredFields:
+    - manifestId
+    - sourceDocumentId
+    - sourceHash
+    - sourceVersion
+    - generatedAt
+    - requestedBy
+    - capabilityTier
+    - mode
+    - steps
+    - preconditions
+    - postconditions
+    - rollbackPlan
+    - provenance
+
+  stepRequiredFields:
+    - stepId
+    - description
+    - operation
+    - target
+    - toolBinding
+    - mutating
+    - authorizationRequired
+    - approvalRequired
+    - timeoutSeconds
+    - successCriteria
+    - failurePolicy
+
+  securityRules:
+    - Never execute arbitrary shell, code, URLs, or commands copied directly from documentation.
+    - Convert documentation instructions into typed, allowlisted execution steps first.
+    - Preserve source URL or artifact identity, source hash, version, and retrieval timestamp.
+    - Treat external documentation as untrusted input until parsed and validated.
+    - Never treat examples, pseudocode, or quoted commands as executable intent automatically.
+    - Require explicit authorization for every external system action.
+    - Require human approval by default for mutating, destructive, financial, credential, deployment, or permission-changing operations.
+    - Capability tier never substitutes for external authorization.
+    - GOD tier is supervisory orchestration, not unrestricted authority.
+    - Record every executed step, result, error, approval decision, and verification artifact.
+    - Stop on ambiguous requirements instead of guessing high-impact behavior.
+
+  implementationState:
+    ontologyContract: IMPLEMENTED
+    typedExecutionManifest: IMPLEMENTED
+    safeExecutionPolicy: IMPLEMENTED
+    documentationParser: PLANNED
+    aipLogicBinding: READY_FOR_CONFIGURATION
+    ontologyActionBinding: READY_FOR_CONFIGURATION
+    liveExecutionRuntime: READY_FOR_IMPLEMENTATION

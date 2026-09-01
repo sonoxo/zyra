@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
+import CommandCenterPage from "@/pages/command-center";
 import Scans from "@/pages/scans";
 import ScanDetail from "@/pages/scan-detail";
 import Compliance from "@/pages/compliance";
@@ -53,18 +54,17 @@ import TeamPage from "@/pages/team";
 import TaskCenterPage from "@/pages/task-center";
 import AdminPage from "@/pages/admin";
 import EnterpriseReadinessPage from "@/pages/enterprise-readiness";
+import ContractOpsPage from "@/pages/contractops";
+import JobReadinessPage from "@/pages/job-readiness";
 import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
 import AcceptInvitePage from "@/pages/accept-invite";
 import AuditLogsPage from "@/pages/audit-logs";
 import ThreatSimulationPage from "@/pages/threat-simulation";
+import BaselineAssurancePage from "@/pages/baseline-assurance";
 import ThreatDetailPage from "@/pages/threat-detail";
 import IncidentDetailPage from "@/pages/incident-detail";
-import WarRoomPage from "@/pages/war-room";
-import TscPage from "@/pages/tsc";
-import TitanRxPage from "@/pages/titan-rx";
 import Layout from "@/components/Layout";
-import WarRoomLauncher from "@/components/WarRoomLauncher";
 import type { AuthUser } from "@/lib/auth";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element | null }) {
@@ -86,7 +86,9 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
     );
   }
 
-  if (!user) return <Redirect to="/auth" />;
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
 
   return (
     <Layout>
@@ -111,7 +113,10 @@ function AuthRoute() {
     );
   }
 
-  if (user) return <Redirect to="/dashboard" />;
+  if (user) {
+    return <Redirect to="/dashboard" />;
+  }
+
   return <AuthPage />;
 }
 
@@ -123,9 +128,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/accept-invite" component={AcceptInvitePage} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
-      <Route path="/war-room">{() => <ProtectedRoute component={WarRoomPage} />}</Route>
-      <Route path="/tsc">{() => <ProtectedRoute component={TscPage} />}</Route>
-      <Route path="/titan-rx">{() => <ProtectedRoute component={TitanRxPage} />}</Route>
+      <Route path="/command-center">{() => <ProtectedRoute component={CommandCenterPage} />}</Route>
       <Route path="/scans/:id">{() => <ProtectedRoute component={ScanDetail} />}</Route>
       <Route path="/scans">{() => <ProtectedRoute component={Scans} />}</Route>
       <Route path="/compliance">{() => <ProtectedRoute component={Compliance} />}</Route>
@@ -172,10 +175,14 @@ function Router() {
       <Route path="/platform-metrics">{() => <ProtectedRoute component={PlatformMetricsPage} />}</Route>
       <Route path="/task-center">{() => <ProtectedRoute component={TaskCenterPage} />}</Route>
       <Route path="/threat-simulation">{() => <ProtectedRoute component={ThreatSimulationPage} />}</Route>
+      <Route path="/baseline-assurance">{() => <ProtectedRoute component={BaselineAssurancePage} />}</Route>
       <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
       <Route path="/admin">{() => <ProtectedRoute component={AdminPage} />}</Route>
       <Route path="/team">{() => <ProtectedRoute component={TeamPage} />}</Route>
       <Route path="/enterprise-readiness">{() => <ProtectedRoute component={EnterpriseReadinessPage} />}</Route>
+      <Route path="/contractops">{() => <ProtectedRoute component={ContractOpsPage} />}</Route>
+      <Route path="/job-readiness">{() => <ProtectedRoute component={JobReadinessPage} />}</Route>
+      <Route path="/career">{() => <Redirect to="/job-readiness" />}</Route>
       <Route path="/team-activity">{() => <Redirect to="/team" />}</Route>
       <Route path="/oncall-schedule">{() => <Redirect to="/team" />}</Route>
       <Route path="/approvals">{() => <Redirect to="/team" />}</Route>
@@ -192,7 +199,6 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
-          <WarRoomLauncher />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

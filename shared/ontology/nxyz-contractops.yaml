@@ -1,0 +1,201 @@
+ontology:
+  id: zyra:nxyz-contractops
+  version: 0.7.0
+  name: NXYZ ContractOps
+  purpose: Evidence-backed federal readiness, opportunity qualification, advisory bid scoring, governed proposal preparation, internal package export, and human-controlled external submission.
+
+classes:
+  Organization:
+    properties: [organizationId, name]
+  FederalRegistration:
+    properties: [registrationId, kind, state, identifier, verificationSource, verifiedAt, notes]
+  Opportunity:
+    properties: [opportunityId, title, agency, solicitationNumber, sourceUrl, deadline, naics, psc, setAside, state, bidDecision, capturedAt, updatedAt]
+  Requirement:
+    properties: [requirementId, text, category, state, mandatory]
+  Capability:
+    properties: [capabilityId, name, domain, summary]
+  CredentialEvidence:
+    properties: [evidenceId, title, issuer, evidenceState, verificationReference, authorizationGrant]
+  RepositoryEvidence:
+    properties: [evidenceId, title, repositoryPath, commitSha, artifactHash]
+  EvidenceMatch:
+    properties: [requirementId, evidenceId, state, score, matchedKeywords, authority]
+  BidAssessment:
+    properties: [assessmentId, advisoryOnly, technicalFitProxy, evidenceCoverage, registrationReadiness, deadlineReadiness, overallScore, recommendation, blockers, assessedAt]
+  HumanBidDecision:
+    properties: [decisionId, decision, rationale, decidedBy, decidedAt]
+  Proposal:
+    properties: [proposalId, opportunityId, title, status, reviewDecision, blockers, readiness, reviewNotes, reviewedBy, reviewedAt, updatedAt]
+  ProposalSection:
+    properties: [sectionId, key, title, ordinal, content, status, requirementRefs, evidenceRefs, updatedAt]
+  ProposalReadiness:
+    properties: [policy, ready, blockers, readySectionCount, requiredSectionCount, evidenceGapCount, registrationFlags, warning]
+  ReviewDecision:
+    properties: [reviewId, decision, reviewer, reviewedAt, notes]
+  SubmissionPackage:
+    properties: [packageId, schemaVersion, generatedAt, internalStatus, externalSubmissionPerformed, evidenceIndex, requirementIndex, checklist, disclaimer]
+  SubmissionChecklistItem:
+    properties: [itemId, label, state, detail]
+  AuditEvent:
+    properties: [eventId, actor, action, target, timestamp, provenance]
+
+relations:
+  hasRegistration: { domain: Organization, range: FederalRegistration }
+  hasCapability: { domain: Organization, range: Capability }
+  capabilitySupportedByCredential: { domain: Capability, range: CredentialEvidence }
+  capabilitySupportedByRepositoryEvidence: { domain: Capability, range: RepositoryEvidence }
+  opportunityHasRequirement: { domain: Opportunity, range: Requirement }
+  requirementMatchedByCapability: { domain: Requirement, range: Capability }
+  requirementHasEvidenceMatch: { domain: Requirement, range: EvidenceMatch }
+  opportunityHasAssessment: { domain: Opportunity, range: BidAssessment }
+  opportunityHasHumanDecision: { domain: Opportunity, range: HumanBidDecision }
+  proposalForOpportunity: { domain: Proposal, range: Opportunity }
+  proposalHasSection: { domain: Proposal, range: ProposalSection }
+  proposalHasReadiness: { domain: Proposal, range: ProposalReadiness }
+  proposalHasReview: { domain: Proposal, range: ReviewDecision }
+  proposalExportsPackage: { domain: Proposal, range: SubmissionPackage }
+  packageHasChecklistItem: { domain: SubmissionPackage, range: SubmissionChecklistItem }
+  emitsAudit: { domain: Opportunity, range: AuditEvent }
+
+proposalPolicy:
+  id: NXYZ_CONTRACTOPS_DEFAULT_V1
+  internalStateOnly: true
+  coreRegistrationReview: [SAM, UEI, CAGE]
+  requireHumanBidDecision: true
+  requireAllSectionsReady: true
+  requireNoEvidenceGaps: true
+  requireHumanOwnerOrAdminApproval: true
+  externalSubmissionPerformed: false
+  note: This default workflow policy is not a statement that every opportunity has identical legal or registration requirements; users must verify the specific solicitation.
+
+packagePolicy:
+  schemaVersion: nxyz-contractops-package/1.0
+  sourceStateRequired: SUBMISSION_READY
+  reviewDecisionRequired: APPROVED
+  sectionStateRequired: READY
+  outputFormats: [MARKDOWN, JSON]
+  includes: [proposal, opportunity, registrationSnapshot, readiness, evidenceIndex, requirementIndex, humanSubmissionChecklist, sections]
+  externalSubmissionPerformed: false
+  portalAction: HUMAN_ONLY
+
+actions:
+  captureOpportunity:
+    mutating: true
+    approval: authenticated_user
+    implementation: IMPLEMENTED
+  updateRegistrationStatus:
+    mutating: true
+    approval: owner_or_admin
+    activeStateRequiresVerificationSource: true
+    implementation: IMPLEMENTED
+  matchOpportunityEvidence:
+    mutating: true
+    approval: authenticated_user
+    resultAuthority: SUPPORTING_EVIDENCE_ONLY
+    implementation: IMPLEMENTED
+  scoreOpportunityReadiness:
+    mutating: true
+    approval: authenticated_user
+    advisoryOnly: true
+    finalDecisionEffect: NONE
+    implementation: IMPLEMENTED
+  recordHumanBidDecision:
+    mutating: true
+    approval: owner_or_admin
+    rationaleRequired: true
+    implementation: IMPLEMENTED
+  buildProposalDraft:
+    mutating: true
+    approval: authenticated_user
+    requiresHumanBidDecision: BID
+    generatedClaimsAuthority: DRAFT_FRAMEWORK_HUMAN_VALIDATION_REQUIRED
+    implementation: IMPLEMENTED
+  updateProposalSection:
+    mutating: true
+    approval: owner_admin_or_analyst
+    readyRequiresSubstantiveContent: true
+    implementation: IMPLEMENTED
+  refreshProposalReadiness:
+    mutating: true
+    approval: authenticated_user
+    externalEffect: NONE
+    implementation: IMPLEMENTED
+  reviewProposal:
+    mutating: true
+    approval: owner_or_admin
+    approvedRequiresReadinessGateClear: true
+    implementation: IMPLEMENTED
+  markSubmissionReady:
+    mutating: true
+    approval: owner_or_admin_human_review
+    internalWorkflowStateOnly: true
+    externalSubmissionEffect: NONE
+    implementation: IMPLEMENTED
+  generateSubmissionPackage:
+    mutating: false
+    approval: owner_admin_or_analyst
+    requiresProposalStatus: SUBMISSION_READY
+    requiresReviewDecision: APPROVED
+    outputFormats: [MARKDOWN, JSON]
+    externalSubmissionEffect: NONE
+    implementation: IMPLEMENTED
+  recordSubmission:
+    mutating: true
+    approval: human_external_process
+    automaticExecution: PROHIBITED
+    implementation: NOT_AUTOMATED
+
+scoring:
+  advisoryOnly: true
+  dimensions:
+    technicalFitProxy: 35
+    evidenceCoverage: 30
+    registrationReadiness: 20
+    deadlineReadiness: 15
+  registrationSystemsScored: [SAM, UEI, CAGE]
+  recommendations:
+    BID_CANDIDATE: overallScore >= 75
+    HUMAN_REVIEW: 50 <= overallScore < 75
+    NO_BID_RISK: overallScore < 50
+  humanDecisionRequired: true
+
+rules:
+  - Never invent UEI, CAGE, SAM, or other government registration identifiers.
+  - A registration may be ACTIVE only when a verification source is recorded.
+  - CAGE may remain PENDING while opportunity capture, evidence matching, advisory scoring, proposal drafting, and internal package preparation continue.
+  - Under the default internal readiness policy, unresolved SAM, UEI, or CAGE review prevents SUBMISSION_READY but does not prevent drafting.
+  - Opportunity-specific solicitation and eligibility requirements must be verified independently; the default policy is not legal advice or an agency determination.
+  - ZYRA/RVIA repository badges are evidence of repository work, not government authorization or security clearance.
+  - Training credentials may support capability claims but never grant platform or government permissions by themselves.
+  - Evidence matches have SUPPORTING_EVIDENCE_ONLY authority and are not agency evaluations or eligibility determinations.
+  - Readiness scores are advisory and may not set a final BID or NO_BID decision automatically.
+  - Final BID or NO_BID requires a human owner/admin decision with rationale.
+  - Generated proposal sections are draft frameworks and require human validation before use.
+  - Every material proposal claim should resolve to credential, repository, product, or other traceable evidence.
+  - SUBMISSION_READY is an internal workflow state and does not mean an agency accepted, certified, or received the package.
+  - Submission package exports are internal artifacts and always record externalSubmissionPerformed as false.
+  - Markdown and JSON package downloads include a human submission checklist and do not trigger a browser or portal submission action.
+  - No government portal submission is performed automatically; external submission remains a human-controlled action.
+  - Secrets, access tokens, passwords, and restricted data must not be stored in this ontology contract.
+
+implementationState:
+  domainTypes: IMPLEMENTED
+  postgresPersistence: IMPLEMENTED_SOURCE_REQUIRES_DB_PUSH
+  authenticatedApi: IMPLEMENTED
+  registrationControl: IMPLEMENTED
+  opportunityIntake: IMPLEMENTED
+  evidenceMatching: IMPLEMENTED
+  advisoryBidScoring: IMPLEMENTED
+  humanBidDecision: IMPLEMENTED
+  proposalWorkspace: IMPLEMENTED
+  proposalSectionEditing: IMPLEMENTED
+  proposalReadinessGate: IMPLEMENTED
+  humanProposalReview: IMPLEMENTED
+  internalSubmissionReadyState: IMPLEMENTED
+  submissionPackageBuilder: IMPLEMENTED
+  submissionPackageMarkdownExport: IMPLEMENTED
+  submissionPackageJsonExport: IMPLEMENTED
+  humanSubmissionChecklist: IMPLEMENTED
+  foundryOntologyBinding: READY_FOR_CONFIGURATION
+  automatedGovernmentSubmission: PROHIBITED

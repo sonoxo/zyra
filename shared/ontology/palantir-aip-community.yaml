@@ -1,0 +1,154 @@
+ontology:
+  id: zyra:palantir-aip-community
+  version: 1.0.0
+  source:
+    name: Palantir AIP Community Registry
+    repository: https://github.com/palantir/aip-community-registry
+    branch: develop
+    evidenceClass: PUBLIC_REFERENCE
+
+  classes:
+    - AIPPlatform
+    - CommunityProject
+    - IntegrationPattern
+    - SDK
+    - ComputeModule
+    - OSDKApplication
+    - WorkshopWidget
+    - OntologyObjectType
+    - OntologyAction
+    - EventSource
+    - DataConnector
+    - GovernancePolicy
+    - DeploymentPackage
+    - CredentialEvidence
+    - EvidenceArtifact
+    - ApplicationConsumer
+    - AuthorizationState
+    - AuditEvent
+
+  relations:
+    implements:
+      domain: CommunityProject
+      range: IntegrationPattern
+    usesSdk:
+      domain: CommunityProject
+      range: SDK
+    usesComputeModule:
+      domain: CommunityProject
+      range: ComputeModule
+    usesOntologyObject:
+      domain: CommunityProject
+      range: OntologyObjectType
+    invokesAction:
+      domain: CommunityProject
+      range: OntologyAction
+    consumesEvent:
+      domain: CommunityProject
+      range: EventSource
+    connectsData:
+      domain: CommunityProject
+      range: DataConnector
+    governedBy:
+      domain: CommunityProject
+      range: GovernancePolicy
+    packagedAs:
+      domain: CommunityProject
+      range: DeploymentPackage
+    producesEvidence:
+      domain: CommunityProject
+      range: EvidenceArtifact
+    consumedBy:
+      domain: EvidenceArtifact
+      range: ApplicationConsumer
+    requiresAuthorization:
+      domain: CommunityProject
+      range: AuthorizationState
+    emitsAudit:
+      domain: CommunityProject
+      range: AuditEvent
+
+  integrationPatterns:
+    conversationalAgent:
+      label: Conversational AI Agent
+      examples:
+        - ElevenLabs Conversational Agent in Workshop Widget
+    localOntologyAccess:
+      label: OSDK local ontology access
+      examples:
+        - OSDK Hello World Project
+    computeModule:
+      label: Foundry Compute Module
+      examples:
+        - Compute Module Hello World Project
+        - Integrating a Server with Compute Modules
+    workshopWidget:
+      label: Workshop custom widget
+      examples:
+        - OSDK Widget in Foundry
+    geospatial:
+      label: Geospatial / geocoding
+      examples:
+        - Geocoding with Nominatim and Compute Modules
+        - Peak Explorer
+    eventDriven:
+      label: Push-based events
+      examples:
+        - Push-Based Events
+    governance:
+      label: Platform governance
+      examples:
+        - Platform Governance App with Platform SDK
+    feedbackLoop:
+      label: AIP evaluation feedback loop
+      examples:
+        - Feedback Loop with AIP Evals
+    connector:
+      label: External data connector
+      examples:
+        - Personal Gmail and Calendar Connector
+        - Small Business Connector
+    media:
+      label: Media and derived properties
+      examples:
+        - Media and Derived Properties
+    devops:
+      label: DevOps for AI products
+      examples:
+        - DevOps for AI Products
+
+  ecosystemBindings:
+    GPT_DOUG_LLM:
+      role: reasoning_orchestration
+      consumes:
+        - IntegrationPattern
+        - AuditEvent
+    ZYRA:
+      role: governed_intelligence_and_ontology
+      owns:
+        - CredentialEvidence
+        - GovernancePolicy
+        - AuthorizationState
+        - AuditEvent
+      consumes:
+        - IntegrationPattern
+        - OntologyObjectType
+        - OntologyAction
+    XUNIA_GLASS_ONION:
+      role: public_source_spatial_intelligence
+      consumes:
+        - geospatial
+        - eventDriven
+        - EvidenceArtifact
+    RVAI:
+      role: downstream_consumer
+      repositoryState: UNRESOLVED
+
+  authorizationRule:
+    statement: Community examples and credentials describe implementation patterns and evidence only; runtime permissions must be checked independently.
+
+  securityRules:
+    - Never commit sensitive credentials or data.
+    - Require explicit runtime authorization for Foundry write actions.
+    - Preserve provenance for imported community patterns.
+    - Treat community projects as examples, not Palantir-supported production guarantees.

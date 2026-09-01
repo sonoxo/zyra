@@ -1,209 +1,244 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Zyra-AI--Native%20Cybersecurity-7c3aed?style=for-the-badge&logo=shield&logoColor=white" alt="Zyra" />
+  <a href="ZYRA.README.md">
+    <img src="docs/assets/zyra-credential-pathway.svg" width="560" alt="ZYRA Application Credential — open credential page" />
+  </a>
 </p>
 
-<h1 align="center">Zyra</h1>
-<p align="center"><strong>AI-Native Cybersecurity Platform</strong></p>
-
-<p align="center">
-  <a href="#features">Features</a> &bull;
-  <a href="#architecture">Architecture</a> &bull;
-  <a href="#getting-started">Getting Started</a> &bull;
-  <a href="#deployment">Deployment</a> &bull;
-  <a href="#contributing">Contributing</a> &bull;
-  <a href="#security">Security</a> &bull;
-  <a href="#license">License</a>
-</p>
+<h1 align="center">ZYRA // NXYZ</h1>
+<p align="center"><strong>Governed agentic software, evidence-backed credentials, ontology-driven operations, and human-controlled execution.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/sonoxo/zyra/releases"><img src="https://img.shields.io/github/v/release/sonoxo/zyra?style=flat-square&color=7c3aed&label=release" alt="Release" /></a>
-  <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/last-commit/sonoxo/zyra?style=flat-square&color=7c3aed&label=last%20commit" alt="Last Commit" /></a>
-  <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/commit-activity/m/sonoxo/zyra?style=flat-square&color=7c3aed&label=commits%2Fmonth" alt="Commit Activity" /></a>
-  <a href="https://github.com/sonoxo/zyra/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/sonoxo/zyra/ci.yml?branch=main&style=flat-square&label=build" alt="Build" /></a>
-  <img src="https://img.shields.io/badge/coverage-85%25-brightgreen?style=flat-square" alt="Coverage" />
-  <img src="https://img.shields.io/badge/license-BSL--1.1-blue?style=flat-square" alt="License" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/VIRGINIA-VYBE%20CODE-8d6bff?style=for-the-badge" alt="Virginia" />
+  <img src="https://img.shields.io/badge/VAL3M-AGENTIC%20COMPUTE-ff4fd8?style=for-the-badge" alt="VAL3M" />
+  <img src="https://img.shields.io/badge/NXYZ-GOVERNED%20ECOSYSTEM-2df6ff?style=for-the-badge" alt="NXYZ governed ecosystem" />
+  <img src="https://img.shields.io/badge/EVIDENCE-PROVENANCE%20FIRST-9cff57?style=for-the-badge" alt="Evidence provenance first" />
 </p>
 
+## External credential & ecosystem provenance
+
 <p align="center">
-  <strong>Current Release:</strong> <code>v1.1.0</code> &nbsp;&bull;&nbsp;
-  <strong>Build:</strong> <a href="https://github.com/sonoxo/zyra/commits/main"><img src="https://img.shields.io/github/sha/sonoxo/zyra?style=flat-square&label=" alt="Build SHA" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Palantir-Foundry%20%2F%20AIP-101010?style=for-the-badge&logo=palantir&logoColor=white" alt="Palantir — credential issuer, Foundry and AIP integration ecosystem" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Google-Credentials-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google — external credential issuer" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/IBM-Credentials-052FAD?style=for-the-badge&logo=ibm&logoColor=white" alt="IBM — external credential and training issuer" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Red%20Hat-Training-EE0000?style=for-the-badge&logo=redhat&logoColor=white" alt="Red Hat — external training issuer" /></a>
 </p>
+<p align="center">
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Replit-Builder%20Evidence-F26207?style=for-the-badge&logo=replit&logoColor=white" alt="Replit — builder credential evidence and development ecosystem" /></a>
+  <a href="docs/NXYZ-MICROSOFT-OSS-LAYER.md"><img src="https://img.shields.io/badge/Microsoft-OSS%20Layer-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" alt="Microsoft — open source ecosystem layer" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions"><img src="https://img.shields.io/badge/GitHub-Code%20%2B%20CI-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub — repository and CI provenance" /></a>
+</p>
+<p align="center">
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Coursera-Verification-0056D2?style=for-the-badge&logo=coursera&logoColor=white" alt="Coursera — credential verification platform" /></a>
+  <a href="ZYRA.README.md"><img src="https://img.shields.io/badge/Credly-Digital%20Badges-FF6B00?style=for-the-badge&logo=credly&logoColor=white" alt="Credly — digital credential evidence platform" /></a>
+</p>
+
+> **Compliance boundary:** the logos above identify documented credential issuers, verification services, software ecosystems, or repository infrastructure. Their presence does **not** mean those companies sponsor, partner with, certify, approve, employ, authorize, or endorse ZYRA/NXYZ. External platform permissions remain controlled by the external platform.
+
+| Organization | Relationship to ZYRA | Evidence/status |
+|---|---|---|
+| **Palantir** | Credential issuer + Foundry/AIP integration ecosystem + separately tracked platform access | Issuer-verifiable Palantir Learn/Skilljar records are documented in [`ZYRA.README.md`](ZYRA.README.md); Foundry/AIP code and ontology contracts are checked in. |
+| **Google** | External credential issuer | Google Cybersecurity, Google AI, and Business Intelligence evidence is documented in the credential ledger. |
+| **IBM** | External credential/training issuer | IBM Quantum Machine Learning / Credly and IBM SkillsBuild evidence are documented in the credential ledger. |
+| **Red Hat** | External training issuer | System Administration I training evidence is retained at its recorded evidence tier. |
+| **Replit** | Builder evidence + development ecosystem | Level 3 Proficient Builder badge artifact is recorded as supplied evidence; use of the ecosystem does not imply endorsement. |
+| **Coursera** | Verification / learning platform | Public verification references support multiple credential records. |
+| **Credly** | Digital credential evidence source | Credly profiles and badge records are tracked separately from authorization. |
+| **Microsoft** | Open-source software ecosystem | NXYZ Microsoft layer references Microsoft Agent Framework, MarkItDown, and optional GraphRAG patterns. This is not represented as a Microsoft credential. |
+| **GitHub** | Repository, CI, security and provenance infrastructure | Commit history, Actions, CodeQL, source review, releases and evidence links provide repository provenance. |
+
+**External provenance policy:** [`docs/compliance/EXTERNAL-ECOSYSTEM.md`](docs/compliance/EXTERNAL-ECOSYSTEM.md)  
+**Machine-readable registry:** [`docs/compliance/external-ecosystem-registry.json`](docs/compliance/external-ecosystem-registry.json)  
+**Full credential ledger:** [`ZYRA.README.md`](ZYRA.README.md)
 
 ---
 
-Zyra is an enterprise-grade, AI-native cybersecurity platform that unifies vulnerability management, exposure management, compliance automation, and security operations into a single pane of glass.
+## What ZYRA does — beginner version
 
-## Features
+<p align="center"><img src="docs/assets/vzn-8088-universal.svg" width="100%" alt="Beginner-friendly Zyra function map: type a mission, Zyra reads it, chooses an operation, calls Foundry, and shows the result" /></p>
 
-### Core Security
-- **Vulnerability Scanning** — Semgrep, Trivy, Bandit, ZAP integration with severity mapping
-- **AI Pentesting Agent** — Automated SQL injection, XSS, CSRF, and auth bypass testing
-- **Cloud Security Posture (CSPM)** — AWS, GCP, Azure configuration auditing
-- **Container & Kubernetes Security** — Image scanning and cluster compliance
-- **Secrets Scanning** — Detect leaked API keys, tokens, and credentials across repos
+**You type a mission → ZYRA turns it into structured work → policy and authorization are checked → an approved system operation runs → evidence comes back.**
 
-### Exposure Management
-- **Attack Path Visualization** — Interactive graph of exploitable paths with risk scoring
-- **Continuous Exposure Monitoring** — Real-time alert generation with deduplication
-- **Automated Remediation Engine** — 10 action types (patch, isolate, block, rotate, etc.)
-- **Risk Prioritization** — Composite scoring with exploitability and business impact
-
-### Intelligence & Operations
-- **Threat Intelligence** — CVE database with auto-refresh and severity tracking
-- **SIEM Integration** — Splunk, Elastic, Microsoft Sentinel, QRadar export
-- **SOAR Automation** — 6 built-in playbooks with parallel execution
-- **Security Copilot** — AI-assisted investigation and remediation guidance
-- **CAASM** — Cyber Asset Attack Surface Management with identity correlation
-
-### Governance & Compliance
-- **Compliance Frameworks** — SOC 2, HIPAA, ISO 27001, PCI-DSS, FedRAMP, GDPR
-- **DevSecOps Pipelines** — CI/CD integration with continuous monitoring
-- **Vendor Risk Management** — Third-party assessment and scoring
-- **Security Awareness** — Phishing simulations and training tracking
-
-### Enterprise
-- **Multi-Tenant Workspaces** — Organization-scoped data isolation
-- **RBAC** — Owner, Admin, Analyst, Viewer permission matrix
-- **Data Retention Policies** — Configurable retention with automated purge
-- **Audit Logging** — Full activity trail with CSV export
-- **SSO & API Keys** — Enterprise authentication with SHA-256 key hashing
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                   Frontend                       │
-│   React 18 · TypeScript · Vite · Tailwind CSS   │
-│   shadcn/ui · Recharts · wouter · TanStack Query│
-├─────────────────────────────────────────────────┤
-│                   Backend                        │
-│   Express.js · TypeScript · Drizzle ORM          │
-│   express-session · connect-pg-simple · bcryptjs │
-├─────────────────────────────────────────────────┤
-│                  Database                        │
-│   PostgreSQL (49 tables)                         │
-└─────────────────────────────────────────────────┘
+```text
+HUMAN MISSION
+     ↓
+ZYRA / NXYZ
+     ↓
+PARSER + POLICY
+     ↓
+ONTOLOGY / AGENT / TOOL LAYER
+     ↓
+AUTHORIZED OPERATION
+     ↓
+EVIDENCE + AUDIT
 ```
 
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed system design.
+The repository keeps **capability**, **credential evidence**, **platform access**, and **authorization** as separate states. A badge can support a capability claim; it does not grant an external permission by itself.
 
-## Getting Started
+## Ecosystem architecture
 
-### Prerequisites
-- Node.js 20+
-- PostgreSQL 15+
+```mermaid
+flowchart LR
+    H[Human operator] --> Z[ZYRA / NXYZ]
+    C[Credential Evidence] --> P[Provenance Layer]
+    G[GitHub / CI] --> P
+    M[Microsoft OSS Layer] --> Z
+    P --> Z
+    Z --> O[Ontology + Evidence]
+    O --> F[Palantir Foundry / AIP]
+    O --> CO[NXYZ ContractOps]
+    O --> D[GPT-DOUG-LLM]
+    F --> R[Result / Audit]
+    CO --> R
+    D --> R
+    R --> H
+```
 
-### Local Development
+### Named ecosystem roles
+
+```text
+PALANTIR   → Ontology / Foundry / AIP integration + credential evidence
+MICROSOFT  → optional OSS agent/document intelligence layer
+GOOGLE     → cybersecurity / AI / BI credential evidence
+IBM        → quantum / data-science credential evidence
+RED HAT    → systems administration training evidence
+REPLIT     → builder evidence + development ecosystem
+GITHUB     → source / CI / CodeQL / provenance
+COURSERA   → issuer verification links
+CREDLY     → digital badge evidence
+```
+
+---
+
+## Products in the ecosystem
+
+| Product / layer | Purpose | State |
+|---|---|---|
+| **ZYRA Core** | Main React/TypeScript + Express/Postgres platform and governed operational shell | Implemented |
+| **VIRGINIA / VAL3M** | Beginner-readable mission language and execution planning | Implemented |
+| **Palantir Foundry Bridge** | Ontology API operations with server-side credentials and governed actions | Implemented / runtime configuration required |
+| **NXYZ ContractOps** | Federal-readiness, evidence matching, bid scoring, proposal review and package export | Implemented source; database migration required per deployment |
+| **NXYZ Microsoft Layer** | Optional Microsoft OSS document + agent orchestration planning layer | Implemented contract/API; adapters remain explicit configuration |
+| **NXYZ Horizons** | Intelligence gateway for the C4ADS Horizons integration path | Implemented source; external access/configuration dependent |
+| **GPT-DOUG-LLM** | Reasoning/orchestration consumer of ZYRA evidence and ontology contracts | Separate ecosystem repository |
+
+### ContractOps
+
+Open: [`products/nxyz-contractops/README.md`](products/nxyz-contractops/README.md)
+
+```text
+REAL OPPORTUNITY
+   ↓
+REQUIREMENTS
+   ↓
+ZYRA EVIDENCE
+   ↓
+ADVISORY SCORE
+   ↓
+HUMAN BID / NO BID
+   ↓
+PROPOSAL + REVIEW
+   ↓
+MARKDOWN / JSON PACKAGE
+   ↓
+HUMAN SUBMISSION
+```
+
+Government portal submission remains human-controlled.
+
+### Microsoft OSS layer
+
+Open: [`products/nxyz-microsoft-layer/README.md`](products/nxyz-microsoft-layer/README.md)
+
+```text
+DOCUMENT / WORK ITEM
+   ↓
+MARKITDOWN ROLE
+   ↓
+NORMALIZED CONTEXT
+   ↓
+OPTIONAL GRAPH CONTEXT
+   ↓
+MICROSOFT AGENT FRAMEWORK ROLE
+   ↓
+NXYZ / ZYRA GOVERNANCE
+```
+
+This layer is provider-optional and does not claim Microsoft partnership or authorization.
+
+---
+
+## Live Implement — supported Foundry operations
+
+The checked-in `apps/zyra-live-implement/` module supports:
+
+| Mission | Operation |
+|---|---|
+| `LIST ONTOLOGIES` | `GET /api/v2/ontologies` |
+| `LIST OBJECT_TYPES <ontology>` | `GET /api/v2/ontologies/{ontology}/objectTypes` |
+| `LIST OBJECTS <ontology> <objectType>` | `GET /api/v2/ontologies/{ontology}/objects/{objectType}` |
+| `APPLY <ontology> <action> <parameters>` | `POST /api/v2/ontologies/{ontology}/actions/{action}/apply` |
+| `/RICHMONDVA3LM` | Returns final evidence and stops the controlled ZYRA Live Implement runtime |
+
+`/RICHMONDVA3LM` stops the local ZYRA process controlled by the app. It does not power off Palantir or unrelated external infrastructure.
+
+## Repository map
+
+| Path | Role |
+|---|---|
+| `client/src/` | React interface and product screens |
+| `server/` | Express APIs, policy gates and backend services |
+| `shared/` | Shared types, schemas, ontology contracts and evidence models |
+| `apps/zyra-live-implement/` | VIRGINIA mission terminal and Foundry gateway |
+| `products/` | Market-facing product modules and product READMEs |
+| `docs/credentials/` | Credential evidence and repository credential program |
+| `docs/compliance/` | External ecosystem, trademark and provenance boundaries |
+| `.github/` | CI, CodeQL and repository quality gates |
+
+## Run ZYRA
+
+Requirements: Node.js 20+ and PostgreSQL 15+.
 
 ```bash
-# Clone the repository
-git clone https://github.com/zyra-security/zyra.git
+git clone https://github.com/sonoxo/zyra.git
 cd zyra
-
-# Install dependencies
 npm install
-
-# Set up environment
 cp .env.example .env
-# Edit .env with your DATABASE_URL and SESSION_SECRET
-
-# Push database schema
 npm run db:push
-
-# Start development server
 npm run dev
 ```
 
-The app starts at `http://localhost:5000` with hot reload.
+Never commit real tokens, passwords, private keys, API secrets, or restricted data.
 
-### Environment Variables
+## Verification language
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `SESSION_SECRET` | Yes | Express session signing key |
-| `NODE_ENV` | No | `development` or `production` (default: `development`) |
-| `STRIPE_SECRET_KEY` | No | Stripe secret key for payment processing (`sk_test_...`) |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | No | Stripe publishable key for frontend (`pk_test_...`) |
+ZYRA deliberately distinguishes:
 
-### Demo Account
+- **Implemented** — source exists in the repository.
+- **CI verified** — automated repository checks passed for the referenced commit.
+- **Credential evidence** — a credential or training artifact exists at the stated evidence tier.
+- **Platform access** — an external account/entitlement is separately recorded.
+- **Authorized action** — the current runtime permission/policy allows the action.
+- **Deployment verified** — a target deployment completed its own smoke test.
+- **Third-party approved** — the third party explicitly reviewed/approved it.
 
-A demo account is available in development mode:
-- Username: `demo`
-- Password: `password123`
+These states are not interchangeable.
 
-## Deployment
+## Security & trust
 
-### Replit (Primary)
-The platform is configured for one-click deployment on Replit with automatic TLS, health checks, and PostgreSQL provisioning.
+ZYRA is designed for authorized defensive security, governed automation, evidence preservation, and human-controlled high-impact actions. Sensitive credentials remain server-side and restricted actions should fail closed when authorization is absent.
 
-### Self-Hosted
-```bash
-# Build for production
-npm run build
+Report vulnerabilities privately using [`SECURITY.md`](SECURITY.md).
 
-# Start production server
-NODE_ENV=production npm start
-```
+## Trademark notice
 
-See [deployment docs](docs/DEPLOYMENT.md) for Docker, Kubernetes, and cloud provider guides.
-
-## Project Structure
-
-```
-├── client/src/
-│   ├── pages/           # 46 page components
-│   ├── components/      # Layout, ThemeProvider, shadcn/ui
-│   ├── lib/             # Auth utilities, API client
-│   └── hooks/           # Custom React hooks
-├── server/
-│   ├── routes.ts        # API routes (24+ feature modules)
-│   ├── storage.ts       # Database storage layer (49 tables)
-│   ├── exposure-manager.ts  # Exposure management engine
-│   ├── enterprise.ts    # SIEM, retention, workspaces
-│   ├── soar.ts          # SOAR automation engine
-│   ├── caasm.ts         # CAASM engine
-│   └── ...              # Additional modules
-├── shared/
-│   └── schema.ts        # Drizzle ORM schema + Zod types
-├── .github/             # CI/CD, templates, project config
-└── docs/                # Architecture, security, roadmap
-```
-
-## Contributing
-
-We welcome contributions. Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a PR.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Commit with conventional commits (`feat:`, `fix:`, `docs:`, etc.)
-4. Open a Pull Request against `main`
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit conventions, and review process.
-
-## Security
-
-Security is foundational to Zyra. If you discover a vulnerability, please report it responsibly.
-
-- **Email**: security@zyra.dev
-- **Policy**: [SECURITY.md](SECURITY.md)
-- **PGP Key**: Available upon request
-
-Do **not** open public issues for security vulnerabilities.
-
-## Roadmap
-
-See [ROADMAP.md](docs/ROADMAP.md) for the full product roadmap organized by quarter.
+Microsoft, Google, IBM, Red Hat, Palantir, Replit, GitHub, Coursera, Credly, and all other third-party names, product names, marks, and logos are property of their respective owners. Their appearance here identifies the documented evidence source, software ecosystem, verification platform, or infrastructure relationship described above. **No third-party sponsorship, partnership, certification of ZYRA/NXYZ, or endorsement is implied unless explicitly documented by that third party.**
 
 ## License
 
-Copyright 2024-2026 Zyra Security, Inc.
+Copyright 2024–2026 Zyra Security, Inc.
 
-Licensed under the [Business Source License 1.1](LICENSE). See the LICENSE file for details.
-
-The software converts to Apache 2.0 on the Change Date specified in the LICENSE file.
+Licensed under the [Business Source License 1.1](LICENSE), converting to Apache 2.0 on the Change Date defined in that file.
 
 ---
 
-<p align="center">Built with purpose by the Zyra team.</p>
+<p align="center"><strong>Evidence first. External claims stay scoped. Human authorization stays in control.</strong></p>

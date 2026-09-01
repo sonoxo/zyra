@@ -1,0 +1,126 @@
+ontology:
+  id: nxyz:horizons-intelligence
+  version: 0.1.0
+  status: OWNER_IMPLEMENTATION
+  ownerSystem: NXYZ
+  projectLayer: EXTERNAL_INVESTIGATIVE_DATA_GATEWAY
+
+  purpose: >-
+    Normalize analyst-authorized C4ADS Horizons screening and investigation evidence
+    into NXYZ intelligence signals with explicit provenance, verification state,
+    and governance boundaries. This contract does not claim a Horizons API and does
+    not authorize scraping, credential automation, or unrestricted surveillance.
+
+  externalSystem:
+    name: C4ADS Horizons
+    publicUrl: https://horizons.c4ads.org/
+    integrationMode: MANUAL_FILE_EXCHANGE
+    machineToMachineApi: NOT_CONFIGURED
+    supportedPublicWorkflows:
+      - BULK_SEARCH_CSV_IMPORT
+      - INVESTIGATION_EXPORT
+      - BRING_YOUR_OWN_DATA
+
+  classes:
+    - HorizonsScreeningSeed
+    - HorizonsScreeningManifest
+    - HorizonsInvestigation
+    - HorizonsEvidenceRecord
+    - IntelligenceSignal
+    - EvidenceArtifact
+    - SourceProvenance
+    - EntityIdentifier
+    - AnalystVerification
+    - GovernancePolicy
+    - AuditEvent
+
+  relations:
+    seedIncludedInManifest:
+      domain: HorizonsScreeningSeed
+      range: HorizonsScreeningManifest
+    manifestTargetsInvestigation:
+      domain: HorizonsScreeningManifest
+      range: HorizonsInvestigation
+    investigationContainsEvidence:
+      domain: HorizonsInvestigation
+      range: HorizonsEvidenceRecord
+    evidenceNormalizesToSignal:
+      domain: HorizonsEvidenceRecord
+      range: IntelligenceSignal
+    signalGroundedByEvidence:
+      domain: IntelligenceSignal
+      range: EvidenceArtifact
+    evidenceHasProvenance:
+      domain: EvidenceArtifact
+      range: SourceProvenance
+    signalUsesIdentifier:
+      domain: IntelligenceSignal
+      range: EntityIdentifier
+    signalVerifiedBy:
+      domain: IntelligenceSignal
+      range: AnalystVerification
+    investigationGovernedBy:
+      domain: HorizonsInvestigation
+      range: GovernancePolicy
+    investigationEmitsAudit:
+      domain: HorizonsInvestigation
+      range: AuditEvent
+
+  states:
+    verification:
+      - UNVERIFIED_MATCH
+      - CORROBORATED
+    evidenceClass:
+      - PUBLIC_REFERENCE
+      - USER_PROVIDED
+      - MIXED
+
+  actions:
+    generateHorizonsBulkScreeningCsv:
+      apiName: nxyz_generate_horizons_bulk_screening_csv
+      writeClass: FILE_GENERATION
+      requiresAuthorization: true
+      externalMutation: false
+    normalizeHorizonsEvidence:
+      apiName: nxyz_normalize_horizons_evidence
+      writeClass: ANALYSIS_ONLY
+      requiresAuthorization: true
+      externalMutation: false
+    corroborateHorizonsSignal:
+      apiName: nxyz_corroborate_horizons_signal
+      writeClass: GOVERNED_WRITE
+      requiresAuthorization: true
+      humanApproval: true
+
+  screeningRules:
+    - Each generated CSV row represents one Horizons bulk-search query.
+    - Multiple values in one row are treated as qualifiers for the same query.
+    - NXYZ entity metadata is retained in a companion manifest, not inserted as search terms.
+    - Screening exports must originate from an authorized user workflow.
+
+  evidenceRules:
+    - A name match is UNVERIFIED_MATCH until independent identifiers corroborate identity.
+    - NXYZ must preserve investigation name, source file, dataset metadata when known, retrieval time, and matched terms.
+    - Source-file SHA-256 may be attached when the original exported file bytes are available.
+    - Envelope hashes prove integrity of NXYZ normalization metadata, not authenticity of the upstream source document.
+    - AI-generated assessments are analyst-supporting conclusions, not automatic determinations of criminality or wrongdoing.
+
+  securityRules:
+    - Do not scrape Horizons pages or bypass access controls.
+    - Do not automate Horizons credentials or sessions without an approved integration.
+    - Do not upload classified, unlawfully obtained, or otherwise prohibited data.
+    - Do not treat shared names as identity proof.
+    - Do not expose screening terms or evidence records in application logs.
+    - Preserve human review before high-impact decisions based on investigative matches.
+    - Follow C4ADS terms, acceptable-use rules, dataset restrictions, and publication requirements.
+
+  implementationState:
+    screeningTypes: IMPLEMENTED
+    bulkCsvGenerator: IMPLEMENTED
+    companionManifest: IMPLEMENTED
+    evidenceNormalizer: IMPLEMENTED
+    provenanceEnvelopeHash: IMPLEMENTED
+    authenticatedApiRoutes: IMPLEMENTED
+    directHorizonsApiConnector: NOT_CONFIGURED
+    investigationZipParser: NOT_IMPLEMENTED
+    foundryOntologyBinding: READY_FOR_IMPLEMENTATION

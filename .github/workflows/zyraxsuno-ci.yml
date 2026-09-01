@@ -1,0 +1,27 @@
+name: zyraXSuno CI
+
+on:
+  pull_request:
+    paths:
+      - "apps/zyraXSuno/**"
+      - ".github/workflows/zyraxsuno-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/zyraXSuno/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/zyraXSuno
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run check
+      - run: npm test
