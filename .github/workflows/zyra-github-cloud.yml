@@ -63,11 +63,15 @@ jobs:
         run: node scripts/github-cloud/validate-registry.mjs
 
       - name: Route mission and create evidence envelope
+        env:
+          ZYRA_MISSION: ${{ inputs.mission }}
+          ZYRA_TARGET: ${{ inputs.target }}
+          ZYRA_ACTION: ${{ inputs.action }}
         run: |
           node scripts/github-cloud/mission-router.mjs \
-            --mission '${{ inputs.mission }}' \
-            --target '${{ inputs.target }}' \
-            --action '${{ inputs.action }}' \
+            --mission "$ZYRA_MISSION" \
+            --target "$ZYRA_TARGET" \
+            --action "$ZYRA_ACTION" \
             --out .zyra-cloud/mission.json
 
       - name: Snapshot registry
@@ -109,14 +113,17 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
         run: |
-          echo "$GHCR_TOKEN" | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
           docker tag zyra-nxyz-control:${GITHUB_SHA} "$IMAGE"
           docker push "$IMAGE"
           printf '%s\n' "$IMAGE" > .zyra-cloud/container-image.txt
 
       - name: Write mission summary
         if: always()
+        env:
+          ZYRA_ACTION: ${{ inputs.action }}
         run: |
           node <<'NODE'
           const fs = require('fs');
@@ -131,7 +138,7 @@ jobs:
             `- Route: ${mission.route?.door ?? 'unavailable'} -> ${mission.route?.target ?? 'unavailable'}`,
             `- Risk class: ${mission.policy?.riskClass ?? 'unavailable'}`,
             `- Human approval required: ${mission.policy?.requiresHumanApproval ?? 'unavailable'}`,
-            `- Job action: ${{ inputs.action }}`,
+            `- Job action: ${process.env.ZYRA_ACTION}`,
             `- Commit: ${process.env.GITHUB_SHA}`,
             ''
           ];
