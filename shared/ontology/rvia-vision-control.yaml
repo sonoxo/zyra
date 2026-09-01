@@ -1,0 +1,140 @@
+ontology:
+  id: rvia:vision-control
+  version: 1.0.0
+  status: OWNER_IMPLEMENTATION
+  ownerSystem: RVIA
+  language: VA
+
+  naming:
+    VA: VIRGINIA_RUNTIME_LANGUAGE
+    RVIA: GPT_DOUG_LLM_MAX_ZYRA_XUNIA_NXYZ_UNIFIED_RUNTIME
+    GOD_MODE: MAXIMUM_OWNER_AUTHORIZED_PROFILE_NOT_A_POLICY_BYPASS
+
+  purpose: >-
+    Model the perception-to-action loop used by ZYRA Eyes. Screen or camera-like
+    frames are reduced into a binary VA sensory representation, interpreted by
+    RVIA, checked against US-CZ policy, approved by a human when required, then
+    simulated or delegated to a local owned-machine adapter.
+
+  classes:
+    - VisionFrame
+    - BinaryVisionGrid
+    - VisionSignal
+    - RviaPlan
+    - UsCzPolicyDecision
+    - HumanApproval
+    - LocalAction
+    - AuditEvidence
+
+  relations:
+    frameEncodesAs:
+      domain: VisionFrame
+      range: BinaryVisionGrid
+    gridProduces:
+      domain: BinaryVisionGrid
+      range: VisionSignal
+    signalInforms:
+      domain: VisionSignal
+      range: RviaPlan
+    planRequiresDecision:
+      domain: RviaPlan
+      range: UsCzPolicyDecision
+    decisionMayRequire:
+      domain: UsCzPolicyDecision
+      range: HumanApproval
+    approvalAuthorizes:
+      domain: HumanApproval
+      range: LocalAction
+    actionEmits:
+      domain: LocalAction
+      range: AuditEvidence
+
+  runtimeProfiles:
+    OBSERVE:
+      nativeAction: DENY
+      humanApproval: false
+    SIMULATE:
+      nativeAction: DENY
+      humanApproval: true
+    OWNER_CONTROLLED:
+      nativeAction: LOCAL_ONLY
+      humanApproval: true
+    GOD_MODE:
+      nativeAction: MAXIMUM_CONFIGURED_LOCAL_CAPABILITY
+      humanApproval: true
+      legalOverride: false
+      policyOverride: false
+      authenticationBypass: false
+      thirdPartyAuthorizationBypass: false
+
+  actionClasses:
+    MOVE:
+      impact: LOW
+      nativeRequiresApproval: true
+    LEFT_CLICK:
+      impact: CONTROLLED
+      nativeRequiresApproval: true
+    KEY_PRESS:
+      impact: CONTROLLED
+      allowedKeys:
+        - enter
+        - escape
+        - tab
+        - space
+        - up
+        - down
+        - left
+        - right
+      nativeRequiresApproval: true
+    TYPE_TEXT:
+      impact: CONTROLLED
+      maxCharacters: 200
+      logPlaintext: false
+      nativeRequiresApproval: true
+
+  controls:
+    - LOCAL_ONLY_NATIVE_ADAPTER
+    - SIMULATION_DEFAULT
+    - ONE_TIME_EXACT_ACTION_APPROVAL
+    - APPROVAL_TTL
+    - NO_RAW_SCREENSHOT_AUDIT
+    - NO_PLAINTEXT_TYPED_TEXT_AUDIT
+    - NO_CREDENTIAL_EXTRACTION
+    - NO_STEALTH
+    - FAILSAFE_ENABLED
+    - US_CZ_POLICY_PRECEDENCE
+
+  policyBindings:
+    ethicalScope: shared/policy/us-cz-ethical-scope.yaml
+    nativeDesktopAction: US_CZ_CONTROLLED
+    simulation: US_CZ_GREEN
+    ownedMachineRequirement: true
+    thirdPartyMachineRequirement: DOCUMENTED_AUTHORIZATION
+
+  evidence:
+    frameEvidence:
+      retain:
+        - frameHash
+        - width
+        - height
+        - binaryDensity
+        - transitionCount
+      doNotRetain:
+        - rawScreenshotBytes
+    actionEvidence:
+      retain:
+        - actionType
+        - coordinatesWhenApplicable
+        - textLengthWhenApplicable
+        - textHashWhenApplicable
+        - approvalState
+        - executionMode
+      doNotRetain:
+        - plaintextTypedText
+
+  implementation:
+    serverCore: server/zyra-eyes.ts
+    localAdapter: apps/zyra-eyes-plugin/zyra_eyes.py
+    ui: client/src/pages/zyra-eyes.tsx
+    tests: server/zyra-eyes.test.ts
+    documentation: docs/ZYRA-EYES-RVIA.md
