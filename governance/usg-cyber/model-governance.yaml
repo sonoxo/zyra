@@ -1,0 +1,119 @@
+schema_version: 1
+policy_id: xunia-ai-model-governance
+frameworks:
+  - nist-ai-rmf-1.0
+  - nist-ai-600-1
+  - nist-csf-2.0
+  - nist-sp800-53r5
+
+models:
+  - id: gpt-doug-llm
+    system_family: xunia
+    risk_class: generative-ai-agentic
+    required_artifacts:
+      - model_card
+      - intended_use
+      - prohibited_use
+      - tool_permissions
+      - data_sources
+      - evaluation_report
+      - security_test_report
+      - human_oversight_rules
+      - incident_history
+      - version_provenance
+    deployment_gates:
+      - source_provenance_verified
+      - tool_allowlist_defined
+      - restricted_data_policy_enabled
+      - secret_redaction_enabled
+      - audit_logging_enabled
+      - critical_evals_passed
+
+  - id: virginia-llm
+    system_family: xunia
+    risk_class: generative-ai-agentic
+    required_artifacts:
+      - model_card
+      - intended_use
+      - prohibited_use
+      - tool_permissions
+      - data_sources
+      - evaluation_report
+      - security_test_report
+      - human_oversight_rules
+      - incident_history
+      - version_provenance
+    deployment_gates:
+      - source_provenance_verified
+      - tool_allowlist_defined
+      - restricted_data_policy_enabled
+      - secret_redaction_enabled
+      - audit_logging_enabled
+      - critical_evals_passed
+
+  - id: zyra
+    system_family: xunia
+    risk_class: orchestrator
+    required_artifacts:
+      - system_card
+      - agent_inventory
+      - permission_graph
+      - source_registry
+      - incident_response_owner
+      - rollback_plan
+    deployment_gates:
+      - least_privilege_enforced
+      - human_approval_boundaries_enabled
+      - audit_logging_enabled
+      - rollback_tested
+
+  - id: xunia
+    system_family: xunia
+    risk_class: platform
+    required_artifacts:
+      - system_security_plan
+      - architecture
+      - data_flow
+      - control_evidence_index
+      - vulnerability_process
+      - incident_response_plan
+      - recovery_plan
+    deployment_gates:
+      - control_scope_documented
+      - asset_inventory_available
+      - secrets_externalized
+      - security_scanning_enabled
+      - incident_response_ready
+
+model_risk_controls:
+  provenance:
+    require_source_registry: true
+    prohibit_unknown_training_or_retrieval_sources_for_compliance_claims: true
+  hallucination:
+    require_source_citation_for_normative_government_claims: true
+    distinguish_source_fact_from_xunia_interpretation: true
+  autonomy:
+    default_permissions: deny
+    require_human_approval_for_high_impact_changes: true
+  privacy:
+    minimize_personal_data: true
+    block_restricted_personnel_data: true
+  security:
+    redact_secrets: true
+    isolate_untrusted_content: true
+    treat_retrieved_instructions_as_data_not_authority: true
+  monitoring:
+    log_security_relevant_tool_calls: true
+    track_model_and_prompt_version: true
+    retain_eval_results: true
+
+claim_rules:
+  may_say:
+    - "mapped to NIST AI RMF"
+    - "aligned with public NIST guidance"
+    - "internally assessed against XUNIA controls"
+  may_not_say_without_formal_evidence:
+    - "NIST certified"
+    - "DoD approved"
+    - "NSA approved"
+    - "government authorized AI"
