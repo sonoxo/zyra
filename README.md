@@ -7,6 +7,10 @@
 <h1 align="center">ZYRA // NXYZ</h1>
 
 <p align="center">
+  <img src="docs/assets/zyra-nxyz-terminal-hero.svg" width="100%" alt="ZYRA NXYZ governed agentic terminal — mission, policy, ontology, action, and evidence" />
+</p>
+
+<p align="center">
   <a href="https://github.com/sonoxo/zyra">
     <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=25&pause=900&color=8D6BFF&center=true&vCenter=true&width=860&lines=Hi+there%2C+I'm+Sonoxo;Governed+Agentic+Software;Evidence-Backed+Credentials;Ontology-Driven+Operations;Human-Controlled+Execution" alt="ZYRA typing header" />
   </a>
@@ -25,6 +29,16 @@
   <img src="https://img.shields.io/badge/VAL3M-AGENTIC%20COMPUTE-ff4fd8?style=for-the-badge" alt="VAL3M" />
   <img src="https://img.shields.io/badge/NXYZ-GOVERNED%20ECOSYSTEM-2df6ff?style=for-the-badge" alt="NXYZ governed ecosystem" />
   <img src="https://img.shields.io/badge/EVIDENCE-PROVENANCE%20FIRST-9cff57?style=for-the-badge" alt="Evidence provenance first" />
+</p>
+
+### Live build telemetry
+
+<p align="center">
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/ci.yml/badge.svg?branch=main" alt="ZYRA CI" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/codeql.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/baseline-assurance-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/baseline-assurance-ci.yml/badge.svg?branch=main" alt="Baseline Assurance" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/tsc-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/tsc-ci.yml/badge.svg?branch=main" alt="TypeScript CI" /></a>
+  <a href="https://github.com/sonoxo/zyra/actions/workflows/zyra-live-implement.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/zyra-live-implement.yml/badge.svg?branch=main" alt="ZYRA Live Implement" /></a>
 </p>
 
 <p align="center">
