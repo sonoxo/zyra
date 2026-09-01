@@ -15,6 +15,15 @@ This ledger records repository-level changes for the ZYRA Eyes / Daredevil Binar
 | ZYE-009 | 2026-09-01 | Privacy-preserving audit model implemented: no raw screenshots, no plaintext typed text | server + local adapter |
 | ZYE-010 | 2026-09-01 | Unit tests added for binary encoding, target planning, approval binding and typed-text audit privacy | `server/zyra-eyes.test.ts` |
 | ZYE-011 | 2026-09-01 | Beginner architecture guide, tables and Mermaid diagrams added | `docs/ZYRA-EYES-RVIA.md` |
+| ZYE-012 | 2026-09-01 | Dedicated ZYRA Eyes CI added for TypeScript, Python syntax and policy invariants | `.github/workflows/zyra-eyes-ci.yml` |
+| ZYE-013 | 2026-09-01 | ZYRA Eyes routes registered in the Express control plane; API response bodies excluded from normal request logging | `server/index.ts` |
+| ZYE-014 | 2026-09-01 | Main npm test suite extended to include ZYRA Eyes tests | `package.json` |
+| ZYE-015 | 2026-09-01 | Authenticated beginner simulation console added at `/zyra-eyes` | `client/src/pages/zyra-eyes.tsx`, `client/src/App.tsx` |
+| ZYE-016 | 2026-09-01 | Native-control and audit environment flags documented | `.env.example` |
+| ZYE-017 | 2026-09-01 | US-CZ policy upgraded to v1.1 with VA, RVIA and bounded GOD_MODE semantics | `shared/policy/us-cz-ethical-scope.yaml` |
+| ZYE-018 | 2026-09-01 | Whole-ecosystem beginner map added | `docs/ECOSYSTEM-BEGINNER.md` |
+| ZYE-019 | 2026-09-01 | Main README updated with VA/RVIA/ZYRA Eyes architecture, product state table, CI badge, run instructions and repository map | `README.md` |
+| ZYE-020 | 2026-09-01 | Final head verification observed GitHub checks running; Job Readiness Contract completed successfully while Registry Quality and CodeQL were still in progress at observation time | commit `2dd176009005654e5d3e36eee8a3a775eb8b8e0a` |
 
 ## Runtime evidence flow
 
@@ -34,6 +43,20 @@ TRANSITIONS ┘
               ↓
         AUDIT METADATA
 ```
+
+## Infrastructure chart
+
+| Surface | Control | State |
+|---|---|---|
+| Web API | Authenticated `/api/zyra-eyes/*` routes | Implemented |
+| Native OS actions | Separate local Python adapter | Implemented / disabled by default |
+| Approval | One-time exact-action tokens + local per-run approval | Implemented |
+| Privacy | No raw screenshot audit; no plaintext typed-text audit | Implemented |
+| CI | Node typecheck/tests + Python syntax + policy invariant checks | Implemented |
+| UI | `/zyra-eyes` simulator | Implemented |
+| Ontology | `rvia:vision-control` | Implemented |
+| Governance | US-CZ v1.1 | Implemented |
+| Documentation | Main README + beginner guide + plugin runbook | Implemented |
 
 ## Logging policy
 
