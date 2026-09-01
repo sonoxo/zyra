@@ -1,0 +1,127 @@
+ontology:
+  id: nxyz:microsoft-oss-layer
+  version: 1.0.0
+  name: NXYZ Microsoft Open Source Layer
+  ownerSystem: NXYZ
+  projectLayer: ZYRA_ECOSYSTEM
+  purpose: Optional Microsoft open-source integration layer for document normalization, explicit embedding work orders, graph-context patterns, agent orchestration, provenance, and human-governed execution.
+
+sources:
+  - repository: microsoft/agent-framework
+    role: AGENT_ORCHESTRATION
+    upstreamState: PRODUCTION_READY
+    integrationState: ADAPTER_READY
+  - repository: microsoft/markitdown
+    role: DOCUMENT_NORMALIZATION
+    upstreamState: ACTIVE
+    integrationState: ADAPTER_READY
+  - repository: microsoft/graphrag
+    role: GRAPH_RETRIEVAL_REFERENCE
+    upstreamState: MAINTENANCE_MODE_RESEARCH
+    integrationState: OPTIONAL_REFERENCE_ONLY
+
+classes:
+  OpenSourceComponent:
+    properties: [componentId, repository, role, upstreamState, integrationState, license, notes]
+  SourceArtifact:
+    properties: [artifactId, sourceType, sourceUri, sourceHash, observedAt, authorizationContext]
+  NormalizedDocument:
+    properties: [documentId, sourceArtifactId, format, contentHash, conversionComponent, createdAt]
+  EmbeddingWorkOrder:
+    properties: [workOrderId, provider, model, dimensions, chunkPolicy, status, createdAt]
+  KnowledgeNode:
+    properties: [nodeId, kind, label, sourceArtifactId, confidence]
+  KnowledgeEdge:
+    properties: [edgeId, fromNodeId, toNodeId, relation, sourceArtifactId, confidence]
+  RetrievalContext:
+    properties: [contextId, query, nodeRefs, edgeRefs, evidenceRefs, generatedAt]
+  AgentWorkflow:
+    properties: [workflowId, framework, pattern, status, humanApprovalRequired]
+  EvidenceArtifact:
+    properties: [evidenceId, sourceArtifactId, claim, authority, provenance]
+  AuditEvent:
+    properties: [eventId, actor, action, target, timestamp, details]
+
+relations:
+  normalizedFrom: { domain: NormalizedDocument, range: SourceArtifact }
+  embeddingFor: { domain: EmbeddingWorkOrder, range: NormalizedDocument }
+  nodeFromSource: { domain: KnowledgeNode, range: SourceArtifact }
+  edgeFromSource: { domain: KnowledgeEdge, range: SourceArtifact }
+  contextUsesNode: { domain: RetrievalContext, range: KnowledgeNode }
+  contextUsesEdge: { domain: RetrievalContext, range: KnowledgeEdge }
+  workflowUsesContext: { domain: AgentWorkflow, range: RetrievalContext }
+  workflowProducesEvidence: { domain: AgentWorkflow, range: EvidenceArtifact }
+  emitsAudit: { domain: AgentWorkflow, range: AuditEvent }
+
+actions:
+  buildIntegrationPlan:
+    implementation: IMPLEMENTED
+    mutating: false
+    externalExecutionEffect: NONE
+  normalizeDocument:
+    implementation: ADAPTER_READY
+    component: microsoft/markitdown
+    inputTrust: UNTRUSTED_BY_DEFAULT
+  buildEmbeddingWorkOrder:
+    implementation: IMPLEMENTED_CONTRACT
+    providerSelection: EXPLICIT_REQUIRED
+    implicitAzureDefault: false
+  buildGraphContext:
+    implementation: OPTIONAL_REFERENCE_ONLY
+    component: microsoft/graphrag
+    coreDependency: false
+  orchestrateAgentWorkflow:
+    implementation: ADAPTER_READY
+    component: microsoft/agent-framework
+    highImpactExternalActionsRequireHumanApproval: true
+  bindToZyraOntology:
+    implementation: READY_FOR_CONFIGURATION
+    preserveProvenance: true
+  emitAuditEvent:
+    implementation: READY_FOR_CONFIGURATION
+
+rules:
+  - Microsoft open-source repositories are integration sources, not evidence of Microsoft endorsement, sponsorship, partnership, tenant access, Azure entitlement, or authorization.
+  - No Microsoft trademark or logo may be used in a way that implies sponsorship or endorsement.
+  - Agent Framework is the preferred Microsoft orchestration reference for new NXYZ agent adapters.
+  - MarkItDown inputs are untrusted by default and conversion must use the narrowest access path appropriate to the source.
+  - GraphRAG is optional reference architecture only because upstream identifies it as maintenance-mode research.
+  - No embedding provider is selected implicitly. LOCAL, AZURE_OPENAI, OPENAI_COMPATIBLE, or CUSTOM must be chosen explicitly before execution.
+  - Secrets, access tokens, Azure credentials, API keys, and restricted data must never be committed to the repository or ontology contract.
+  - Every transformed artifact preserves source identity and provenance.
+  - External writes, deployments, submissions, permission changes, financial actions, and other high-impact actions remain human-gated.
+  - NXYZ capability tiers do not bypass external authorization or provider permissions.
+
+pipeline:
+  - CAPTURE_PROVENANCE
+  - NORMALIZE_DOCUMENT_WHEN_APPLICABLE
+  - BUILD_EXPLICIT_EMBEDDING_WORK_ORDER_WHEN_NEEDED
+  - BUILD_OPTIONAL_GRAPH_CONTEXT_WHEN_NEEDED
+  - ORCHESTRATE_AGENT_WORKFLOW_WHEN_NEEDED
+  - BIND_ZYRA_ONTOLOGY
+  - HUMAN_POLICY_GATE
+  - AUDIT
+
+consumerBindings:
+  GPT_DOUG_LLM:
+    role: AGENT_REASONING_AND_ORCHESTRATION_CONSUMER
+  ZYRA:
+    role: GOVERNED_ONTOLOGY_AND_EVIDENCE_HOST
+  NXYZ_CONTRACTOPS:
+    role: DOCUMENT_AND_OPPORTUNITY_INTELLIGENCE_CONSUMER
+  PALANTIR_FOUNDRY:
+    role: OPTIONAL_GOVERNED_DOWNSTREAM_SYSTEM
+    runtimeAuthorization: INDEPENDENT_REQUIRED
+
+implementationState:
+  componentRegistry: IMPLEMENTED
+  planBuilder: IMPLEMENTED
+  authenticatedStatusApi: IMPLEMENTED
+  authenticatedPlanApi: IMPLEMENTED
+  regressionTests: IMPLEMENTED
+  markitdownRuntimeAdapter: READY_FOR_IMPLEMENTATION
+  agentFrameworkRuntimeAdapter: READY_FOR_IMPLEMENTATION
+  graphRagRuntimeDependency: NOT_REQUIRED
+  embeddingProviderRuntime: NOT_CONFIGURED
+  zyraOntologyBinding: READY_FOR_CONFIGURATION
+  automatedHighImpactExternalActions: PROHIBITED_WITHOUT_HUMAN_APPROVAL
