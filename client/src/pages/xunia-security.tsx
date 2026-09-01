@@ -13,6 +13,9 @@ import {
   Wifi,
   WifiOff,
   TimerReset,
+  BellRing,
+  Wrench,
+  CheckCircle2,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -25,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type TargetType = "url" | "host" | "cidr" | "path" | "image" | "cloud";
 type JobStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+type FindingStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED_PENDING_RETEST" | "RETESTING" | "VERIFIED" | "DISMISSED";
 
 interface CatalogTool {
   id: string;
@@ -91,6 +95,42 @@ interface RuntimeJob {
   manifest: SecurityManifest;
 }
 
+interface RuntimeFinding {
+  id: string;
+  job_id: string;
+  tool_id: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  title: string;
+  resource: string;
+  description: string;
+  remediation: string;
+  status: FindingStatus;
+  first_seen_at: string;
+  last_seen_at: string;
+  verified_at?: string | null;
+}
+
+interface RuntimeRemediation {
+  id: string;
+  finding_id: string;
+  status: string;
+  recommendation: string;
+  title: string;
+  severity: string;
+  resource: string;
+  finding_status: FindingStatus;
+}
+
+interface RuntimeNotification {
+  id: number;
+  finding_id?: string | null;
+  severity: string;
+  title: string;
+  message: string;
+  read: number;
+  created_at: string;
+}
+
 const modeCards = [
   { mode: "ASSESS", icon: Radar, description: "Passive and discovery checks only" },
   { mode: "PENTEST", icon: Crosshair, description: "Authorized safe-active validation" },
@@ -110,6 +150,12 @@ function statusVariant(status: JobStatus): "default" | "secondary" | "destructiv
   if (status === "COMPLETED") return "default";
   if (status === "FAILED") return "destructive";
   if (status === "RUNNING") return "secondary";
+  return "outline";
+}
+
+function severityVariant(severity: string): "default" | "secondary" | "destructive" | "outline" {
+  if (severity === "critical" || severity === "high") return "destructive";
+  if (severity === "medium") return "secondary";
   return "outline";
 }
 
@@ -136,6 +182,24 @@ export default function XuniaSecurityPage() {
     queryKey: ["/api/xunia/security/runtime/jobs"],
     retry: false,
     refetchInterval: 1000,
+  });
+
+  const { data: findingsData } = useQuery<{ findings: RuntimeFinding[] }>({
+    queryKey: ["/api/xunia/security/runtime/findings"],
+    retry: false,
+    refetchInterval: 1000,
+  });
+
+  const { data: remediationData } = useQuery<{ remediations: RuntimeRemediation[] }>({
+    queryKey: ["/api/xunia/security/runtime/remediations"],
+    retry: false,
+    refetchInterval: 2000,
+  });
+
+  const { data: notificationData } = useQuery<{ notifications: RuntimeNotification[] }>({
+    queryKey: ["/api/xunia/security/runtime/notifications"],
+    retry: false,
+    refetchInterval: 2000,
   });
 
   const allowedChecks = useMemo(() => {
@@ -169,6 +233,13 @@ export default function XuniaSecurityPage() {
     };
   };
 
+  const invalidateRuntime = () => {
+    qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/jobs"] });
+    qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/findings"] });
+    qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/remediations"] });
+    qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/notifications"] });
+  };
+
   const createPlan = useMutation({
     mutationFn: async () => {
       const body = buildManifest();
@@ -186,7 +257,7 @@ export default function XuniaSecurityPage() {
       setLastManifest(body);
       return response.json() as Promise<{ jobId: string }>;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/jobs"] }),
+    onSuccess: invalidateRuntime,
   });
 
   const cancelJob = useMutation({
@@ -194,7 +265,7 @@ export default function XuniaSecurityPage() {
       const response = await apiRequest("POST", `/api/xunia/security/runtime/jobs/${jobId}/cancel`, {});
       return response.json();
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/jobs"] }),
+    onSuccess: invalidateRuntime,
   });
 
   const retestJob = useMutation({
@@ -202,7 +273,23 @@ export default function XuniaSecurityPage() {
       const response = await apiRequest("POST", `/api/xunia/security/runtime/jobs/${jobId}/retest`, {});
       return response.json();
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/xunia/security/runtime/jobs"] }),
+    onSuccess: invalidateRuntime,
+  });
+
+  const resolveFinding = useMutation({
+    mutationFn: async (findingId: string) => {
+      const response = await apiRequest("POST", `/api/xunia/security/runtime/findings/${findingId}/resolve`, {});
+      return response.json();
+    },
+    onSuccess: invalidateRuntime,
+  });
+
+  const retestFinding = useMutation({
+    mutationFn: async (findingId: string) => {
+      const response = await apiRequest("POST", `/api/xunia/security/runtime/findings/${findingId}/retest`, {});
+      return response.json();
+    },
+    onSuccess: invalidateRuntime,
   });
 
   const scheduleRun = useMutation({
@@ -221,7 +308,11 @@ export default function XuniaSecurityPage() {
   });
 
   const jobs = jobsData?.jobs || [];
+  const findings = findingsData?.findings || [];
+  const remediations = remediationData?.remediations || [];
+  const notifications = notificationData?.notifications || [];
   const runtimeOnline = health?.status === "ok";
+  const openFindings = findings.filter((finding) => finding.status !== "VERIFIED" && finding.status !== "DISMISSED");
 
   return (
     <div className="p-6 space-y-6" data-testid="xunia-security-command-center">
@@ -230,13 +321,20 @@ export default function XuniaSecurityPage() {
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">XUNIA Security Command Center</h1>
-            <p className="text-muted-foreground">Free local realtime assessment, authorized pentesting, and retesting</p>
+            <p className="text-muted-foreground">Free local realtime assessment, authorized pentesting, remediation, and verified retesting</p>
           </div>
         </div>
         <Badge variant={runtimeOnline ? "default" : "outline"} className="w-fit gap-2">
           {runtimeOnline ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
           Runtime {runtimeOnline ? `online · ${health?.workers || 0} workers` : "offline"}
         </Badge>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Card><CardContent className="p-4"><div className="text-2xl font-bold">{jobs.filter((job) => job.status === "RUNNING").length}</div><div className="text-xs text-muted-foreground">Running jobs</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-2xl font-bold">{openFindings.length}</div><div className="text-xs text-muted-foreground">Open findings</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-2xl font-bold">{remediations.filter((item) => item.status !== "DONE").length}</div><div className="text-xs text-muted-foreground">Remediation tasks</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-2xl font-bold">{notifications.length}</div><div className="text-xs text-muted-foreground">Local alerts</div></CardContent></Card>
       </div>
 
       <Alert>
@@ -312,7 +410,7 @@ export default function XuniaSecurityPage() {
             <div className="flex gap-2">
               <Input value={scheduleMinutes} onChange={(event) => setScheduleMinutes(event.target.value)} inputMode="numeric" aria-label="Schedule minutes" />
               <Button variant="secondary" disabled={!runtimeOnline || scheduleRun.isPending} onClick={() => scheduleRun.mutate()}>
-                <TimerReset className="mr-2 h-4 w-4" /> Every min
+                <TimerReset className="mr-2 h-4 w-4" /> Schedule
               </Button>
             </div>
             {[createPlan.error, runNow.error, scheduleRun.error].filter(Boolean).map((error, index) => (
@@ -392,6 +490,82 @@ export default function XuniaSecurityPage() {
             </div>
           ))}
           {!jobs.length ? <p className="text-sm text-muted-foreground">No local runtime jobs yet.</p> : null}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Radar className="h-5 w-5" /> Findings</CardTitle>
+            <CardDescription>Normalized scanner findings with automatic retest state.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {findings.slice(0, 20).map((finding) => (
+              <div key={finding.id} className="rounded-md border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={severityVariant(finding.severity)}>{finding.severity.toUpperCase()}</Badge>
+                  <Badge variant="outline">{finding.status}</Badge>
+                  <strong className="text-sm">{finding.title}</strong>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{finding.tool_id} · {finding.resource}</p>
+                <p className="mt-2 text-sm">{finding.remediation}</p>
+                <div className="mt-3 flex gap-2">
+                  {finding.status !== "VERIFIED" ? (
+                    <Button size="sm" variant="outline" onClick={() => resolveFinding.mutate(finding.id)} disabled={resolveFinding.isPending}>
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Mark fixed
+                    </Button>
+                  ) : null}
+                  {finding.status === "RESOLVED_PENDING_RETEST" || finding.status === "OPEN" ? (
+                    <Button size="sm" onClick={() => retestFinding.mutate(finding.id)} disabled={retestFinding.isPending}>
+                      <Repeat2 className="mr-1 h-3.5 w-3.5" /> Retest
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+            {!findings.length ? <p className="text-sm text-muted-foreground">No normalized findings yet.</p> : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5" /> Remediation Queue</CardTitle>
+            <CardDescription>Deterministic local remediation guidance; no paid model required.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {remediations.slice(0, 20).map((item) => (
+              <div key={item.id} className="rounded-md border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={severityVariant(item.severity)}>{item.severity.toUpperCase()}</Badge>
+                  <Badge variant="outline">{item.status}</Badge>
+                  <strong className="text-sm">{item.title}</strong>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{item.resource}</p>
+                <p className="mt-2 text-sm">{item.recommendation}</p>
+              </div>
+            ))}
+            {!remediations.length ? <p className="text-sm text-muted-foreground">No remediation tasks yet.</p> : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><BellRing className="h-5 w-5" /> Local Alerts</CardTitle>
+          <CardDescription>High and critical findings generated by the free local runtime.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {notifications.slice(0, 10).map((item) => (
+            <div key={item.id} className="rounded-md border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={severityVariant(item.severity)}>{item.severity.toUpperCase()}</Badge>
+                <strong className="text-sm">{item.title}</strong>
+                <span className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString()}</span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{item.message}</p>
+            </div>
+          ))}
+          {!notifications.length ? <p className="text-sm text-muted-foreground">No high-severity local alerts.</p> : null}
         </CardContent>
       </Card>
     </div>
