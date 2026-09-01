@@ -1,0 +1,44 @@
+{
+  "id": "almighty-sonoxo-diss-100-v1",
+  "artist": "Almighty Sonoxo",
+  "count": 100,
+  "model": "/va3lm-gpt-doug-llm",
+  "constraints": {
+    "maxCharacters": 3000,
+    "dissFirst": true,
+    "requireFreshTitle": true,
+    "requireFreshTheme": true,
+    "requirePunchlines": true,
+    "sunoSectionTags": true
+  },
+  "flow": {
+    "name": "Almighty Pressure Pocket",
+    "energy": ["dark", "nocturnal", "cocky", "rap-first", "bouncy", "punchline-heavy"],
+    "pacing": ["short cold bars", "internal rhyme chains", "sudden fast pockets", "hypnotic hook", "late-song acceleration"],
+    "structure": ["Intro", "Hook", "Verse 1", "Hook", "Verse 2 - Pressure Pocket", "Switch", "Verse 3 - Punchline Run", "Bridge", "Final Hook", "Outro"]
+  },
+  "usedTitles": [],
+  "usedThemes": [],
+  "conceptSeeds": [
+    "attention as borrowed electricity",
+    "a career built like a movie set with no building behind it",
+    "fake toughness as an insurance policy",
+    "status symbols acting as character witnesses",
+    "a rapper whose confidence has shareholders",
+    "controversy treated like oxygen tanks",
+    "identity rented from a trend warehouse",
+    "fame functioning like a temporary visa",
+    "a luxury image with negative cultural equity",
+    "a persona that needs tech support to stay online",
+    "a crown secured by monthly payments",
+    "an entourage used as emotional body armor",
+    "a legacy advertised before it exists",
+    "ownership claims contradicted by fine print",
+    "an ego that behaves like a leveraged acquisition",
+    "artificial scarcity used to imitate importance",
+    "a reputation assembled from other people's biographies",
+    "a rebel persona operating under corporate service levels",
+    "a career whose strongest instrument is public relations",
+    "a lifestyle that needs constant external verification"
+  ]
+}
