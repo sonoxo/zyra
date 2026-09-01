@@ -1,15 +1,16 @@
 # ZYRA Eyes Local Plugin
 
-Local owned-machine perception and gaze-control adapter for the VA / RVIA runtime.
+Local owned-machine perception, gaze-control, and accessibility system-controller adapter for the VA / RVIA runtime.
 
 ## What it does
 
-ZYRA Eyes now has two local modes:
+ZYRA Eyes now has three local modes:
 
 1. **Binary screen perception** — capture the owned machine's screen, compress it into a VA 0/1 field, plan a bounded pointer action, and simulate by default.
 2. **Gaze control** — use the local webcam to estimate where the authorized operator is looking, calibrate that signal to screen coordinates, smooth the gaze vector, and optionally move the local pointer.
+3. **Full system controller** — add per-user/one-eye profiles, dwell click, click types, drag/drop, scrolling, keyboard navigation, app switching, back/forward navigation, pause/resume, and a gaze-selected control dock.
 
-Camera frames stay in memory. The gaze runtime does not save video or still images. Calibration stores only numeric mapping coefficients and metadata under `~/.zyra/eyes/`.
+Camera frames stay in memory. The gaze runtimes do not save video or still images. Calibration stores only numeric mapping coefficients and metadata under `~/.zyra/eyes/`.
 
 ## Install
 
@@ -25,7 +26,7 @@ On macOS, Terminal/Python may need permission under:
 
 - **Privacy & Security → Camera** for gaze tracking
 - **Privacy & Security → Screen & System Audio Recording** for screen capture
-- **Privacy & Security → Accessibility** for native pointer control
+- **Privacy & Security → Accessibility** for native pointer/system control
 
 ## Binary screen simulation
 
@@ -40,11 +41,9 @@ export ZYRA_EYES_NATIVE_CONTROL=I_OWN_AND_AUTHORIZE_THIS_MACHINE
 python apps/zyra-eyes-plugin/zyra_eyes.py --capture --goal brightest --threshold 40 --native --approve
 ```
 
-## Gaze control
+## Gaze pointer control
 
 ### 1. Calibrate
-
-Sit in the position you normally use the computer and run:
 
 ```bash
 python apps/zyra-eyes-plugin/zyra_gaze.py --calibrate
@@ -64,8 +63,6 @@ Calibration data is stored locally at:
 python apps/zyra-eyes-plugin/zyra_gaze.py --run
 ```
 
-The preview displays the detected face/eye region, estimated gaze coordinate and confidence. Press **Esc** or **Ctrl-C** to stop.
-
 ### 3. Make the cursor follow your gaze
 
 ```bash
@@ -73,47 +70,109 @@ export ZYRA_EYES_NATIVE_CONTROL=I_OWN_AND_AUTHORIZE_THIS_MACHINE
 python apps/zyra-eyes-plugin/zyra_gaze.py --run --native --approve
 ```
 
-Native mode moves the pointer only. It does not click, type, submit forms or bypass operating-system permissions.
+Native gaze-pointer mode moves the pointer only. It does not click, type, submit forms or bypass operating-system permissions.
 
-## One-eye / monocular use
+## Full system controller
 
-The gaze runtime is deliberately able to produce a gaze feature from **one detected eye or two**. A person who relies primarily on one eye can calibrate using the eye signal the camera is able to track; the calibration maps that user's observed pupil movement to their screen.
+The full controller is `zyra_system_controller.py`.
 
-Practical setup for monocular use:
+### Calibrate a named user profile
 
-- Put the webcam close to the centerline of the display.
-- Use even front lighting so the usable eye is clearly visible.
-- Re-run calibration whenever the seating position or camera moves substantially.
-- If tracking is unstable, reduce reflections from glasses and increase front lighting.
-- Start with preview-only mode before enabling native pointer movement.
+```bash
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --calibrate \
+  --profile operator
+```
 
-This is an accessibility/control experiment, not a medical device and not a substitute for a dedicated clinical or commercial eye-tracking system when precise assistive access is required.
+### One-eye / monocular profile
+
+Use the side of the usable eye **as seen in the ZYRA camera image**:
+
+```bash
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --calibrate \
+  --profile operator \
+  --eye camera-left
+```
+
+or:
+
+```bash
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --calibrate \
+  --profile operator \
+  --eye camera-right
+```
+
+If only one eye is detected, the controller can use that single signal even in `auto` mode.
+
+### Demo the complete controller without controlling macOS
+
+```bash
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --run \
+  --profile operator
+```
+
+This default demo/simulation mode displays the gaze runtime and control dock and records proposed actions as simulated events.
+
+### Native full-system control
+
+```bash
+export ZYRA_EYES_NATIVE_CONTROL=I_OWN_AND_AUTHORIZE_THIS_MACHINE
+
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --run \
+  --profile operator \
+  --native \
+  --approve
+```
+
+The gaze-selected dock provides:
+
+```text
+CLICK | DOUBLE | RIGHT | DWELL | SCROLL | DRAG |
+TAB | ENTER | ESC | SPACE | APP | BACK | FWD | PAUSE
+```
+
+Native controller capabilities are bounded to local visible desktop actions:
+
+- pointer follows gaze
+- dwell click
+- left/double/right click
+- drag/drop
+- gaze-zone scrolling
+- Tab / Enter / Escape / Space
+- app switching
+- back/forward navigation
+- pause/resume
+
+For eye-driven text entry on macOS, enable the built-in **Accessibility Keyboard** and operate it with the same gaze pointer + dwell click rather than hiding text entry behind an autonomous typing layer.
+
+Full runbook: [`../../docs/ZYRA-EYES-SYSTEM-CONTROLLER.md`](../../docs/ZYRA-EYES-SYSTEM-CONTROLLER.md)
 
 ## Tuning
 
 Smoother movement:
 
 ```bash
-python apps/zyra-eyes-plugin/zyra_gaze.py --run --native --approve --smoothing 0.12
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --run --profile operator --native --approve --smoothing 0.12
 ```
 
-More responsive movement:
+More stable dwell for a user with less precise gaze:
 
 ```bash
-python apps/zyra-eyes-plugin/zyra_gaze.py --run --native --approve --smoothing 0.35
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --run --profile operator --native --approve \
+  --dwell-seconds 1.6 --dwell-radius 45
 ```
 
 Reduce small cursor jitter:
 
 ```bash
-python apps/zyra-eyes-plugin/zyra_gaze.py --run --native --approve --deadzone 14
-```
-
-Use another camera:
-
-```bash
-python apps/zyra-eyes-plugin/zyra_gaze.py --calibrate --camera 1
-python apps/zyra-eyes-plugin/zyra_gaze.py --run --camera 1
+python apps/zyra-eyes-plugin/zyra_system_controller.py \
+  --run --profile operator --native --approve --deadzone 14
 ```
 
 ## Architecture
@@ -123,21 +182,23 @@ AUTHORIZED OPERATOR EYE(S)
         ↓
 LOCAL WEBCAM FRAME (memory only)
         ↓
-FACE / EYE REGION
+FACE / SELECTED EYE REGION
         ↓
 PUPIL FEATURE
         ↓
-9-POINT USER CALIBRATION
+PER-USER 9-POINT CALIBRATION
         ↓
 SCREEN GAZE VECTOR
         ↓
 EMA SMOOTHING + DEADZONE
         ↓
-SIMULATION / PREVIEW (default)
+CONTENT TARGET / CONTROL DOCK
+        ↓
+DEMO/SIMULATION (default)
         OR
 OWNER SENTINEL + --native + --approve
         ↓
-LOCAL POINTER MOVE
+BOUNDED LOCAL DESKTOP ACTION
         ↓
 PRIVACY-PRESERVING SESSION AUDIT
 ```
@@ -148,7 +209,8 @@ PRIVACY-PRESERVING SESSION AUDIT
 - `--approve` is required every native invocation.
 - `ZYRA_EYES_NATIVE_CONTROL=I_OWN_AND_AUTHORIZE_THIS_MACHINE` must be set locally.
 - PyAutoGUI's corner failsafe remains enabled.
-- Press **Esc** in the preview or **Ctrl-C** in Terminal to stop the gaze loop.
+- Press **Esc** in a ZYRA window or **Ctrl-C** in Terminal to stop.
+- Active drag is released during controller shutdown.
 - No remote-control server is created by this plugin.
 - No credential, password, cookie or token extraction is implemented.
 
@@ -157,6 +219,13 @@ Default audit files:
 ```text
 ~/.zyra/eyes/native-audit.jsonl
 ~/.zyra/eyes/gaze-audit.jsonl
+~/.zyra/eyes/controller-audit.jsonl
+```
+
+Controller profiles:
+
+```text
+~/.zyra/eyes/profiles/<profile>.json
 ```
 
 Audit records contain action/session metadata, not screenshot bytes or webcam frames.
@@ -165,6 +234,8 @@ Audit records contain action/session metadata, not screenshot bytes or webcam fr
 
 - `zyra_eyes.py` — binary screen perception and bounded local actions
 - `zyra_gaze.py` — webcam gaze calibration and gaze-to-pointer runtime
+- `zyra_system_controller.py` — full local accessibility system controller
 - `requirements.txt` — local Python dependencies
 - `../../docs/ZYRA-EYES-RVIA.md` — ecosystem/runtime architecture
+- `../../docs/ZYRA-EYES-SYSTEM-CONTROLLER.md` — controller runbook
 - `../../shared/policy/us-cz-ethical-scope.yaml` — policy boundary
