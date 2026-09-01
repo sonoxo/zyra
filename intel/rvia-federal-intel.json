@@ -1,0 +1,91 @@
+{
+  "schema": "rvia.federal-intel.public-source.v1",
+  "verifiedAsOf": "2026-09-01",
+  "mode": "PUBLIC_OSINT_ONLY",
+  "canonicalRuntime": "sonoxo/gpt-doug-llm/va3lm",
+  "entities": [
+    {
+      "id": "cia",
+      "name": "Central Intelligence Agency",
+      "entityType": "agency",
+      "officialGitHubStatus": "NO_VERIFIED_OFFICIAL_ORG",
+      "officialGitHub": [],
+      "sources": [
+        "https://www.cia.gov/",
+        "https://www.cia.gov/the-world-factbook/",
+        "https://www.cia.gov/readingroom/"
+      ]
+    },
+    {
+      "id": "nsa",
+      "name": "National Security Agency",
+      "entityType": "agency",
+      "officialGitHubStatus": "VERIFIED_PUBLIC_ORGS",
+      "officialGitHub": [
+        "https://github.com/NationalSecurityAgency",
+        "https://github.com/nsacyber"
+      ],
+      "curatedRepositories": [
+        "https://github.com/NationalSecurityAgency/ghidra",
+        "https://github.com/NationalSecurityAgency/datawave",
+        "https://github.com/NationalSecurityAgency/Foundation"
+      ],
+      "sources": [
+        "https://www.nsa.gov/",
+        "https://code.nsa.gov/"
+      ]
+    },
+    {
+      "id": "nro",
+      "name": "National Reconnaissance Office",
+      "entityType": "agency",
+      "officialGitHubStatus": "NO_VERIFIED_OFFICIAL_ORG",
+      "officialGitHub": [],
+      "sources": [
+        "https://www.nro.gov/",
+        "https://www.nro.gov/news-media-featured-stories/",
+        "https://www.nro.gov/foia-home/foia-resources-reading-room/"
+      ]
+    },
+    {
+      "id": "ngp",
+      "name": "National Geospatial-Intelligence Program",
+      "entityType": "program",
+      "owner": "National Geospatial-Intelligence Agency (NGA)",
+      "officialGitHubStatus": "VERIFIED_PUBLIC_ORG_VIA_NGA",
+      "officialGitHub": [
+        "https://github.com/ngageoint"
+      ],
+      "curatedRepositories": [
+        "https://github.com/ngageoint/geoint-standards",
+        "https://github.com/ngageoint/GeoPackage",
+        "https://github.com/ngageoint/hootenanny",
+        "https://github.com/ngageoint/mage-server"
+      ],
+      "sources": [
+        "https://www.nga.mil/",
+        "https://www.nga.mil/about/About_Us.html"
+      ]
+    },
+    {
+      "id": "gdip",
+      "name": "General Defense Intelligence Program",
+      "entityType": "program",
+      "owner": "Defense Intelligence Agency (DIA)",
+      "officialGitHubStatus": "NO_VERIFIED_OFFICIAL_ORG",
+      "officialGitHub": [],
+      "sources": [
+        "https://www.dia.mil/",
+        "https://www.dia.mil/FOIA/FOIA-Electronic-Reading-Room/",
+        "https://www.dia.mil/News-Features/The-DIA-60th-Anniversary/The-1970s/"
+      ]
+    }
+  ],
+  "boundaries": [
+    "publicly released and lawfully accessible sources only",
+    "no classified, leaked, stolen, credentialed, or access-controlled material",
+    "no communications interception or signals collection",
+    "no covert person tracking or biometric identification",
+    "no targeting, operational tasking, or security-control bypass"
+  ]
+}
