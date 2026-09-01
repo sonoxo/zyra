@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { registerBaselineAssuranceRoutes } from "./baseline-assurance";
 import { registerZyraShieldRoutes } from "./zyra-shield";
 import { registerManagedBrowserRoutes } from "./managed-browser";
+import { registerZyraEyesRoutes } from "./zyra-eyes";
 import { registerContractOpsRoutes } from "./contractops";
 import { registerContractOpsProposalRoutes } from "./contractops-proposals";
 import { registerContractOpsPackageRoutes } from "./contractops-package";
@@ -16,7 +17,7 @@ import { createServer } from "http";
 
 function validateEnv() {
   const required = ["DATABASE_URL", "JWT_SECRET"];
-  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM", "HF_TOKEN"];
+  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM", "HF_TOKEN", "ZYRA_EYES_NATIVE_CONTROL", "ZYRA_EYES_AUDIT_LOG"];
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`FATAL: Missing required environment variables: ${missing.join(", ")}`);
@@ -147,7 +148,7 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons"];
+  const SENSITIVE_PATHS = ["/api/auth", "/api/api-keys", "/api/admin/env", "/api/browser", "/api/nxyz/horizons", "/api/zyra-eyes"];
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
@@ -168,6 +169,7 @@ app.use((req, res, next) => {
   registerBaselineAssuranceRoutes(app);
   registerZyraShieldRoutes(app);
   registerManagedBrowserRoutes(app);
+  registerZyraEyesRoutes(app);
   registerContractOpsRoutes(app);
   registerContractOpsProposalRoutes(app);
   registerContractOpsPackageRoutes(app);
@@ -215,6 +217,7 @@ app.use((req, res, next) => {
         "bas-detection-assurance",
         "zyra-shield",
         "managed-profile-browser",
+        "zyra-eyes-va-rvia",
         "nxyz-contractops",
         "nxyz-contractops-proposals",
         "nxyz-contractops-package-builder",
