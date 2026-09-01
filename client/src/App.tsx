@@ -9,6 +9,7 @@ import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import CommandCenterPage from "@/pages/command-center";
 import ZyraEyesPage from "@/pages/zyra-eyes";
+import XuniaSecurityPage from "@/pages/xunia-security";
 import Scans from "@/pages/scans";
 import ScanDetail from "@/pages/scan-detail";
 import Compliance from "@/pages/compliance";
@@ -135,6 +136,7 @@ function Router() {
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/command-center">{() => <ProtectedRoute component={CommandCenterPage} />}</Route>
       <Route path="/zyra-eyes">{() => <ProtectedRoute component={ZyraEyesPage} />}</Route>
+      <Route path="/xunia-security">{() => <ProtectedRoute component={XuniaSecurityPage} />}</Route>
       <Route path="/war-room">{() => <ProtectedRoute component={WarRoomPage} />}</Route>
       <Route path="/tsc">{() => <ProtectedRoute component={TscPage} />}</Route>
       <Route path="/titan-rx">{() => <ProtectedRoute component={TitanRxPage} />}</Route>
