@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "last_reviewed": "2026-09-01",
+  "cadence": "weekly_minimum_and_after_material_changes",
+  "north_star": "Give ZYRA a mission.",
+  "product_thesis": "Simple at the surface, deep underneath, increasingly useful as missions, projects, agents, intelligence and evidence accumulate.",
+  "layers": [
+    {"id":"VA","label":"Virginia Runtime","role":"mission_and_sensory_representation","state":"implemented"},
+    {"id":"RVIA","label":"RVIA Unified Runtime","role":"ecosystem_orchestration","state":"architecture_implemented"},
+    {"id":"GPT_DOUG_LLM_MAX","label":"GPT-DOUG-LLM-MAX","role":"reasoning_and_planning","state":"ecosystem_role"},
+    {"id":"ZYRA","label":"ZYRA","role":"policy_security_approval_execution_audit","state":"implemented"},
+    {"id":"XUNIA","label":"XUNIA","role":"apps_agents_orchestration","state":"developing"},
+    {"id":"NXYZ","label":"NXYZ","role":"ontology_evidence_intelligence_integration","state":"multiple_implemented_integrations"},
+    {"id":"ZYRA_EYES","label":"ZYRA Eyes","role":"binary_perception_to_action","state":"implemented_simulation_and_local_adapter"},
+    {"id":"US_CZ","label":"US-CZ","role":"civilian_ethical_legal_policy_boundary","state":"policy_v1_1"}
+  ],
+  "beginner_doors": [
+    {"id":"protect","label":"Protect Something","readiness":"strong","routes_to":["security_scans","pentest","cloud_security","container_security","attack_surface","secrets","vulnerabilities"]},
+    {"id":"see","label":"See With ZYRA","readiness":"strong_demo_hook","routes_to":["ZYRA_EYES","VA","RVIA"]},
+    {"id":"investigate","label":"Investigate Something","readiness":"strong","routes_to":["NXYZ","threat_intel","cve_intelligence","security_graph","evidence"]},
+    {"id":"build","label":"Build Something","readiness":"needs_unified_beginner_flow","routes_to":["XUNIA","repositories","integrations","agents"]},
+    {"id":"mission","label":"Run a Mission","readiness":"highest_priority_ux_build","routes_to":["RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ"]},
+    {"id":"federal","label":"Government / Contracting","readiness":"advanced","routes_to":["NXYZ_CONTRACTOPS","governed_prototypes","proposal_evidence"]}
+  ],
+  "capability_domains": {
+    "security":["security_scans","ai_pentesting","cloud_security","container_security","vulnerability_management","secrets_scanning","attack_surface","attack_paths","sbom","bug_bounty"],
+    "intelligence":["threat_intel","cve_intelligence","threat_hunting","dark_web_surfaces","security_data_lake","security_graph","caasm","asset_intelligence","nxyz_evidence","horizons_path"],
+    "operations_governance":["incident_response","risk_register","soar","compliance","devsecops","reports","vendor_risk","audit_logs","platform_metrics","team_admin","api_keys","enterprise"],
+    "agentic":["VA","RVIA","GPT_DOUG_LLM_MAX","ZYRA","XUNIA","NXYZ","US_CZ","ZYRA_EYES"],
+    "federal_external":["NXYZ_CONTRACTOPS","PALANTIR_FOUNDRY_AIP_BRIDGE","MICROSOFT_OSS_LAYER","C4ADS_HORIZONS_PATH","USSF_SSC_PROSPECTIVE_COLLABORATION"]
+  },
+  "beginner_health": {
+    "capability_depth":"very_strong",
+    "beginner_documentation":"strong",
+    "visual_hook":"strong",
+    "first_use_ux":"needs_simplification",
+    "mission_first_home":"priority_build",
+    "product_hierarchy":"too_many_modules_at_once",
+    "cross_product_continuity":"developing",
+    "personal_knowledge_accumulation":"priority",
+    "daily_return_loop":"priority",
+    "ecosystem_progress":"priority"
+  },
+  "build_board": [
+    {"priority":"P0","id":"mission_home","label":"Mission Home","status":"next","goal":"One primary mission input with Protect, Build, Investigate, See and Run Mission entry points."},
+    {"priority":"P1","id":"beginner_mode","label":"Beginner Mode","status":"next","goal":"Progressive disclosure with My ZYRA, Explore and Advanced navigation."},
+    {"priority":"P2","id":"first_mission_demo","label":"First Mission Demo","status":"partial","goal":"Fast safe result with ZYRA Eyes plus additional sample missions."},
+    {"priority":"P3","id":"mission_history","label":"Mission History","status":"planned","goal":"Unified timeline of intent, routing, authorization, evidence, result and follow-up."},
+    {"priority":"P4","id":"ecosystem_progress","label":"Ecosystem Progress","status":"planned","goal":"Evidence-backed user progress based on real accomplishments."},
+    {"priority":"P5","id":"daily_command_center","label":"Daily Command Center","status":"planned","goal":"Explain what changed and recommend one next mission."},
+    {"priority":"P6","id":"rvia_mission_router","label":"RVIA Mission Router","status":"architecture_defined","goal":"One user interface that routes missions across the ecosystem."}
+  ],
+  "retention_assets":["mission_history","projects","agents","intelligence","evidence","recommendations"],
+  "status_language": ["planned","implemented","ci_verified","deployed","platform_access","authorized_action","third_party_approved"],
+  "rules": [
+    "Do not equate implementation with deployment.",
+    "Do not equate credentials with authorization.",
+    "Do not equate platform access with permission for a specific action.",
+    "GOD_MODE never bypasses US-CZ policy, authentication, platform restrictions or law.",
+    "Update the human bulletin and this status file after material ecosystem changes."
+  ]
+}
