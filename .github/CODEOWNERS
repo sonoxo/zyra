@@ -1,0 +1,17 @@
+# Black House Shield ownership map
+* @sonoxo
+
+# Security and automation controls
+/.github/ @sonoxo
+/SECURITY.md @sonoxo
+/scripts/ @sonoxo
+
+# Governed intelligence / ontology / policy surfaces
+/shared/ontology/ @sonoxo
+/shared/policy/ @sonoxo
+/docs/compliance/ @sonoxo
+/docs/security/ @sonoxo
+
+# Deployment surfaces
+/infra/ @sonoxo
+/Dockerfile @sonoxo
