@@ -6,11 +6,31 @@ vite.config.ts.*
 *.tar.gz
 *.log
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 .cache
 .vite
 .turbo
 tmp/
 gha-creds-*.json
 .nxyz-api-key
+
+# Black House Shield: local credentials and signing material
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+.netrc
+.pypirc
+service-account*.json
+*credentials*.json
+!docs/credentials/**/*.json
+
+# Private correspondence/data exports belong outside the public repository
+private-data/
+private-correspondence/
+exports/private/
