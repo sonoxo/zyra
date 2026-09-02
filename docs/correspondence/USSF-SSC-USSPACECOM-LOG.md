@@ -1,49 +1,30 @@
 # USSF / SSC / USSPACECOM Correspondence Log
 
-Purpose: maintain a chronological, evidence-backed record of outreach, replies, routing, requested artifacts, and follow-up actions related to prospective ZYRA/NXYZ collaboration with the U.S. Space Force, Space Systems Command, and U.S. Space Command.
+This public repository no longer stores direct correspondence metadata.
 
-> Compliance boundary: this log records prospective outreach only. It does not indicate or imply government sponsorship, authorization, contract status, clearance, partnership, endorsement, or operational access unless such status is formally documented by the relevant government organization.
+## Privacy boundary
 
-## Status summary
+To reduce disclosure risk, the public tree must not contain:
 
-- Program track: ZYRA/NXYZ governed multi-vendor integration and mission-software assurance
-- GitHub execution tracker: https://github.com/sonoxo/zyra/issues/60
-- Gmail label: `USSF-SSC-USSPACECOM`
-- Current state: initial capability introduction sent; awaiting response
+- personal or business email addresses used for outreach;
+- direct recipient addresses;
+- Gmail message IDs, thread IDs, labels, or mailbox metadata;
+- exact private correspondence subjects or message bodies;
+- non-public routing contacts;
+- attachments containing personal, contractual, controlled, restricted, or operational data.
 
-## Correspondence
+## Public status
 
-### 001 — Initial capability introduction
+ZYRA/NXYZ maintains public technical material describing prospective mission-software and multi-vendor integration concepts. Any outreach or correspondence is tracked outside this repository.
 
-- Date: 2026-09-01
-- Direction: Outbound
-- From: Almighty Sonoxo <AlmightySonoxo@24kmediaproductions.com>
-- To: smallbus@spaceforce.mil
-- Organization: Space Systems Command Small Business Office
-- Subject: `Capability Introduction — ZYRA/NXYZ Governed Multi-Vendor Integration & Mission-Software Assurance`
-- Gmail message ID: `1a05be0cd1b8a6d7`
-- Gmail thread ID: `1a05be0cd1b8a6d7`
-- Status: Sent
-- Response: Pending
-- Purpose: Introduce ZYRA/NXYZ as an unclassified governed mission-software and multi-vendor integration-assurance capability and request routing to the appropriate USSF Front Door, SSC, or USSPACECOM mission owner.
-- Proposal: https://github.com/sonoxo/zyra/blob/main/docs/proposals/USSF-SSC-FRONT-DOOR-PROPOSAL.md
-- Mission-alignment brief: https://github.com/sonoxo/zyra/blob/main/docs/partnerships/USSF-SSC-COLLABORATION.md
+This file does **not** indicate or imply government sponsorship, authorization, contract status, clearance, partnership, endorsement, or operational access.
+
+## Public artifacts
+
 - Repository: https://github.com/sonoxo/zyra
-- Next action: Log any reply, routing contact, meeting request, requested technical artifact, or procurement pathway. Prepare follow-up based on government response.
+- Mission-alignment brief: `docs/partnerships/USSF-SSC-COLLABORATION.md`
+- Front Door capability package: `docs/proposals/USSF-SSC-FRONT-DOOR-PROPOSAL.md`
 
-## Logging standard
+## Logging rule
 
-For every new item, record:
-
-1. Sequential correspondence ID
-2. Date and direction (inbound/outbound)
-3. Sender and recipients
-4. Organization / office
-5. Exact subject
-6. Source message/thread identifier when available
-7. Concise summary
-8. Commitments or requests made by either party
-9. Attachments or linked artifacts
-10. Current status and next action
-
-Do not store passwords, access tokens, private keys, controlled unclassified information, classified information, or other restricted data in this repository log.
+Do not commit correspondence metadata, passwords, access tokens, private keys, controlled unclassified information, classified information, customer data, personal data, private screenshots, or other restricted information to this repository.
