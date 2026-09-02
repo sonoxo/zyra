@@ -58,3 +58,7 @@ node diagnostics.js
 ## Upstream attribution
 
 The default runtime target is **nukesimulation.com**. xrAtlas is a separate local wrapper/launcher and does not redistribute that site's application source or assets.
+
+## xrAtlas branding
+
+The Electron shell replaces the upstream page's visible `NukeSimulation.com` text label with `xrAtlas` after each page load and watches dynamic DOM updates so the shell branding remains consistent. This is a presentation-layer override only: it does not copy or modify the upstream site's source repository. Upstream attribution remains documented here.
