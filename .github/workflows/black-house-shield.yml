@@ -1,0 +1,67 @@
+name: Black House Shield
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 9 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  repository-shield:
+    name: secret and privacy gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject tracked secret-bearing artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(git ls-files | grep -E '(^|/)(\.env($|\.)|id_rsa$|id_ed25519$|[^/]+\.(pem|key|p12|pfx|jks|keystore)$|service-account[^/]*\.json$|[^/]*credentials[^/]*\.json$|\.netrc$|\.pypirc$)' | grep -vE '(^|/)\.env\.example$' || true)"
+          if [[ -n "$forbidden" ]]; then
+            echo "BLACK HOUSE SHIELD: tracked secret-bearing artifact(s) detected"
+            printf '%s\n' "$forbidden"
+            exit 1
+          fi
+
+      - name: Scan current tree for credential material
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,}|sk_live_[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[A-Za-z0-9-]{20,}|hooks\.slack\.com/services/[A-Za-z0-9/_-]{20,}|discord(app)?\.com/api/webhooks/[0-9]{8,}/[A-Za-z0-9._-]{20,}'
+          matches="$(git grep -IEn -- "$pattern" -- . ':!*.lock' 2>/dev/null || true)"
+          if [[ -n "$matches" ]]; then
+            echo "BLACK HOUSE SHIELD: possible credential material detected"
+            printf '%s\n' "$matches"
+            exit 1
+          fi
+
+      - name: Block public correspondence PII
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d docs/correspondence ]]; then
+            matches="$(git grep -IEn -i -- '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}' -- docs/correspondence 2>/dev/null || true)"
+            if [[ -n "$matches" ]]; then
+              echo "BLACK HOUSE SHIELD: email address detected in public correspondence docs"
+              printf '%s\n' "$matches"
+              exit 1
+            fi
+          fi
+
+      - name: Verify repository integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git fsck --no-dangling >/dev/null
+          echo "BLACK HOUSE SHIELD: PASS"
