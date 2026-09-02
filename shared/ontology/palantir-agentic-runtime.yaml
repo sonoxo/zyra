@@ -1,0 +1,127 @@
+ontology:
+  id: zyra:palantir-agentic-runtime
+  version: 1.0.0
+  updatedAt: 2026-09-02
+  purpose: >-
+    Govern how XUNIA, ZYRA, GPT-Doug-LLM, and RVIA consume Palantir Foundry/AIP/Apollo
+    capabilities through OSDK, MCP, AI FDE, AIP Logic, and Automate while preserving
+    authorization, provenance, audit, and human-review boundaries.
+
+  controllingReferences:
+    - https://www.palantir.com/docs/foundry/platform-overview
+    - https://www.palantir.com/docs/foundry/dev-toolchain/overview
+    - https://www.palantir.com/docs/foundry/ontology/overview
+    - https://www.palantir.com/docs/foundry/ontology-sdk/overview
+    - https://www.palantir.com/docs/foundry/ai-fde/overview
+    - https://www.palantir.com/docs/foundry/automate
+    - https://www.palantir.com/docs/foundry/logic/aip-logic-integration-automate
+
+  supplementalReferences:
+    - id: youtube:wdyKBzBxM6w
+      uri: https://www.youtube.com/watch?v=wdyKBzBxM6w
+      evidenceClass: PUBLIC_REFERENCE
+      suppliedAt: 2026-09-02
+      suppliedBy: OWNER
+      verificationState: METADATA_PENDING
+      promotionPolicy: VERIFY_AGAINST_CONTROLLING_DOCS
+
+  platformLayers:
+    experienceAndAgents:
+      - XUNIA
+      - GPT_DOUG_LLM
+      - RVIA_REPOSITORY_INTELLIGENCE
+    governedOperationalGraph:
+      - ZYRA
+      - PALANTIR_FOUNDRY_ONTOLOGY
+    aiAndLogic:
+      - PALANTIR_AIP
+      - AIP_LOGIC
+      - AI_FDE
+    developerAccess:
+      - OSDK
+      - ONTOLOGY_MCP
+      - PALANTIR_MCP
+    businessAutomation:
+      - AUTOMATE
+    continuousDelivery:
+      - PALANTIR_APOLLO
+
+  integrationPatterns:
+    OSDK:
+      producer: PALANTIR_FOUNDRY
+      consumers: [XUNIA, ZYRA]
+      purpose: Permission-scoped object, link, action, function, and Logic access.
+      writes: EXPLICIT_ACTION
+    ONTOLOGY_MCP:
+      producer: PALANTIR_FOUNDRY
+      consumers: [GPT_DOUG_LLM, XUNIA]
+      purpose: Expose selected Ontology resources as MCP tools to approved external agents.
+      writes: EXPLICIT_ACTION
+    PALANTIR_MCP:
+      producer: PALANTIR_FOUNDRY
+      consumers: [GPT_DOUG_LLM]
+      purpose: Provide Palantir platform context and tools to approved AI development workflows.
+      writes: EXPLICIT_ACTION
+    AI_FDE:
+      producer: PALANTIR_AIP
+      consumers: [XUNIA]
+      purpose: Convert natural-language engineering intent into governed Foundry operations.
+      writes: STAGED_REVIEW
+    AIP_LOGIC:
+      producer: PALANTIR_AIP
+      consumers: [ZYRA]
+      purpose: Execute LLM-assisted functions over governed Ontology context.
+      writes: STAGED_REVIEW
+    AUTOMATE:
+      producer: PALANTIR_FOUNDRY
+      consumers: [ZYRA, XUNIA]
+      purpose: Trigger Actions, Logic, functions, and notifications from time or Ontology state.
+      writes: STAGED_REVIEW
+    APOLLO:
+      producer: PALANTIR_APOLLO
+      consumers: [RVIA_REPOSITORY_INTELLIGENCE, ZYRA]
+      purpose: Ingest deployment and runtime state as evidence-bearing operational signals.
+      writes: READ_ONLY
+
+  classes:
+    - AgentToolBinding
+    - AutomationDefinition
+    - AutomationTrigger
+    - AutomationEffect
+    - StagedWrite
+    - HumanReviewGate
+    - PublicReference
+    - PlatformRuntimeSignal
+    - AuthorizationState
+    - AuditEvent
+
+  relations:
+    exposesTool:
+      domain: AgentToolBinding
+      range: PublicReference
+    triggers:
+      domain: AutomationTrigger
+      range: AutomationDefinition
+    producesEffect:
+      domain: AutomationDefinition
+      range: AutomationEffect
+    stagesWrite:
+      domain: AutomationEffect
+      range: StagedWrite
+    requiresReview:
+      domain: StagedWrite
+      range: HumanReviewGate
+    requiresAuthorization:
+      domain: AgentToolBinding
+      range: AuthorizationState
+    emitsAudit:
+      domain: AutomationDefinition
+      range: AuditEvent
+
+  invariants:
+    - MCP exposure does not imply write authorization.
+    - AI FDE does not bypass Foundry permissions or review requirements.
+    - Ontology-changing workflows use Actions or staged writes when approval is required.
+    - Automate effects inherit object-level authorization and audit constraints.
+    - Public video or community references remain supplemental until reconciled with controlling documentation.
+    - No secret, token, credential, or enrollment-specific identifier is committed to source control.
