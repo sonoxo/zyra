@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "xrAtlas Branding",
+  "version": "1.0.0",
+  "description": "Presentation-layer branding for xrAtlas when running the authorized upstream web app in Chrome app mode.",
+  "content_scripts": [
+    {
+      "matches": ["https://nukesimulation.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
