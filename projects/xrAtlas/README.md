@@ -35,6 +35,18 @@ http://127.0.0.1:8787/__health
 - isolated remote content (`nodeIntegration: false`, `contextIsolation: true`, sandbox enabled)
 - optional local reverse proxy
 
+## Rendering compatibility
+
+xrAtlas v1.1.3 presents a normal Chrome-on-macOS user agent to the live renderer and explicitly enables WebGL, GPU rasterization, zero-copy rendering, and Chromium's GPU path. This is intended to improve compatibility with map and 3D-tile renderers that take a different code path when Electron is detected.
+
+Press **F12** or **Cmd+Option+I** inside xrAtlas to open Chromium DevTools. xrAtlas also writes failed Google / tile / WorldPop requests to the Terminal that launched the app.
+
+Optional ANGLE/Metal troubleshooting mode:
+
+```bash
+XRATLAS_FORCE_METAL=1 npm start
+```
+
 ## Configuration
 
 Override the default remote target when launching:
