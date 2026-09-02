@@ -1,0 +1,57 @@
+name: NXYZ GHCR Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - services/nxyz-gcp/**
+      - cloud/github/registry.json
+      - .github/workflows/nxyz-ghcr-publish.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build and Publish NXYZ
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate registry
+        run: node scripts/github-cloud/validate-registry.mjs
+
+      - name: Build image
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:${{ github.sha }} \
+            -t ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:main \
+            services/nxyz-gcp
+
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+
+      - name: Publish immutable and main tags
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:main
+
+      - name: Write package summary
+        run: |
+          {
+            echo '# NXYZ GitHub Cloud Image'
+            echo
+            echo '- Registry: GitHub Container Registry'
+            echo '- Immutable: `ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:${{ github.sha }}`'
+            echo '- Moving tag: `ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:main`'
+            echo '- Source commit: `${{ github.sha }}`'
+          } >> "$GITHUB_STEP_SUMMARY"

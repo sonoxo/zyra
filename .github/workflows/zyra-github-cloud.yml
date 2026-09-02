@@ -1,0 +1,155 @@
+name: ZYRA GitHub Cloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      mission:
+        description: Mission for the ZYRA cloud control plane
+        required: true
+        default: Inspect ZYRA cloud status
+        type: string
+      target:
+        description: Preferred service target
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - zyra-core
+          - nxyz-control
+          - xunia
+          - gpt-doug
+          - nxyz-horizons
+      action:
+        description: Safe cloud job to run
+        required: true
+        default: route
+        type: choice
+        options:
+          - route
+          - registry_snapshot
+          - health
+          - build
+      publish_container:
+        description: Publish the NXYZ container to GHCR after a successful build
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: zyra-github-cloud-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mission-control:
+    name: Mission Control
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate cloud registry
+        run: node scripts/github-cloud/validate-registry.mjs
+
+      - name: Route mission and create evidence envelope
+        env:
+          ZYRA_MISSION: ${{ inputs.mission }}
+          ZYRA_TARGET: ${{ inputs.target }}
+          ZYRA_ACTION: ${{ inputs.action }}
+        run: |
+          node scripts/github-cloud/mission-router.mjs \
+            --mission "$ZYRA_MISSION" \
+            --target "$ZYRA_TARGET" \
+            --action "$ZYRA_ACTION" \
+            --out .zyra-cloud/mission.json
+
+      - name: Snapshot registry
+        if: inputs.action == 'registry_snapshot'
+        run: |
+          mkdir -p .zyra-cloud
+          cp cloud/github/registry.json .zyra-cloud/registry.json
+
+      - name: Health-check NXYZ control plane
+        if: inputs.action == 'health'
+        working-directory: services/nxyz-gcp
+        env:
+          GOOGLE_CLOUD_PROJECT: zyra-github-cloud-ci
+          NXYZ_API_KEY: github-cloud-healthcheck
+          PORT: '8080'
+        run: |
+          npm ci
+          node server.mjs > ../../.zyra-cloud/nxyz-health.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in {1..15}; do
+            if curl --fail --silent http://127.0.0.1:8080/healthz > ../../.zyra-cloud/health.json; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat ../../.zyra-cloud/nxyz-health.log
+          exit 1
+
+      - name: Build NXYZ cloud image
+        if: inputs.action == 'build'
+        run: |
+          docker build \
+            -t zyra-nxyz-control:${GITHUB_SHA} \
+            services/nxyz-gcp
+
+      - name: Publish NXYZ image to GitHub Container Registry
+        if: inputs.action == 'build' && inputs.publish_container == true
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/zyra-nxyz-control:${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+          docker tag zyra-nxyz-control:${GITHUB_SHA} "$IMAGE"
+          docker push "$IMAGE"
+          printf '%s\n' "$IMAGE" > .zyra-cloud/container-image.txt
+
+      - name: Write mission summary
+        if: always()
+        env:
+          ZYRA_ACTION: ${{ inputs.action }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+          let mission = {};
+          try { mission = JSON.parse(fs.readFileSync('.zyra-cloud/mission.json', 'utf8')); } catch {}
+          const lines = [
+            '# ZYRA GitHub Cloud',
+            '',
+            `- Mission ID: ${mission.missionId ?? 'unavailable'}`,
+            `- Status: ${mission.status ?? 'unavailable'}`,
+            `- Route: ${mission.route?.door ?? 'unavailable'} -> ${mission.route?.target ?? 'unavailable'}`,
+            `- Risk class: ${mission.policy?.riskClass ?? 'unavailable'}`,
+            `- Human approval required: ${mission.policy?.requiresHumanApproval ?? 'unavailable'}`,
+            `- Job action: ${process.env.ZYRA_ACTION}`,
+            `- Commit: ${process.env.GITHUB_SHA}`,
+            ''
+          ];
+          fs.appendFileSync(summary, lines.join('\n'));
+          NODE
+
+      - name: Upload mission evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zyra-cloud-${{ github.run_id }}
+          path: .zyra-cloud/
+          if-no-files-found: error
+          retention-days: 30
