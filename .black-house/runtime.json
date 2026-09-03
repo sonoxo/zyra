@@ -1,11 +1,14 @@
 {
   "schemaVersion": "1.0.0",
+  "kernelVersion": "3.0.0",
   "controlPlane": "THE_BLACK_HOUSE_V1",
   "canonicalRoot": "sonoxo/gpt-doug-llm/the-black-house",
+  "kernelContract": ".black-house/kernel.json",
   "component": "ZYRA",
   "role": "policy_security_approval_execution_audit",
   "requiredGates": [
     "npm test",
+    "npx tsx --test server/black-house-kernel.test.ts",
     "npm run check",
     "npm audit --audit-level=high",
     "npm run build"
