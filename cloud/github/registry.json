@@ -1,6 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "controlPlane": "ZYRA_GITHUB_CLOUD_V1",
+  "displayName": "Zyra Cloud",
   "provider": "github",
   "regionModel": "github-hosted-runners",
   "runtime": {
