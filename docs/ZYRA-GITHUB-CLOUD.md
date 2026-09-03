@@ -1,12 +1,12 @@
-# ZYRA GitHub Cloud
+# Zyra Cloud
 
 Status: implemented in-repository.
 
-ZYRA GitHub Cloud uses GitHub itself as a cloud-style control surface for the ZYRA/NXYZ ecosystem. It does not pretend GitHub is a full replacement for GCP, AWS, or Azure. Instead, it maps the cloud primitives GitHub actually provides into a governed execution plane that works immediately from this repository.
+**Zyra Cloud** is the public name for the governed cloud control system used by the ZYRA/NXYZ ecosystem. Its current control-plane implementation uses GitHub primitives, while provider-specific runtimes such as GCP remain separate execution targets.
 
 ## Cloud primitive mapping
 
-| Cloud concept | ZYRA GitHub Cloud |
+| Cloud concept | Zyra Cloud |
 | --- | --- |
 | Control plane | Git repository + workflows |
 | Compute | GitHub-hosted Actions runners |
@@ -23,7 +23,7 @@ ZYRA GitHub Cloud uses GitHub itself as a cloud-style control surface for the ZY
 
 ```mermaid
 flowchart TD
-    OP[Authorized GitHub operator] --> WF[ZYRA GitHub Cloud workflow]
+    OP[Authorized operator] --> WF[Zyra Cloud workflow]
     WF --> ROUTER[Mission Router]
     ROUTER --> REG[Service Registry]
     ROUTER --> POLICY{Policy Classification}
@@ -50,11 +50,13 @@ scripts/github-cloud/validate-registry.mjs
 docs/ZYRA-GITHUB-CLOUD.md
 ```
 
+The implementation paths keep their existing GitHub-specific names for compatibility; the product/system name is now **Zyra Cloud**.
+
 ## What works now
 
 ### Mission routing
 
-From **Actions -> ZYRA GitHub Cloud -> Run workflow**, enter a mission and choose a target/action. The workflow produces a stable mission evidence envelope containing:
+From **Actions -> Zyra Cloud -> Run workflow**, enter a mission and choose a target/action. The workflow produces a stable mission evidence envelope containing:
 
 - mission ID
 - repository, ref, and commit SHA
@@ -91,7 +93,7 @@ The immutable SHA tag is the release identity. The `main` tag tracks the newest 
 
 ### Evidence and audit
 
-Every manual ZYRA GitHub Cloud mission uploads `.zyra-cloud/` as an Actions artifact for 30 days. The workflow summary records route, target, risk class, approval requirement, action, and commit.
+Every manual Zyra Cloud mission uploads `.zyra-cloud/` as an Actions artifact for 30 days. The workflow summary records route, target, risk class, approval requirement, action, and commit.
 
 Git commits and GitHub Actions run history provide the control-plane audit trail.
 
@@ -109,21 +111,21 @@ The registry is versioned in Git, so changes to service identity and capabilitie
 
 ## Relationship to GCP
 
-The existing `services/nxyz-gcp` implementation remains the managed-cloud deployment unit for Cloud Run/Firestore/Secret Manager. GitHub Cloud sits one layer earlier and can operate without a configured Google Cloud account:
+The existing `services/nxyz-gcp` implementation remains the managed-cloud deployment unit for Cloud Run/Firestore/Secret Manager. Zyra Cloud sits one layer earlier and can operate without a configured Google Cloud account:
 
 ```text
 Mission Home
-   -> ZYRA GitHub Cloud
+   -> Zyra Cloud
       -> route / validate / build / evidence
       -> GHCR image
-      -> optional future target adapter
+      -> provider target adapter
            -> GCP
            -> AWS
            -> Azure
            -> self-hosted runtime
 ```
 
-This makes GitHub the source-of-truth control plane and package factory while keeping provider deployment adapters separate.
+This makes Zyra Cloud the source-of-truth control plane and package factory while keeping provider deployment adapters separate.
 
 ## Security invariants
 
