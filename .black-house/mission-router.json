@@ -1,0 +1,13 @@
+{
+  "controlPlane": "THE_BLACK_HOUSE_V1",
+  "kernelVersion": "3.0.0",
+  "missionProtocol": "black-house-mission-v1",
+  "component": "ZYRA",
+  "acceptedTargets": ["ZYRA", "NXYZ", "ZYRA_CLOUD"],
+  "adapterMode": "contract-adapter",
+  "approvalAuthority": true,
+  "requiresExplicitApprovalForMutation": true,
+  "evidenceRequired": true,
+  "auditRequired": true,
+  "failClosed": true
+}
