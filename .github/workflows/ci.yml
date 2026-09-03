@@ -34,9 +34,24 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Enforce registry quality result
         env:
           QUALITY_RESULT: ${{ needs.registry-quality.result }}
         run: |
           echo "Registry quality result: ${QUALITY_RESULT}"
           test "${QUALITY_RESULT}" = "success"
+      - name: Validate Black House runtime contract
+        run: |
+          node <<'NODE'
+          const assert = require('assert');
+          const fs = require('fs');
+          const runtime = JSON.parse(fs.readFileSync('.black-house/runtime.json','utf8'));
+          assert.equal(runtime.controlPlane, 'THE_BLACK_HOUSE_V1');
+          assert.equal(runtime.component, 'ZYRA');
+          assert.equal(runtime.cloudLayer, 'Zyra Cloud');
+          for (const gate of ['npm test','npm run check','npm audit --audit-level=high','npm run build']) {
+            assert.ok(runtime.requiredGates.includes(gate), `missing runtime gate: ${gate}`);
+          }
+          console.log('BLACK HOUSE ZYRA RUNTIME CONTRACT: PASS');
+          NODE
