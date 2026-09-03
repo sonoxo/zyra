@@ -16,9 +16,10 @@ permissions:
 jobs:
   registry-quality:
     name: Registry Quality
-    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@82de1196b406d35166e1bb94f2c44e4e4709a235
+    uses: sonoxo/aip-community-registry-zyra/.github/workflows/node-quality-gate.yml@80af170e1097015c5135f544c7546cae691f2e04
     with:
       node-version: "20"
+      verify-command: "node -e \"const r=require('./.black-house/runtime.json'); if(r.controlPlane!=='THE_BLACK_HOUSE_V1'||r.component!=='ZYRA') process.exit(1); console.log('BLACK HOUSE ZYRA CONTRACT: PASS')\""
       run-tests: true
       test-command: "npm test"
       run-typecheck: true
