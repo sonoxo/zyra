@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "last_reviewed": "2026-09-01",
+  "last_reviewed": "2026-09-03",
   "cadence": "weekly_minimum_and_after_material_changes",
   "north_star": "Give ZYRA a mission.",
   "product_thesis": "Simple at the surface, deep underneath, increasingly useful as missions, projects, agents, intelligence and evidence accumulate.",
@@ -11,7 +11,7 @@
     {"id":"ZYRA","label":"ZYRA","role":"policy_security_approval_execution_audit","state":"implemented"},
     {"id":"XUNIA","label":"XUNIA","role":"apps_agents_orchestration","state":"developing"},
     {"id":"NXYZ","label":"NXYZ","role":"ontology_evidence_intelligence_integration","state":"multiple_implemented_integrations"},
-    {"id":"GITHUB_CLOUD","label":"ZYRA GitHub Cloud","role":"cloud_control_compute_registry_evidence_audit","state":"implemented_repo_workflows"},
+    {"id":"GITHUB_CLOUD","label":"Zyra Cloud","role":"cloud_control_compute_registry_evidence_audit","state":"implemented_repo_workflows"},
     {"id":"ZYRA_EYES","label":"ZYRA Eyes","role":"binary_perception_to_action","state":"implemented_simulation_and_local_adapter"},
     {"id":"US_CZ","label":"US-CZ","role":"civilian_ethical_legal_policy_boundary","state":"policy_v1_1"}
   ],
@@ -45,7 +45,7 @@
   },
   "build_board": [
     {"priority":"P0","id":"mission_home","label":"Mission Home","status":"implemented","goal":"One primary mission input with Protect, Build, Investigate, See, Government/Contracting and Run Operation entry points."},
-    {"priority":"P1","id":"github_cloud_control_plane","label":"GitHub Cloud Control Plane","status":"implemented","goal":"Use GitHub Actions, GHCR, Git, and Actions artifacts as an immediately usable cloud-style execution, registry, evidence, and audit plane."},
+    {"priority":"P1","id":"github_cloud_control_plane","label":"Zyra Cloud","status":"implemented","goal":"Use GitHub Actions, GHCR, Git, and Actions artifacts as an immediately usable cloud-style execution, registry, evidence, and audit plane."},
     {"priority":"P1","id":"beginner_mode","label":"Beginner Mode","status":"partial","goal":"Progressive disclosure with a mission-first surface while preserving the advanced dashboard below it."},
     {"priority":"P2","id":"first_mission_demo","label":"First Mission Demo","status":"partial","goal":"Fast safe result with ZYRA Eyes plus additional sample missions."},
     {"priority":"P3","id":"mission_history","label":"Mission History","status":"planned","goal":"Unified timeline of intent, routing, authorization, evidence, result and follow-up."},
