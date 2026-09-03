@@ -1,12 +1,12 @@
-name: ZYRA GitHub Cloud
+name: Zyra Cloud
 
 on:
   workflow_dispatch:
     inputs:
       mission:
-        description: Mission for the ZYRA cloud control plane
+        description: Mission for the Zyra Cloud control plane
         required: true
-        default: Inspect ZYRA cloud status
+        default: Inspect Zyra Cloud status
         type: string
       target:
         description: Preferred service target
@@ -131,7 +131,7 @@ jobs:
           let mission = {};
           try { mission = JSON.parse(fs.readFileSync('.zyra-cloud/mission.json', 'utf8')); } catch {}
           const lines = [
-            '# ZYRA GitHub Cloud',
+            '# Zyra Cloud',
             '',
             `- Mission ID: ${mission.missionId ?? 'unavailable'}`,
             `- Status: ${mission.status ?? 'unavailable'}`,
