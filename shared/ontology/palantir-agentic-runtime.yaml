@@ -1,12 +1,13 @@
 ontology:
   id: zyra:palantir-agentic-runtime
-  version: 1.1.0
+  version: 1.2.0
   updatedAt: 2026-09-03
   purpose: >-
     Govern how XUNIA, ZYRA, GPT-Doug-LLM, and RVIA consume Palantir Foundry/AIP/Apollo
-    capabilities through OSDK, MCP, AI FDE, AIP Logic, and Automate while preserving
-    authorization, provenance, audit, human-review boundaries, and evidence-backed
-    public intelligence ingestion through The Black House.
+    capabilities through OSDK, MCP, AI FDE, AIP Logic, Automate, AIP Evals, and AIP Evolve while
+    preserving authorization, provenance, audit, human-review boundaries, evidence-backed public
+    intelligence ingestion, model portability, and organization-owned decision rights through
+    The Black House.
 
   controllingReferences:
     - https://www.palantir.com/docs/foundry/platform-overview
@@ -16,6 +17,9 @@ ontology:
     - https://www.palantir.com/docs/foundry/ai-fde/overview
     - https://www.palantir.com/docs/foundry/automate
     - https://www.palantir.com/docs/foundry/logic/aip-logic-integration-automate
+    - https://www.palantir.com/docs/foundry/aip-evals/overview
+    - https://www.palantir.com/docs/foundry/aip-evals/experiments
+    - https://www.palantir.com/docs/foundry/aip-evolve/overview
     - https://investors.palantir.com/files/Palantir%20-%20Q1%202026%20Business%20Update.pdf
 
   supplementalReferences:
@@ -36,6 +40,17 @@ ontology:
       verificationState: SOURCE_METADATA_VERIFIED
       intelligenceBrief: .black-house/intel/aipcon-9-2026-03-09.json
       promotionPolicy: RECONCILE_WITH_PALANTIR_FIRST_PARTY_SOURCES
+    - id: youtube:9eUUeTC6wnY
+      uri: https://www.youtube.com/watch?v=9eUUeTC6wnY
+      title: EXCLUSIVE Interview w/ Top Palantir Architect
+      publisher: Hans Nelson
+      guest: Chad Wahlquist
+      evidenceClass: PUBLIC_INTERVIEW_REFERENCE
+      suppliedAt: 2026-09-03
+      suppliedBy: OWNER
+      verificationState: SOURCE_SUMMARY_AND_CHAPTERS_VERIFIED
+      intelligenceBrief: .black-house/intel/palantir-sovereign-ai-harness-2026-08-19.json
+      promotionPolicy: CORROBORATE_PRODUCT_CLAIMS_WITH_PALANTIR_FIRST_PARTY_DOCS
 
   platformLayers:
     experienceAndAgents:
@@ -46,10 +61,13 @@ ontology:
       - ZYRA
       - PALANTIR_FOUNDRY_ONTOLOGY
       - BLACK_HOUSE_INTELLIGENCE
+      - BLACK_HOUSE_SOVEREIGN_AI_HARNESS
     aiAndLogic:
       - PALANTIR_AIP
       - AIP_LOGIC
       - AI_FDE
+      - AIP_EVALS
+      - AIP_EVOLVE
     developerAccess:
       - OSDK
       - ONTOLOGY_MCP
@@ -85,6 +103,16 @@ ontology:
       consumers: [ZYRA]
       purpose: Execute LLM-assisted functions over governed Ontology context.
       writes: STAGED_REVIEW
+    AIP_EVALS:
+      producer: PALANTIR_AIP
+      consumers: [ZYRA, XUNIA, GPT_DOUG_LLM]
+      purpose: Evaluate workflow-specific target functions with representative cases, criteria, repeated runs, and baseline comparisons before production promotion.
+      writes: EVIDENCE_ONLY
+    AIP_EVOLVE:
+      producer: PALANTIR_AIP
+      consumers: [XUNIA, GPT_DOUG_LLM]
+      purpose: Coordinate bounded candidate improvements under explicit optimization goals, constraints, validation strategies, and review-before-merge semantics.
+      writes: STAGED_REVIEW
     AUTOMATE:
       producer: PALANTIR_FOUNDRY
       consumers: [ZYRA, XUNIA]
@@ -100,6 +128,12 @@ ontology:
       consumers: [GPT_DOUG_LLM, ZYRA, NXYZ]
       purpose: Normalize public AIP intelligence into provenance-bearing briefs that can inform ontology design and missions without implying authorization.
       writes: EVIDENCE_ONLY
+    BLACK_HOUSE_SOVEREIGN_AI_HARNESS:
+      producer: BLACK_HOUSE_KNOWLEDGE_BASE
+      consumers: [GPT_DOUG_LLM, ZYRA, XUNIA, NXYZ]
+      purpose: Keep data, logic, actions, security, evaluations, traces, feedback, and promotion rights organization-owned while models and providers remain replaceable adapters.
+      writes: STAGED_REVIEW
+      ontology: shared/ontology/black-house-sovereign-ai-harness.yaml
 
   operationalSignals:
     AIPCON_9_2026:
@@ -112,6 +146,23 @@ ontology:
         - VALIDATION_AUTOMATION
         - FLEET_AND_SUPPLY_CHAIN_OPERATIONS
       designRule: MEASURABLE_OUTCOMES_OVER_GENERIC_MODEL_CLAIMS
+    SOVEREIGN_AI_HARNESS_2026:
+      source: youtube:9eUUeTC6wnY
+      brief: .black-house/intel/palantir-sovereign-ai-harness-2026-08-19.json
+      themes:
+        - AI_SOVEREIGNTY_AND_DECISION_RIGHTS
+        - MODEL_PORTABILITY
+        - DATA_LOGIC_ACTIONS_SECURITY_HARNESS
+        - WORKFLOW_SPECIFIC_EVALS
+        - POST_TRAINING_FEEDBACK_FLYWHEEL
+        - PRODUCTION_RELIABILITY
+        - HUMAN_AUGMENTATION
+      designRules:
+        - OWN_THE_HARNESS_NOT_THE_MODEL
+        - WORKFLOW_EVALS_OVER_GENERIC_BENCHMARKS
+        - BASELINE_VS_CANDIDATE_BEFORE_PROMOTION
+        - SENSITIVE_DATA_BOUNDARIES_BEFORE_PROVIDER_EGRESS
+        - HUMAN_REVIEW_FOR_CONSEQUENTIAL_PROMOTION
 
   classes:
     - AgentToolBinding
@@ -126,6 +177,23 @@ ontology:
     - AuditEvent
     - IntelligenceBrief
     - IntelligenceSignal
+    - SovereigntyPolicy
+    - BusinessHarness
+    - HarnessPlane
+    - ModelAdapter
+    - ModelCandidate
+    - EvaluationSuite
+    - EvaluationRun
+    - ExecutionTrace
+    - FeedbackSignal
+    - OutcomeMetric
+    - RegressionGate
+    - SensitiveDataPolicy
+    - OptimizationProposal
+    - BaselineVersion
+    - CandidateVersion
+    - PromotionDecision
+    - HumanDecision
 
   relations:
     exposesTool:
@@ -152,6 +220,57 @@ ontology:
     derivedFrom:
       domain: IntelligenceBrief
       range: PublicReference
+    bindsModel:
+      domain: BusinessHarness
+      range: ModelAdapter
+    evaluatedBy:
+      domain: ModelCandidate
+      range: EvaluationSuite
+    producesRun:
+      domain: EvaluationSuite
+      range: EvaluationRun
+    emitsTrace:
+      domain: EvaluationRun
+      range: ExecutionTrace
+    producesFeedback:
+      domain: ExecutionTrace
+      range: FeedbackSignal
+    proposesCandidate:
+      domain: OptimizationProposal
+      range: CandidateVersion
+    comparesBaseline:
+      domain: OptimizationProposal
+      range: BaselineVersion
+    decidedBy:
+      domain: PromotionDecision
+      range: HumanDecision
+
+  sovereignHarnessPolicy:
+    organizationOwned:
+      - ONTOLOGY
+      - DATA_CONTRACTS
+      - BUSINESS_LOGIC
+      - ACTION_SEMANTICS
+      - SECURITY_POLICY
+      - EVALUATION_CRITERIA
+      - REPRESENTATIVE_TEST_CASES
+      - TRACES
+      - FEEDBACK
+      - EVIDENCE
+      - PROMOTION_DECISIONS
+    replaceable:
+      - MODEL
+      - MODEL_PROVIDER
+      - INFERENCE_ENDPOINT
+      - PROMPT_IMPLEMENTATION
+      - OPTIMIZATION_STRATEGY
+    promotionRequires:
+      - REPRESENTATIVE_WORKFLOW_EVALUATION
+      - BASELINE_COMPARISON
+      - REGRESSION_CHECK
+      - SENSITIVE_DATA_POLICY_CHECK
+      - SUPPORTING_EVIDENCE
+      - HUMAN_REVIEW_IF_CONSEQUENTIAL
 
   invariants:
     - MCP exposure does not imply write authorization.
@@ -161,4 +280,10 @@ ontology:
     - Public video or community references remain supplemental until reconciled with controlling documentation.
     - Public intelligence may inform design and analysis but never grants external platform authorization.
     - Claims promoted into operational intelligence require provenance and an explicit verification state.
+    - The model is a replaceable adapter and never becomes the source of organizational authority.
+    - Provider or model changes cannot silently alter authorization, business logic, or action semantics.
+    - Generic benchmark scores cannot by themselves authorize production promotion.
+    - Candidate changes must be compared against a preserved baseline with workflow-specific evaluation evidence.
+    - Sensitive data must remain inside authorized context and provider boundaries.
+    - Human augmentation is the default success model; consequential promotion remains human-gated.
     - No secret, token, credential, or enrollment-specific identifier is committed to source control.
