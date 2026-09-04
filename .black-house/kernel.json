@@ -40,6 +40,15 @@
     "EVIDENCES"
   ],
   "cloudLayer": "Zyra Cloud",
+  "intelligence": {
+    "mode": "evidence_first",
+    "sources": [
+      ".black-house/intel/aipcon-9-2026-03-09.json"
+    ],
+    "ontology": "shared/ontology/palantir-agentic-runtime.yaml",
+    "publicReferencePolicy": "supplemental_until_first_party_reconciled",
+    "externalAuthorizationImplied": false
+  },
   "approvalAuthority": true,
   "failureState": "RED",
   "successState": "GREEN"
