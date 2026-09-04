@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "xunidirect-youtube-cleaner",
+  "displayName": "XuniDirect YouTube Cleaner",
+  "component": "XUNIDIRECT",
+  "controlPlane": "THE_BLACK_HOUSE_V1",
+  "kernelVersion": "3.0.0",
+  "kind": "BROWSER_EXTENSION",
+  "platform": "CHROME_MANIFEST_V3",
+  "executionMode": "HUMAN_CONFIRMED_EXTERNAL_ACTION",
+  "runtimeStatus": "LOCAL_FUNCTIONALITY_VERIFIED",
+  "storeStatus": "NOT_YET_PUBLISHED",
+  "purpose": "Allow the authenticated owner to inspect, filter, select, and remove their own YouTube subscriptions using the official YouTube Data API.",
+  "capabilities": [
+    "LIST_OWN_SUBSCRIPTIONS",
+    "FILTER_BY_SUBSCRIPTION_DATE",
+    "FILTER_BY_CHANNEL_NAME",
+    "PREVIEW_SELECTION",
+    "HUMAN_CONFIRM_BULK_UNSUBSCRIBE",
+    "DELETE_OWN_SUBSCRIPTION",
+    "EMIT_EXECUTION_EVIDENCE"
+  ],
+  "externalApis": [
+    {
+      "name": "YouTube Data API v3",
+      "provider": "Google",
+      "auth": "OAuth 2.0",
+      "scope": "https://www.googleapis.com/auth/youtube.force-ssl"
+    }
+  ],
+  "dataBoundary": {
+    "ownerScoped": true,
+    "thirdPartyAccountTargeting": false,
+    "backgroundCollection": false,
+    "browserHistoryCollection": false,
+    "remoteCodeExecution": false
+  },
+  "approvalPolicy": {
+    "previewRequired": true,
+    "explicitFinalConfirmationRequired": true,
+    "autonomousBulkDeleteAllowed": false,
+    "failClosedOnAuthError": true,
+    "failClosedOnQuotaError": true
+  },
+  "evidence": {
+    "requiredFields": [
+      "authenticated_owner_context",
+      "filter_criteria",
+      "matched_count",
+      "selected_count",
+      "deleted_count",
+      "failed_count",
+      "timestamp"
+    ]
+  },
+  "blackHouseFlow": [
+    "MISSION",
+    "POLICY",
+    "OWNER_AUTH",
+    "SELECTION_PREVIEW",
+    "HUMAN_APPROVAL",
+    "YOUTUBE_API_EXECUTION",
+    "RESULT",
+    "AUDIT_EVIDENCE"
+  ]
+}
