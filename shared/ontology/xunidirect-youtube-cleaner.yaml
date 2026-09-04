@@ -1,0 +1,84 @@
+ontology:
+  id: zyra:xunidirect-youtube-cleaner
+  version: 1.0.0
+  authority: THE_BLACK_HOUSE_V1
+  component: XUNIDIRECT
+  domain: browser_extension
+  purpose: owner-scoped YouTube subscription management
+
+objectTypes:
+  - id: XuniDirectTool
+    properties:
+      - id
+      - version
+      - platform
+      - runtimeStatus
+      - storeStatus
+
+  - id: SubscriptionSelection
+    properties:
+      - authenticatedOwner
+      - beforeDate
+      - afterDate
+      - channelNameFilter
+      - matchedCount
+      - selectedCount
+
+  - id: UnsubscribeAction
+    properties:
+      - subscriptionId
+      - channelId
+      - channelTitle
+      - requestedAt
+      - confirmedByHuman
+      - result
+
+  - id: ExecutionEvidence
+    properties:
+      - missionId
+      - selectedCount
+      - deletedCount
+      - failedCount
+      - quotaState
+      - completedAt
+
+relationships:
+  - from: XuniDirectTool
+    type: CREATES
+    to: SubscriptionSelection
+  - from: SubscriptionSelection
+    type: REQUIRES_HUMAN_APPROVAL_FOR
+    to: UnsubscribeAction
+  - from: UnsubscribeAction
+    type: EMITS
+    to: ExecutionEvidence
+  - from: XuniDirectTool
+    type: GOVERNED_BY
+    to: THE_BLACK_HOUSE_V1
+
+policies:
+  owner_scope_only: true
+  preview_before_delete: required
+  explicit_human_confirmation: required
+  autonomous_bulk_delete: forbidden
+  background_collection: forbidden
+  browser_history_collection: forbidden
+  remote_code_execution: forbidden
+  fail_closed_on_auth_error: true
+  fail_closed_on_quota_error: true
+
+externalIntegration:
+  provider: Google
+  service: YouTube Data API v3
+  oauthScope: https://www.googleapis.com/auth/youtube.force-ssl
+  transport: HTTPS
+
+missionFlow:
+  - MISSION
+  - POLICY
+  - OWNER_AUTH
+  - SELECTION_PREVIEW
+  - HUMAN_APPROVAL
+  - EXECUTION
+  - RESULT
+  - AUDIT_EVIDENCE
