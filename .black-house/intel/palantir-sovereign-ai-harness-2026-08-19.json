@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "BH-INTEL-SOVEREIGN-AI-HARNESS-2026-08-19",
+  "objectType": "IntelligenceBrief",
+  "controlPlane": "THE_BLACK_HOUSE_V1",
+  "title": "Sovereign AI Harness — Palantir architecture interview",
+  "source": {
+    "type": "PUBLIC_INTERVIEW_REFERENCE",
+    "uri": "https://www.youtube.com/watch?v=9eUUeTC6wnY",
+    "title": "EXCLUSIVE Interview w/ Top Palantir Architect",
+    "publisher": "Hans Nelson",
+    "guest": "Chad Wahlquist",
+    "publishedAt": "2026-08-19",
+    "metadataVerification": "VERIFIED_FROM_SUPPLIED_PUBLIC_PAGE",
+    "contentVerification": "SOURCE_SUMMARY_AND_CHAPTERS",
+    "promotionPolicy": "CORROBORATE_PRODUCT_CLAIMS_WITH_PALANTIR_FIRST_PARTY_DOCS"
+  },
+  "corroboratingSources": [
+    {
+      "type": "PALANTIR_FIRST_PARTY",
+      "uri": "https://www.palantir.com/docs/foundry/ontology/overview",
+      "purpose": "Corroborates Ontology as the governed semantic and kinetic layer for decision-making, actions, and functions."
+    },
+    {
+      "type": "PALANTIR_FIRST_PARTY",
+      "uri": "https://www.palantir.com/docs/foundry/aip-evals/overview",
+      "purpose": "Corroborates workflow-specific evaluation suites, model comparison, iteration, and production confidence."
+    },
+    {
+      "type": "PALANTIR_FIRST_PARTY",
+      "uri": "https://www.palantir.com/docs/foundry/aip-evolve/overview",
+      "purpose": "Corroborates bounded iterative optimization with candidate changes, validation, evidence, constraints, and human review before merge."
+    }
+  ],
+  "sourceThemes": [
+    "AI_SOVEREIGNTY_AND_DECISION_RIGHTS",
+    "MODEL_PORTABILITY_AND_LOCK_IN_RESILIENCE",
+    "BUSINESS_HARNESS_DATA_LOGIC_ACTIONS_SECURITY",
+    "WORKFLOW_SPECIFIC_EVALUATION_OVER_GENERIC_BENCHMARKS",
+    "POST_TRAINING_AND_FEEDBACK_FLYWHEEL",
+    "PRODUCTION_RELIABILITY_AND_SENSITIVE_DATA_CONTROLS",
+    "OUTCOME_DRIVEN_FORWARD_DEPLOYED_ENGINEERING",
+    "HUMAN_AUGMENTATION_OVER_REPLACEMENT"
+  ],
+  "publicNamedConcepts": [
+    {
+      "name": "Evolve",
+      "sourceStatus": "MENTIONED_IN_SUPPLIED_VIDEO_SUMMARY",
+      "firstPartyStatus": "CORROBORATED_AS_AIP_EVOLVE"
+    },
+    {
+      "name": "Trace Collector",
+      "sourceStatus": "MENTIONED_IN_SUPPLIED_VIDEO_SUMMARY",
+      "firstPartyStatus": "NOT_PROMOTED_TO_PRODUCT_SEMANTICS_WITHOUT_DOC_CORROBORATION"
+    },
+    {
+      "name": "Regress",
+      "sourceStatus": "MENTIONED_IN_SUPPLIED_VIDEO_SUMMARY",
+      "firstPartyStatus": "NOT_PROMOTED_TO_PRODUCT_SEMANTICS_WITHOUT_DOC_CORROBORATION"
+    },
+    {
+      "name": "Pass",
+      "sourceStatus": "MENTIONED_IN_SUPPLIED_VIDEO_SUMMARY",
+      "firstPartyStatus": "NOT_PROMOTED_TO_PRODUCT_SEMANTICS_WITHOUT_DOC_CORROBORATION"
+    }
+  ],
+  "blackHouseAdaptation": {
+    "primaryRule": "OWN_THE_HARNESS_NOT_THE_MODEL",
+    "harnessPlanes": [
+      "DATA",
+      "LOGIC",
+      "ACTIONS",
+      "SECURITY"
+    ],
+    "decisionLoop": [
+      "OBSERVE_REAL_WORK",
+      "CAPTURE_TRACE",
+      "MEASURE_OUTCOME",
+      "IDENTIFY_FAILURE_OR_COST",
+      "PROPOSE_BOUNDED_CHANGE",
+      "RUN_WORKFLOW_SPECIFIC_EVALS",
+      "COMPARE_BASELINE_AND_CANDIDATE",
+      "CHECK_REGRESSION_AND_SENSITIVE_DATA_POLICY",
+      "HUMAN_REVIEW",
+      "PROMOTE_OR_REJECT",
+      "PRESERVE_EVIDENCE"
+    ],
+    "sovereigntyRules": [
+      "The organization owns the ontology, policy, evaluation criteria, traces, evidence, and decision rights.",
+      "Models and providers are replaceable adapters rather than the source of authority.",
+      "A provider or model change must not silently change authorization, business logic, or action semantics.",
+      "No generic benchmark score can substitute for workflow-specific evaluation on representative business tasks.",
+      "Sensitive data policy is evaluated before context leaves its authorized boundary.",
+      "Consequential actions remain human-gated even when a candidate system outperforms the baseline."
+    ],
+    "humanAugmentation": {
+      "defaultMode": "COPILOT_WITH_GOVERNED_ACTIONS",
+      "measure": [
+        "operator_time_saved",
+        "decision_quality",
+        "task_accuracy",
+        "cost_per_successful_outcome",
+        "latency",
+        "regression_rate",
+        "human_override_rate"
+      ]
+    }
+  },
+  "targetLayers": [
+    "BLACK_HOUSE_KNOWLEDGE_BASE",
+    "PALANTIR_FOUNDRY_ONTOLOGY",
+    "PALANTIR_AIP",
+    "AIP_EVALS",
+    "AIP_EVOLVE",
+    "AI_FDE",
+    "GPT_DOUG_LLM",
+    "ZYRA",
+    "NXYZ",
+    "ZYRA_CLOUD"
+  ],
+  "policy": {
+    "publicReferenceOnly": true,
+    "externalAuthorizationImplied": false,
+    "thirdPartyEndorsementImplied": false,
+    "humanReviewForConsequentialAction": true,
+    "secretsAllowed": false,
+    "benchmarkOnlyPromotionAllowed": false
+  },
+  "ingestedAt": "2026-09-03T21:20:00-04:00"
+}
