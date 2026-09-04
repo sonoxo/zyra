@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>XuniDirect YouTube Cleaner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div><div class="brand">XUNIDIRECT</div><h1>YouTube Cleaner</h1></div>
+      <span id="authBadge" class="badge">Not connected</span>
+    </header>
+
+    <section id="setupPanel" class="panel setup hidden">
+      <h2>Authorization unavailable</h2>
+      <p>This production build requires its registered Google OAuth client. Reinstall or contact XuniDirect support if sign-in cannot start.</p>
+    </section>
+
+    <section class="panel controls">
+      <div class="row"><button id="connectBtn" class="primary">Connect YouTube</button><button id="disconnectBtn" class="ghost">Disconnect</button></div>
+      <div class="dateGrid">
+        <label>From date (optional)<input id="afterDate" type="date"></label>
+        <label>Before date<input id="beforeDate" type="date" value="2026-07-04"></label>
+      </div>
+      <label>Channel name contains (optional)<input id="nameFilter" type="text" placeholder="e.g. news, music, AI"></label>
+      <div class="row"><button id="scanBtn" class="primary">Scan subscriptions</button><button id="stopBtn" class="ghost" disabled>Stop</button></div>
+    </section>
+
+    <section class="stats">
+      <div><b id="totalCount">0</b><span>Total</span></div><div><b id="matchedCount">0</b><span>Matched</span></div>
+      <div><b id="selectedCount">0</b><span>Selected</span></div><div><b id="removedCount">0</b><span>Removed</span></div>
+    </section>
+
+    <section class="toolbar"><button id="selectAllBtn" class="small">Select all</button><button id="clearBtn" class="small">Clear</button><button id="removeBtn" class="danger" disabled>Unfollow selected</button></section>
+    <div id="status" class="status">Ready.</div>
+    <progress id="progress" value="0" max="100"></progress>
+    <section id="list" class="list"><div class="empty">Connect YouTube, then scan your subscriptions.</div></section>
+    <footer>Official YouTube Data API. No page-click automation.</footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
