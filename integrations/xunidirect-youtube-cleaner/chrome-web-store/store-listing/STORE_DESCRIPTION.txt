@@ -1,0 +1,38 @@
+XuniDirect YouTube Cleaner helps you review and clean up your own YouTube subscriptions from a focused Chrome extension.
+
+Instead of scrolling through a long subscriptions page and manually opening channels one at a time, XuniDirect uses the official YouTube Data API to retrieve the subscriptions on the Google account you authorize.
+
+KEY FEATURES
+
+• Filter by subscription date
+Choose a “before” date to find older subscriptions, add an optional “after” date for a specific time range, or combine both.
+
+• Search by channel name
+Narrow the results to channels whose names contain a word or phrase.
+
+• Preview before removal
+XuniDirect displays the subscriptions that match your filters before anything is changed.
+
+• Select exactly what you want to remove
+Choose individual channels, select all matching results, or clear the selection.
+
+• Human-confirmed unsubscribe
+Unsubscribe requests do not begin automatically. XuniDirect requires an explicit confirmation before selected subscriptions are removed.
+
+• Progress and result counts
+See total subscriptions, matched subscriptions, selected subscriptions, and completed removals in one interface.
+
+• Official API execution
+XuniDirect performs unsubscribe actions through the YouTube Data API rather than relying on fragile page-click automation.
+
+PRIVACY-FIRST DESIGN
+
+XuniDirect is designed for the signed-in user’s own YouTube account. It does not collect browser history, does not perform background surveillance, does not sell Google user data, and does not download or execute remote JavaScript.
+
+Google OAuth is used to authorize access to the YouTube Data API. Subscription metadata is used only for the subscription-management workflow and user-confirmed unsubscribe actions.
+
+SINGLE PURPOSE
+
+XuniDirect’s single purpose is to help users review and manage their own YouTube subscriptions by subscription date or channel name, with preview and explicit confirmation before unsubscribe actions.
+
+XuniDirect, XUNIA, ZYRA, and Black House are independent project/software architecture names. References to Google, Chrome, YouTube, and their APIs describe interoperability and do not imply endorsement, certification, or partnership.
