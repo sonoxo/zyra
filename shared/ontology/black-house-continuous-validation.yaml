@@ -1,15 +1,16 @@
 ontology:
   id: zyra:black-house-continuous-validation
-  version: 1.0.0
-  updatedAt: 2026-09-03
+  version: 1.1.0
+  updatedAt: 2026-09-04
   purpose: >-
-    Provide a zero-paid-API continuous validation loop for migration and operational workflows.
-    The loop compares source and target records, records deterministic evidence, fails closed when
-    validation falls below policy thresholds, and requires human review before consequential promotion.
+    Provide a zero-paid-API validation and closed-loop improvement system for migration and operational
+    workflows. The loop compares source and target records, records deterministic evidence, proposes a
+    reviewable correction when quality is below policy, re-validates the candidate, preserves only the
+    better result, and requires human review before consequential promotion.
 
   sourceIntelligence:
     primaryBrief: .black-house/intel/aipcon-9-2026-03-09.json
-    designPriority: CONTINUOUS_VALIDATION_WITH_MEASURABLE_OUTCOMES
+    designPriority: CONTINUOUS_VALIDATION_WITH_MEASURABLE_OUTCOMES_AND_ITERATIVE_IMPROVEMENT
 
   classes:
     - ValidationRun
@@ -18,6 +19,9 @@ ontology:
     - TargetSnapshot
     - ValidationMetric
     - ValidationDelta
+    - ImprovementProposal
+    - ImprovementCandidate
+    - PreservedResult
     - EvidenceArtifact
     - HumanReviewGate
     - PromotionDecision
@@ -32,6 +36,15 @@ ontology:
     governedBy:
       domain: ValidationRun
       range: ValidationPolicy
+    proposes:
+      domain: ValidationRun
+      range: ImprovementProposal
+    producesCandidate:
+      domain: ImprovementProposal
+      range: ImprovementCandidate
+    preserves:
+      domain: ValidationRun
+      range: PreservedResult
     produces:
       domain: ValidationRun
       range: EvidenceArtifact
@@ -53,22 +66,32 @@ ontology:
     - CALCULATE_VALIDATION_ACCURACY
     - RECORD_CHANGED_MISSING_UNEXPECTED
     - APPLY_THRESHOLD_POLICY
+    - IF_DEGRADED_PROPOSE_SOURCE_CANONICAL_RECONCILIATION
+    - REVALIDATE_CANDIDATE
+    - COMPARE_BEFORE_AND_AFTER
+    - PRESERVE_ONLY_BETTER_RESULT
     - EMIT_EVIDENCE
     - REQUIRE_HUMAN_REVIEW_FOR_CONSEQUENTIAL_PROMOTION
 
   runtime:
-    engine: scripts/black-house/continuous-validator.mjs
+    validator: scripts/black-house/continuous-validator.mjs
+    improver: scripts/black-house/closed-loop-improver.mjs
     paidApiRequired: false
     externalServiceRequired: false
+    externalModelRequired: false
     supportedInputs: [JSON, CSV]
     defaultKey: id
     defaultThresholdPct: 99
-    evidencePath: .black-house/evidence/continuous-validation.json
+    validationEvidencePath: .black-house/evidence/continuous-validation.json
+    improvementEvidencePath: .black-house/evidence/closed-loop-improvement.json
+    candidatePath: .black-house/evidence/improved-candidate.json
     ciWorkflow: .github/workflows/black-house-continuous-validation.yml
 
   invariants:
     - Validation evidence must contain hashes for source and target input material.
-    - Failed validation must return a non-zero process exit code.
-    - A passing validation does not itself authorize deployment or promotion.
+    - Improvement evidence must contain the before score, candidate score, preserved score, and candidate hash.
+    - The original target is never overwritten by the closed-loop engine.
+    - Only a higher-quality candidate may be preserved by the engine.
+    - A passing or improved validation does not itself authorize deployment or promotion.
     - Consequential promotion requires an explicit human review gate.
-    - No external API, model subscription, or paid inference service is required.
+    - No external API, model subscription, cloud account, or paid inference service is required.
