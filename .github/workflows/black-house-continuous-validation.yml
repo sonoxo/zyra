@@ -7,9 +7,12 @@ on:
     paths:
       - "scripts/black-house/continuous-validator.mjs"
       - "scripts/black-house/continuous-validator.test.mjs"
+      - "scripts/black-house/closed-loop-improver.mjs"
+      - "scripts/black-house/closed-loop-improver.test.mjs"
       - "examples/black-house-validation/**"
       - ".github/workflows/black-house-continuous-validation.yml"
       - "docs/BLACK-HOUSE-CONTINUOUS-VALIDATION.md"
+      - "shared/ontology/black-house-continuous-validation.yaml"
   workflow_dispatch:
 
 permissions:
@@ -34,6 +37,9 @@ jobs:
       - name: Run validator unit tests
         run: node --test scripts/black-house/continuous-validator.test.mjs
 
+      - name: Run closed-loop unit tests
+        run: node --test scripts/black-house/closed-loop-improver.test.mjs
+
       - name: Run migration validation proof
         run: |
           node scripts/black-house/continuous-validator.mjs \
@@ -43,18 +49,54 @@ jobs:
             --threshold 99 \
             --out .black-house/evidence/continuous-validation.json
 
+      - name: Run degraded-target closed-loop proof
+        run: |
+          node scripts/black-house/closed-loop-improver.mjs \
+            --source examples/black-house-validation/source.json \
+            --target examples/black-house-validation/target-degraded.json \
+            --key id \
+            --threshold 99 \
+            --candidate .black-house/evidence/improved-candidate.json \
+            --evidence .black-house/evidence/closed-loop-improvement.json
+
+      - name: Re-validate preserved candidate
+        run: |
+          node scripts/black-house/continuous-validator.mjs \
+            --source examples/black-house-validation/source.json \
+            --target .black-house/evidence/improved-candidate.json \
+            --key id \
+            --threshold 100 \
+            --out .black-house/evidence/post-improvement-validation.json
+
       - name: Publish evidence summary
         if: always()
         run: |
-          if [[ -f .black-house/evidence/continuous-validation.json ]]; then
-            node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(".black-house/evidence/continuous-validation.json","utf8"));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`# Black House Continuous Validation\n\n- Verdict: **${x.verdict}**\n- Accuracy: **${x.metrics.validationAccuracyPct}%**\n- Threshold: **${x.threshold}%**\n- Exact: ${x.metrics.exactMatches}\n- Changed: ${x.metrics.changedRecords}\n- Missing: ${x.metrics.missingRecords}\n- Unexpected: ${x.metrics.unexpectedRecords}\n- Engine: ${x.engine}\n`);'
-          fi
+          node <<'NODE'
+          const fs = require('fs');
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+          const read = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
+          const validation = read('.black-house/evidence/continuous-validation.json');
+          const loop = read('.black-house/evidence/closed-loop-improvement.json');
+          const post = read('.black-house/evidence/post-improvement-validation.json');
+          const lines = ['# Black House Continuous Validation + Closed Loop', ''];
+          if (validation) lines.push(`- Baseline proof: **${validation.verdict}** @ ${validation.metrics.validationAccuracyPct}%`);
+          if (loop) {
+            lines.push(`- Closed-loop status: **${loop.status}**`);
+            lines.push(`- Before: **${loop.before.metrics.validationAccuracyPct}%**`);
+            lines.push(`- Preserved candidate: **${loop.preserved.metrics.validationAccuracyPct}%**`);
+            lines.push(`- Accuracy gain: **${loop.improvement.accuracyGainPct}%**`);
+            lines.push(`- Issue reduction: **${loop.improvement.issueReduction}**`);
+            lines.push(`- Automatic deployment authorized: **${loop.policy.automaticDeploymentAuthorized}**`);
+          }
+          if (post) lines.push(`- Post-improvement verification: **${post.verdict}** @ ${post.metrics.validationAccuracyPct}%`);
+          fs.appendFileSync(summary, `${lines.join('\n')}\n`);
+          NODE
 
       - name: Upload validation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: black-house-continuous-validation-${{ github.run_id }}
-          path: .black-house/evidence/continuous-validation.json
+          path: .black-house/evidence/
           if-no-files-found: warn
           retention-days: 30
