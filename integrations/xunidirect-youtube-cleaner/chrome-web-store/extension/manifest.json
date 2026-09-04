@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "XuniDirect YouTube Cleaner",
+  "short_name": "XuniDirect",
+  "version": "1.0.1",
+  "description": "Clean up your own YouTube subscriptions by date or channel name with preview and confirmation before unfollowing.",
+  "minimum_chrome_version": "105",
+  "permissions": [
+    "identity",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*"
+  ],
+  "action": {
+    "default_title": "XuniDirect YouTube Cleaner",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "oauth2": {
+    "client_id": "REPLACE_WITH_CHROME_EXTENSION_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/youtube.force-ssl"
+    ]
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
