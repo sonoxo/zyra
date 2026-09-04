@@ -1,0 +1,265 @@
+ontology:
+  id: zyra:black-house-sovereign-ai-harness
+  version: 1.0.0
+  updatedAt: 2026-09-03
+  purpose: >-
+    Model a sovereign, portable, outcome-driven AI harness for The Black House. The ontology
+    separates organizational authority from any one model provider and connects real-work traces,
+    workflow-specific evaluations, bounded optimization proposals, sensitive-data controls,
+    human decision rights, and evidence-backed promotion.
+
+  sourceIntelligence:
+    primaryBrief: .black-house/intel/palantir-sovereign-ai-harness-2026-08-19.json
+    source: https://www.youtube.com/watch?v=9eUUeTC6wnY
+    sourceClass: PUBLIC_INTERVIEW_REFERENCE
+    controllingDocs:
+      - https://www.palantir.com/docs/foundry/ontology/overview
+      - https://www.palantir.com/docs/foundry/aip-evals/overview
+      - https://www.palantir.com/docs/foundry/aip-evals/experiments
+      - https://www.palantir.com/docs/foundry/aip-evolve/overview
+    designPriority: OWN_THE_HARNESS_NOT_THE_MODEL
+
+  harness:
+    planes:
+      DATA:
+        authority: ORGANIZATION
+        responsibilities:
+          - provenance
+          - schemas
+          - representative evaluation data
+          - lineage
+          - retention
+      LOGIC:
+        authority: ORGANIZATION
+        responsibilities:
+          - business rules
+          - functions
+          - prompts
+          - deterministic transforms
+          - policy-aware decision support
+      ACTIONS:
+        authority: ORGANIZATION
+        responsibilities:
+          - governed mutations
+          - tool calls
+          - approvals
+          - rollback
+          - side-effect evidence
+      SECURITY:
+        authority: ORGANIZATION
+        responsibilities:
+          - authorization
+          - data classification
+          - context boundaries
+          - egress policy
+          - audit
+
+  classes:
+    - SovereigntyPolicy
+    - BusinessHarness
+    - HarnessPlane
+    - ModelAdapter
+    - ModelCandidate
+    - ProviderBoundary
+    - Workflow
+    - WorkflowTask
+    - RepresentativeCase
+    - EvaluationSuite
+    - EvaluationCriterion
+    - EvaluationRun
+    - ExecutionTrace
+    - FeedbackSignal
+    - OutcomeMetric
+    - CostMetric
+    - RegressionGate
+    - SensitiveDataPolicy
+    - ContextBoundary
+    - EvolutionGoal
+    - EvolutionConstraint
+    - OptimizationProposal
+    - BaselineVersion
+    - CandidateVersion
+    - HumanReviewGate
+    - HumanDecision
+    - PromotionDecision
+    - EvidenceArtifact
+    - KnowledgeClaim
+    - PublicReference
+
+  relations:
+    owns:
+      domain: SovereigntyPolicy
+      range: BusinessHarness
+    containsPlane:
+      domain: BusinessHarness
+      range: HarnessPlane
+    bindsModel:
+      domain: BusinessHarness
+      range: ModelAdapter
+    adaptsCandidate:
+      domain: ModelAdapter
+      range: ModelCandidate
+    protectsBoundary:
+      domain: SovereigntyPolicy
+      range: ProviderBoundary
+    governsWorkflow:
+      domain: BusinessHarness
+      range: Workflow
+    decomposesInto:
+      domain: Workflow
+      range: WorkflowTask
+    evaluatedBy:
+      domain: Workflow
+      range: EvaluationSuite
+    containsCase:
+      domain: EvaluationSuite
+      range: RepresentativeCase
+    containsCriterion:
+      domain: EvaluationSuite
+      range: EvaluationCriterion
+    producesRun:
+      domain: EvaluationSuite
+      range: EvaluationRun
+    emitsTrace:
+      domain: Workflow
+      range: ExecutionTrace
+    producesFeedback:
+      domain: ExecutionTrace
+      range: FeedbackSignal
+    measuresOutcome:
+      domain: EvaluationRun
+      range: OutcomeMetric
+    measuresCost:
+      domain: EvaluationRun
+      range: CostMetric
+    checkedBy:
+      domain: CandidateVersion
+      range: RegressionGate
+    constrainedBy:
+      domain: Workflow
+      range: SensitiveDataPolicy
+    enforcesBoundary:
+      domain: SensitiveDataPolicy
+      range: ContextBoundary
+    optimizesFor:
+      domain: OptimizationProposal
+      range: EvolutionGoal
+    boundedBy:
+      domain: OptimizationProposal
+      range: EvolutionConstraint
+    comparesBaseline:
+      domain: OptimizationProposal
+      range: BaselineVersion
+    proposesCandidate:
+      domain: OptimizationProposal
+      range: CandidateVersion
+    requiresReview:
+      domain: PromotionDecision
+      range: HumanReviewGate
+    decidedBy:
+      domain: PromotionDecision
+      range: HumanDecision
+    evidences:
+      domain: EvidenceArtifact
+      range: EvaluationRun
+    derivedFrom:
+      domain: KnowledgeClaim
+      range: PublicReference
+
+  evaluationPolicy:
+    benchmarkPolicy: WORKFLOW_SPECIFIC_EVALS_PRIMARY
+    genericBenchmarks: SUPPLEMENTAL_ONLY
+    requiredComparisons:
+      - BASELINE_VS_CANDIDATE
+      - QUALITY
+      - COST
+      - LATENCY
+      - REGRESSION
+      - SENSITIVE_DATA_POLICY
+    representativeCaseRule: >-
+      Promotion evidence must include tasks representative of the real workflow; generic public
+      benchmark scores alone cannot authorize a model, prompt, workflow, or provider change.
+    nonDeterminismRule: >-
+      LLM-backed evaluations should support repeated runs and variance inspection when the task
+      can produce materially different outputs across executions.
+
+  improvementFlywheel:
+    - OBSERVE_REAL_WORK
+    - CAPTURE_EXECUTION_TRACE
+    - COLLECT_HUMAN_OR_SYSTEM_FEEDBACK
+    - IDENTIFY_FAILURE_COST_OR_LATENCY_TARGET
+    - DEFINE_BOUNDED_EVOLUTION_GOAL
+    - CREATE_CANDIDATE_CHANGE
+    - RUN_REPRESENTATIVE_EVALUATION_SUITE
+    - COMPARE_TO_BASELINE
+    - REJECT_REGRESSIONS
+    - CHECK_SENSITIVE_DATA_BOUNDARIES
+    - PRESERVE_SUPPORTING_EVIDENCE
+    - HUMAN_REVIEW
+    - PROMOTE_OR_REJECT
+    - FEED_APPROVED_RESULTS_BACK_INTO_KNOWLEDGE_BASE
+
+  sovereigntyPolicy:
+    organizationOwned:
+      - ontology
+      - business_logic
+      - action_semantics
+      - security_policy
+      - evaluation_criteria
+      - representative_test_cases
+      - traces
+      - feedback
+      - evidence
+      - promotion_decisions
+    replaceable:
+      - model
+      - model_provider
+      - inference_endpoint
+      - prompt_implementation
+      - optimization_strategy
+    forbiddenImplicitCoupling:
+      - provider_change_alters_authorization
+      - model_change_alters_action_semantics
+      - prompt_change_bypasses_policy
+      - benchmark_score_grants_production_authority
+
+  humanAugmentation:
+    operatingMode: HUMAN_PLUS_AI
+    principle: >-
+      Optimize for increased operator effectiveness and decision quality rather than assuming that
+      model autonomy or labor replacement is itself a successful outcome.
+    preferredMetrics:
+      - operator_time_saved
+      - task_accuracy
+      - decision_quality
+      - cost_per_successful_outcome
+      - latency
+      - regression_rate
+      - human_override_rate
+      - unresolved_exception_rate
+
+  publicConceptMapping:
+    AIP_EVOLVE:
+      localPattern: BOUNDED_EVOLUTION_PROPOSAL
+      verification: PALANTIR_DOCS_CORROBORATED
+    TRACE_COLLECTOR_MENTION:
+      localPattern: EXECUTION_TRACE_AND_FEEDBACK_CAPTURE
+      verification: VIDEO_SUMMARY_ONLY_NO_PRODUCT_SEMANTICS_INFERRED
+    REGRESS_MENTION:
+      localPattern: REGRESSION_GATE
+      verification: VIDEO_SUMMARY_ONLY_NO_PRODUCT_SEMANTICS_INFERRED
+    PASS_MENTION:
+      localPattern: SENSITIVE_DATA_AND_PROMOTION_POLICY
+      verification: VIDEO_SUMMARY_ONLY_NO_PRODUCT_SEMANTICS_INFERRED
+
+  invariants:
+    - The model is never the authority; the harness owns authority.
+    - Data, logic, actions, and security remain explicit governed planes.
+    - Model and provider portability must not change organizational decision rights.
+    - Workflow-specific evaluations outrank generic benchmark scores for promotion decisions.
+    - Candidate optimization must compare against a preserved baseline.
+    - A candidate with unacceptable regression is rejected even if it reduces cost or latency.
+    - Sensitive data must not cross an unauthorized context or provider boundary.
+    - Execution traces and feedback are evidence inputs, not automatic permission grants.
+    - Consequential promotion requires explicit human review.
+    - Public interview concepts remain provenance-bearing knowledge and do not imply Palantir affiliation, authorization, tenant access, or endorsement.
