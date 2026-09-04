@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 560" role="img" aria-labelledby="title desc">
+<title id="title">XuniDirect YouTube Cleaner</title>
+<desc id="desc">Beginner-friendly Chrome extension for cleaning up your own YouTube subscriptions.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" x2="1"><stop stop-color="#050914"/><stop offset="1" stop-color="#120b2b"/></linearGradient>
+  <linearGradient id="accent" x1="0" x2="1"><stop stop-color="#27e6ff"/><stop offset="1" stop-color="#9c6cff"/></linearGradient>
+  <linearGradient id="purple" x1="0" x2="1"><stop stop-color="#6fcfff"/><stop offset="1" stop-color="#b27cff"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#173049" stroke-width="1" opacity=".35"/></pattern>
+</defs>
+<rect width="1400" height="560" rx="28" fill="url(#bg)"/>
+<rect x="1.5" y="1.5" width="1397" height="557" rx="27" fill="none" stroke="url(#accent)" stroke-width="2" opacity=".7"/>
+<rect width="1400" height="560" rx="28" fill="url(#grid)" opacity=".45"/>
+<g font-family="Inter,Segoe UI,Arial,sans-serif">
+  <g transform="translate(54 42)">
+    <path d="M0 0L32 32M32 0L0 32" stroke="url(#accent)" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
+    <text x="54" y="25" fill="#f5f7ff" font-size="19" font-weight="700" letter-spacing="8">XUNIA</text>
+  </g>
+  <text x="58" y="145" font-size="67" font-weight="800" fill="url(#accent)">XuniDirect</text>
+  <text x="58" y="218" font-size="67" font-weight="800" fill="url(#purple)">YouTube Cleaner</text>
+  <rect x="58" y="245" width="610" height="2" fill="url(#accent)"/>
+  <text x="60" y="293" fill="#cbd5e1" font-size="24">Beginner-friendly Chrome extension for</text>
+  <text x="60" y="326" fill="#cbd5e1" font-size="24">cleaning up your own YouTube subscriptions.</text>
+
+  <g transform="translate(60 365)">
+    <g><rect width="290" height="126" rx="18" fill="#0a1422" stroke="#2de6ff" stroke-opacity=".45"/><circle cx="46" cy="50" r="28" fill="#071520" stroke="#2de6ff"/><path d="M46 32v31m-12-10 12 12 12-12" stroke="#2de6ff" stroke-width="3" fill="none"/><text x="90" y="43" fill="#2de6ff" font-size="20" font-weight="700">Local Install</text><text x="90" y="72" fill="#b8c5d8" font-size="15">Load the project directly</text><text x="90" y="94" fill="#b8c5d8" font-size="15">in your own browser.</text></g>
+    <g transform="translate(310)"><rect width="290" height="126" rx="18" fill="#0c1021" stroke="#9c6cff" stroke-opacity=".55"/><circle cx="46" cy="50" r="28" fill="#110b20" stroke="#9c6cff"/><path d="M30 50c9-15 23-15 32 0-9 15-23 15-32 0z" fill="none" stroke="#b58bff" stroke-width="2.5"/><circle cx="46" cy="50" r="5" fill="#b58bff"/><text x="90" y="43" fill="#aa7cff" font-size="20" font-weight="700">Preview First</text><text x="90" y="72" fill="#b8c5d8" font-size="15">Review matches before</text><text x="90" y="94" fill="#b8c5d8" font-size="15">anything is removed.</text></g>
+    <g transform="translate(620)"><rect width="290" height="126" rx="18" fill="#0a1422" stroke="#2de6ff" stroke-opacity=".45"/><circle cx="46" cy="50" r="28" fill="#071520" stroke="#2de6ff"/><path d="M33 37h26v26H33zM33 45h26" fill="none" stroke="#2de6ff" stroke-width="2.4"/><text x="90" y="43" fill="#2de6ff" font-size="20" font-weight="700">Official API</text><text x="90" y="72" fill="#b8c5d8" font-size="15">Authenticated requests</text><text x="90" y="94" fill="#b8c5d8" font-size="15">to YouTube Data API.</text></g>
+  </g>
+
+  <g transform="translate(760 70)">
+    <rect width="570" height="270" rx="24" fill="#08111d" stroke="#2de6ff" stroke-width="2" opacity=".98"/>
+    <rect x="18" y="18" width="534" height="42" rx="12" fill="#0e1a29"/><circle cx="38" cy="39" r="7" fill="#ff667d"/><circle cx="60" cy="39" r="7" fill="#ffd166"/><circle cx="82" cy="39" r="7" fill="#61e6ab"/><text x="116" y="46" fill="#e6edf8" font-size="16" font-weight="700">XuniDirect YouTube Cleaner</text>
+    <circle cx="190" cy="165" r="71" fill="none" stroke="#123e60" stroke-width="18"/><circle cx="190" cy="165" r="71" fill="none" stroke="url(#accent)" stroke-width="6" stroke-dasharray="140 320" transform="rotate(-45 190 165)" filter="url(#glow)"/>
+    <text x="165" y="176" fill="#d9e7ff" font-size="42">✦</text>
+    <rect x="320" y="85" width="205" height="130" rx="16" fill="#0c1827" stroke="#233b55"/><text x="340" y="111" fill="#91a7c0" font-size="14">SUBSCRIPTIONS</text><text x="340" y="151" fill="#ffffff" font-size="38" font-weight="800">842</text><text x="340" y="181" fill="#91a7c0" font-size="14">MARKED FOR REVIEW</text><text x="485" y="183" fill="#a77cff" font-size="20" font-weight="800">27</text>
+    <rect x="88" y="232" width="396" height="32" rx="16" fill="#0e1c2e"/><text x="112" y="253" fill="#2de6ff" font-size="14" font-weight="700">SCAN</text><text x="236" y="253" fill="#b58bff" font-size="14" font-weight="700">REVIEW</text><text x="380" y="253" fill="#61e6ab" font-size="14" font-weight="700">CLEAN</text>
+  </g>
+  <text x="1030" y="392" fill="#cfd8e8" font-size="17">Built for clear setup,</text><text x="1030" y="418" fill="#ae7cff" font-size="19" font-weight="800">easy learning,</text><text x="1030" y="444" fill="#cfd8e8" font-size="17">and controlled actions.</text>
+  <text x="70" y="535" fill="#8fa1b8" font-size="17">XuniDirect  •  Zyra  •  Black House  •  XUNIA</text>
+</g>
+</svg>
