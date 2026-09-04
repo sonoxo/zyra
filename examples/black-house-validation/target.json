@@ -1,0 +1,5 @@
+[
+  {"id":"A-100","system":"legacy","amount":"1250.00","status":"open"},
+  {"id":"A-101","system":"legacy","amount":"980.00","status":"closed"},
+  {"id":"A-102","system":"legacy","amount":"400.00","status":"open"}
+]
