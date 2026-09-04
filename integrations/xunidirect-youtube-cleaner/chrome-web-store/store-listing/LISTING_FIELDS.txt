@@ -1,0 +1,32 @@
+Chrome Web Store Item ID
+afmhdjmneddlnmfeimikfombdbmjmnjk
+
+Category
+Tools
+
+Language
+English (United States)
+
+Mature content
+No
+
+Official URL
+Leave as None until a publisher-owned site is verified in Google Search Console.
+
+Homepage URL
+https://github.com/sonoxo/zyra/tree/main/integrations/xunidirect-youtube-cleaner
+
+Support URL
+https://github.com/sonoxo/zyra/blob/main/integrations/xunidirect-youtube-cleaner/SUPPORT.md
+
+Privacy Policy URL
+https://github.com/sonoxo/zyra/blob/main/integrations/xunidirect-youtube-cleaner/PRIVACY.md
+
+Recommended visibility
+Public
+
+Recommended regions
+All regions unless the publisher has a specific legal/commercial reason to restrict distribution.
+
+Item support
+On
