@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "BH-INTEL-AIPCON9-2026-03-09",
+  "objectType": "IntelligenceBrief",
+  "controlPlane": "THE_BLACK_HOUSE_V1",
+  "title": "AIPCon 9 — Palantir AIP operational intelligence",
+  "publisher": "Palantir Technologies",
+  "source": {
+    "type": "PUBLIC_REFERENCE",
+    "uri": "https://www.youtube.com/watch?v=3O8isI3GJXU",
+    "title": "AIPCon 9 March 2026 | Livestream",
+    "publishedAt": "2026-03-09",
+    "metadataVerification": "VERIFIED_FROM_PUBLIC_SOURCE",
+    "contentVerification": "PARTIAL_FIRST_PARTY_CORROBORATION"
+  },
+  "corroboratingSources": [
+    {
+      "type": "PALANTIR_FIRST_PARTY",
+      "uri": "https://investors.palantir.com/files/Palantir%20-%20Q1%202026%20Business%20Update.pdf",
+      "purpose": "Corroborates selected AIPCon 9 customer outcomes and operational themes."
+    }
+  ],
+  "signals": [
+    {
+      "id": "aip-agents-enterprise-migration",
+      "theme": "agentic enterprise transformation",
+      "assessment": "AIP agents are being positioned as governed execution layers for high-friction enterprise workflows, including ERP and cloud migration rather than chat-only assistance.",
+      "confidence": "HIGH",
+      "basis": "Palantir first-party Q1 2026 business update describing AIPCon 9 customer deployment outcomes."
+    },
+    {
+      "id": "sap-validation-acceleration",
+      "theme": "migration validation",
+      "assessment": "Palantir reported early SAP-cloud migration engagements above 99% validation accuracy within two weeks and more than 70% timeline and cost reduction.",
+      "confidence": "HIGH",
+      "basis": "Palantir first-party Q1 2026 business update."
+    },
+    {
+      "id": "ge-aerospace-operational-ai",
+      "theme": "industrial operations",
+      "assessment": "AIP is being used in fleet-management and supply-chain workflows; GE Aerospace reported materially higher engine output in 2025 while presenting its Palantir-enabled operational transformation.",
+      "confidence": "HIGH",
+      "basis": "Palantir first-party Q1 2026 business update."
+    }
+  ],
+  "blackHouseImplications": [
+    "Treat AIP as a governed operational execution layer connected to ontology objects, actions, evidence, and approvals.",
+    "Prefer measurable workflow outcomes over generic model capability claims.",
+    "Model migration, validation, supply-chain, fleet, and other operational workflows as ontology-backed missions with explicit evidence.",
+    "Keep external video intelligence supplemental until reconciled with Palantir documentation or other first-party evidence.",
+    "Never infer external authorization, partnership, customer status, or deployment rights from public AIPCon material."
+  ],
+  "targetLayers": [
+    "PALANTIR_AIP",
+    "AIP_LOGIC",
+    "AI_FDE",
+    "PALANTIR_FOUNDRY_ONTOLOGY",
+    "AUTOMATE",
+    "ZYRA",
+    "NXYZ",
+    "ZYRA_CLOUD"
+  ],
+  "relationships": [
+    {"type": "DERIVED_FROM", "target": "youtube:3O8isI3GJXU"},
+    {"type": "EVIDENCES", "target": "zyra:palantir-agentic-runtime"}
+  ],
+  "policy": {
+    "publicReferenceOnly": true,
+    "externalAuthorizationImplied": false,
+    "humanReviewForConsequentialAction": true,
+    "secretsAllowed": false
+  },
+  "ingestedAt": "2026-09-03T20:28:00-04:00"
+}
