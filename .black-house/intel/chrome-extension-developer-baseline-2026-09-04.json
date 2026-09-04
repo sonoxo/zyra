@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceId": "chrome-extension-developer-baseline-2026-09-04",
+  "authority": "THE_BLACK_HOUSE_V1",
+  "sourceType": "PUBLIC_FIRST_PARTY_DOCUMENTATION",
+  "provider": "Google Chrome for Developers",
+  "retrievedAt": "2026-09-04",
+  "primaryUrl": "https://developer.chrome.com/docs/extensions/get-started",
+  "scope": "Chrome Extensions engineering and distribution baseline",
+  "verifiedConcepts": [
+    "MANIFEST_JSON_REQUIRED_AT_EXTENSION_ROOT",
+    "MANIFEST_V3_BASELINE",
+    "SERVICE_WORKER_BACKGROUND_RUNTIME",
+    "CONTENT_SCRIPT_PAGE_CONTEXT",
+    "ACTION_TOOLBAR_ENTRYPOINT",
+    "SIDE_PANEL_OPTIONAL_UI_SURFACE",
+    "DECLARATIVE_NET_REQUEST_NETWORK_POLICY_SURFACE",
+    "SINGLE_PURPOSE_STORE_QUALITY_EXPECTATION",
+    "ALL_EXECUTABLE_EXTENSION_LOGIC_PACKAGED_LOCALLY",
+    "CHROME_WEB_STORE_POLICY_COMPLIANCE_REQUIRED"
+  ],
+  "appliesTo": [
+    "XUNIDIRECT",
+    "FUTURE_XUNIA_CHROME_EXTENSIONS",
+    "ZYRA_BROWSER_TOOLS"
+  ],
+  "derivedStandard": "docs/BLACK_HOUSE_CHROME_EXTENSION_ENGINEERING_STANDARD.md",
+  "truthBoundary": "Public first-party engineering documentation used as a source and benchmark. This does not establish Google endorsement, certification, partnership, store approval, or privileged access."
+}
