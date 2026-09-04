@@ -1,4 +1,4 @@
-# Black House Continuous Validation
+# Black House Continuous Validation + Closed Loop Improvement
 
 Status: implemented in-repository.
 
@@ -6,7 +6,7 @@ This module turns the AIPCon 9 operational priority of measurable, continuously 
 
 ## What it does
 
-The validator compares a source dataset against a target dataset using a stable record key and produces deterministic validation evidence. It is designed for migration checks, configuration promotion, data-pipeline verification, and other before/after operational workflows.
+The validator compares a source dataset against a target dataset using a stable record key and produces deterministic validation evidence. The closed-loop improver then detects degraded results, proposes a correction candidate, re-runs validation, compares before/after quality, and preserves only the better result for review.
 
 It requires no paid model, paid API, Palantir enrollment, cloud account, or external service.
 
@@ -17,7 +17,7 @@ Requirements:
 - Node.js 20+
 - local JSON or CSV files
 
-Run:
+Baseline validation:
 
 ```bash
 node scripts/black-house/continuous-validator.mjs \
@@ -28,52 +28,69 @@ node scripts/black-house/continuous-validator.mjs \
   --out .black-house/evidence/continuous-validation.json
 ```
 
+Closed-loop improvement proof:
+
+```bash
+node scripts/black-house/closed-loop-improver.mjs \
+  --source examples/black-house-validation/source.json \
+  --target examples/black-house-validation/target-degraded.json \
+  --key id \
+  --threshold 99 \
+  --candidate .black-house/evidence/improved-candidate.json \
+  --evidence .black-house/evidence/closed-loop-improvement.json
+```
+
+## Closed-loop behavior
+
+```text
+SOURCE OF TRUTH
+      ↓
+DEGRADED TARGET
+      ↓
+VALIDATE + SCORE
+      ↓
+DETECT DELTAS
+      ↓
+PROPOSE RECONCILIATION CANDIDATE
+      ↓
+RE-VALIDATE
+      ↓
+COMPARE BEFORE / AFTER
+   ↙                 ↘
+WORSE / SAME       BETTER
+     ↓                ↓
+KEEP TARGET      PRESERVE CANDIDATE
+                      ↓
+                EVIDENCE ARTIFACT
+                      ↓
+              HUMAN REVIEW BEFORE
+              CONSEQUENTIAL PROMOTION
+```
+
+The engine never overwrites the original target. It emits a candidate file and evidence bundle. A better score does not authorize deployment.
+
 ## Evidence produced
 
-The evidence envelope records:
+Validation evidence records SHA-256 input hashes, exact-match count, changed/missing/unexpected records, validation accuracy, threshold, verdict, and bounded deltas.
 
-- SHA-256 hash of both source and target inputs
-- exact-match count
-- changed-record count
-- missing-record count
-- unexpected-record count
-- validation accuracy percentage
-- policy threshold
-- PASS / FAIL verdict
-- bounded delta samples for review
+Closed-loop evidence adds:
 
-A failed threshold exits non-zero, so the validator can gate CI or promotion workflows.
+- before validation score
+- candidate validation score
+- preserved score
+- accuracy gain
+- issue reduction
+- proposed reconciliation operation counts
+- candidate SHA-256 hash
+- explicit `originalTargetMutated: false`
+- explicit `humanReviewRequiredForPromotion: true`
+- explicit `automaticDeploymentAuthorized: false`
 
 ## GitHub integration
 
-`.github/workflows/black-house-continuous-validation.yml` runs the validator tests and a migration proof automatically, then uploads the evidence JSON as an Actions artifact.
+`.github/workflows/black-house-continuous-validation.yml` now runs both validator and closed-loop unit tests, proves a normal migration, intentionally feeds a degraded target into the improvement engine, re-validates the preserved candidate at 100%, and uploads the complete `.black-house/evidence/` directory as an Actions artifact.
 
-The workflow is intentionally deterministic and model-free. GitHub is used only as the repository CI surface; the validator itself runs locally with Node.
-
-## Black House policy
-
-```text
-SOURCE SNAPSHOT
-      ↓
-TARGET SNAPSHOT
-      ↓
-SHA-256 INPUT IDENTITY
-      ↓
-RECORD VALIDATION
-      ↓
-METRICS + DELTAS
-      ↓
-THRESHOLD POLICY
-   ↙       ↘
- FAIL      PASS
-  ↓         ↓
-BLOCK    EVIDENCE
-            ↓
-   HUMAN REVIEW IF
-   PROMOTION IS CONSEQUENTIAL
-```
-
-A PASS verdict means the configured validation threshold was met. It does not grant deployment permission, external authorization, or approval for a consequential action.
+The workflow is deterministic and model-free. GitHub is used only as the repository CI surface; both engines run locally with Node.
 
 ## Source intelligence
 
@@ -83,4 +100,4 @@ Design source:
 - Black House intelligence brief: `.black-house/intel/aipcon-9-2026-03-09.json`
 - Palantir enterprise migration material describing continuous validation and continuous improvement cycles.
 
-The implementation intentionally copies the operational pattern rather than Palantir proprietary software: measure, validate continuously, preserve evidence, iterate, and keep consequential promotion under human control.
+The implementation copies the operational pattern rather than Palantir proprietary software: measure, validate continuously, identify failure, propose a correction, re-run validation, preserve measurable improvement, retain evidence, and keep consequential promotion under human control.
