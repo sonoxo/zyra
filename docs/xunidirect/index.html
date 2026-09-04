@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#070a12" />
+<title>XuniDirect YouTube Cleaner — XUNIA</title>
+<meta name="description" content="Beginner-friendly Chrome extension for reviewing and cleaning up your own YouTube subscriptions." />
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><canvas id="stars" aria-hidden="true"></canvas>
+<header class="nav glass">
+  <a class="brand" href="#top"><span class="xmark">X</span><span>XUNIA</span></a>
+  <nav><a href="#beginner">Start here</a><a href="#how">How it works</a><a href="#ecosystem">Ecosystem</a><a href="#local">Run locally</a><a href="#status">Status</a></nav>
+  <a class="nav-cta" href="https://github.com/sonoxo/zyra/tree/main/integrations/xunidirect-youtube-cleaner/chrome-web-store/extension">View source</a>
+</header>
+<main id="top">
+<section class="hero section">
+  <div class="eyebrow reveal">XUNIA // BROWSER TOOL // BEGINNER MODE</div>
+  <h1 class="reveal">Clean up your YouTube subscriptions <span>without losing control.</span></h1>
+  <p class="lead reveal">XuniDirect helps you scan your own subscriptions, filter by date or channel name, preview exactly what matches, and explicitly confirm before anything is unfollowed.</p>
+  <div class="actions reveal"><a class="btn primary" href="#local">Run it locally</a><a class="btn" href="https://github.com/sonoxo/zyra/tree/main/integrations/xunidirect-youtube-cleaner/chrome-web-store">Open the Git</a></div>
+  <div class="media-frame tilt reveal"><div class="scanline"></div><img src="./assets/xunidirect-hero.svg" alt="XuniDirect beginner-friendly hero infographic" /></div>
+</section>
+
+<section id="beginner" class="section split">
+  <div class="section-copy reveal"><span class="kicker">START HERE</span><h2>Never built a Chrome extension before?</h2><p>You do not need to understand the whole codebase. Start with four concepts: the extension folder, <code>manifest.json</code>, Chrome Developer mode, and the XuniDirect popup.</p></div>
+  <div class="steps-grid">
+    <article class="glass card reveal"><span class="step">01</span><h3>Clone</h3><p>Copy the repo to your Mac.</p></article>
+    <article class="glass card reveal"><span class="step">02</span><h3>Open</h3><p>Go to the XuniDirect extension folder.</p></article>
+    <article class="glass card reveal"><span class="step">03</span><h3>Load</h3><p>Use Chrome → Extensions → Load unpacked.</p></article>
+    <article class="glass card reveal"><span class="step">04</span><h3>Scan</h3><p>Connect, choose a filter, preview, then act.</p></article>
+  </div>
+</section>
+
+<section id="how" class="section">
+  <div class="section-copy reveal"><span class="kicker">WHAT IT DOES</span><h2>One narrow purpose. One clear workflow.</h2><p>The extension is intentionally simple: it manages the authenticated user’s own YouTube subscriptions using the official YouTube Data API.</p></div>
+  <div class="flow reveal">
+    <div class="flow-node"><b>1</b><span>Connect</span><small>Authorize your YouTube account</small></div><i>→</i>
+    <div class="flow-node"><b>2</b><span>Scan</span><small>Load your subscriptions</small></div><i>→</i>
+    <div class="flow-node"><b>3</b><span>Filter</span><small>Date or channel name</small></div><i>→</i>
+    <div class="flow-node"><b>4</b><span>Preview</span><small>See every selected match</small></div><i>→</i>
+    <div class="flow-node"><b>5</b><span>Confirm</span><small>Human approval before delete</small></div>
+  </div>
+</section>
+
+<section id="local" class="section">
+  <div class="section-copy reveal"><span class="kicker">LOCAL RUN</span><h2>Four steps from GitHub to Chrome.</h2><p>This is the path to use when you want to test XuniDirect directly from the repository.</p></div>
+  <div class="media-frame tilt reveal"><div class="scanline violet"></div><img src="./assets/run-locally.svg" alt="Four-step beginner guide for running XuniDirect locally" /></div>
+  <div class="terminal glass reveal">
+    <div class="terminal-bar"><span></span><span></span><span></span><strong>Terminal</strong></div>
+    <div class="cmd"><code>git clone https://github.com/sonoxo/zyra.git</code><button data-copy="git clone https://github.com/sonoxo/zyra.git">Copy</button></div>
+    <div class="cmd"><code>cd zyra/integrations/xunidirect-youtube-cleaner/chrome-web-store/extension</code><button data-copy="cd zyra/integrations/xunidirect-youtube-cleaner/chrome-web-store/extension">Copy</button></div>
+    <div class="cmd"><code>open .</code><button data-copy="open .">Copy</button></div>
+  </div>
+  <div class="notice reveal"><strong>Beginner tip:</strong> in <code>chrome://extensions</code>, click <b>Load unpacked</b> and select the actual <b>extension folder</b> — not a ZIP file.</div>
+</section>
+
+<section id="ecosystem" class="section">
+  <div class="section-copy reveal"><span class="kicker">ECOSYSTEM</span><h2>Where XuniDirect fits.</h2><p>XuniDirect is the browser tool. Zyra is the platform layer. Black House is the project governance layer. The official YouTube Data API handles the external subscription data and confirmed actions.</p></div>
+  <div class="media-frame tilt reveal"><div class="scanline"></div><img src="./assets/ecosystem.svg" alt="Beginner-friendly XuniDirect ecosystem infographic" /></div>
+</section>
+
+<section id="status" class="section status-grid">
+  <article class="glass metric reveal"><span>Chrome Web Store</span><b>Draft</b><small>Item ID afmhdjmneddlnmfeimikfombdbmjmnjk</small></article>
+  <article class="glass metric reveal"><span>Architecture</span><b>Manifest V3</b><small>Popup + service worker + Google OAuth</small></article>
+  <article class="glass metric reveal"><span>Action model</span><b>Human confirmed</b><small>Preview before unsubscribe execution</small></article>
+  <article class="glass metric reveal"><span>Execution path</span><b>Official API</b><small>No YouTube page-click automation</small></article>
+</section>
+
+<section class="section final-cta reveal"><span class="kicker">SOURCE FIRST</span><h2>Read it. Run it. Change it.</h2><p>The Git repository is the source of truth. This page is designed to make that source understandable before you touch the code.</p><div class="actions"><a class="btn primary" href="https://github.com/sonoxo/zyra/tree/main/integrations/xunidirect-youtube-cleaner/chrome-web-store/extension">Open extension source</a><a class="btn" href="https://github.com/sonoxo/zyra/blob/main/docs/BLACK_HOUSE_CHROME_EXTENSION_ENGINEERING_STANDARD.md">Engineering standard</a></div></section>
+</main>
+<footer><span>XuniDirect • Zyra • Black House • XUNIA</span><span>Independent software project. Google/Chrome/YouTube references describe interoperability and do not imply endorsement.</span></footer>
+<script src="./app.js"></script>
+</body>
+</html>
