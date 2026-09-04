@@ -26,19 +26,39 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Build Pages artifact
         run: |
+          rm -rf _site
           mkdir -p _site/xunidirect
           cp -R docs/xunidirect/. _site/xunidirect/
+          touch _site/.nojekyll
+          touch _site/xunidirect/.nojekyll
           cat > _site/index.html <<'EOF'
-          <!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./xunidirect/"><title>XuniDirect</title></head><body><p><a href="./xunidirect/">Open XuniDirect</a></p></body></html>
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width,initial-scale=1">
+              <meta http-equiv="refresh" content="0; url=./xunidirect/">
+              <title>XuniDirect</title>
+            </head>
+            <body><p><a href="./xunidirect/">Open XuniDirect</a></p></body>
+          </html>
           EOF
+          test -f _site/xunidirect/index.html
+          test -f _site/xunidirect/styles.css
+          test -f _site/xunidirect/app.js
+          test -f _site/xunidirect/assets/xunidirect-hero.svg
+
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
