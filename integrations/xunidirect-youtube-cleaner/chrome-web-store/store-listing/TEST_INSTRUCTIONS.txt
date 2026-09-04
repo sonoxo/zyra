@@ -1,0 +1,24 @@
+XuniDirect YouTube Cleaner — Chrome Web Store Test Instructions
+
+No separate XuniDirect username/password is required.
+
+1. Install the extension.
+2. Click the XuniDirect toolbar icon.
+3. Click “Connect YouTube.”
+4. Complete Google OAuth with a Google account that has a YouTube channel and at least one subscription.
+5. Set “Before date” to a future date such as 2099-01-01 so existing subscriptions can be displayed, or choose another date appropriate for the test account.
+6. Click “Scan subscriptions.”
+7. Verify that total/matched counts and the subscription list are shown.
+8. Test the channel-name filter if desired.
+9. Select one test subscription that the reviewer is comfortable removing.
+10. Click “Unfollow selected.”
+11. Verify that a final confirmation is displayed before the unsubscribe action.
+12. Confirm. Verify the removed count updates and the selected subscription is no longer returned on the next scan.
+
+Important behavior:
+- XuniDirect does not unsubscribe automatically in the background.
+- A destructive action requires an explicit final confirmation.
+- If the test account has no subscriptions, subscribe to a test/public channel before testing the delete flow.
+- If YouTube API quota or OAuth errors occur, the extension fails closed and displays an error rather than silently continuing.
+
+No publisher-owned test credentials are necessary because the product’s purpose is to manage the Google/YouTube account authorized by the person using the extension.
