@@ -1,0 +1,74 @@
+ontology:
+  id: zyra:black-house-continuous-validation
+  version: 1.0.0
+  updatedAt: 2026-09-03
+  purpose: >-
+    Provide a zero-paid-API continuous validation loop for migration and operational workflows.
+    The loop compares source and target records, records deterministic evidence, fails closed when
+    validation falls below policy thresholds, and requires human review before consequential promotion.
+
+  sourceIntelligence:
+    primaryBrief: .black-house/intel/aipcon-9-2026-03-09.json
+    designPriority: CONTINUOUS_VALIDATION_WITH_MEASURABLE_OUTCOMES
+
+  classes:
+    - ValidationRun
+    - ValidationPolicy
+    - SourceSnapshot
+    - TargetSnapshot
+    - ValidationMetric
+    - ValidationDelta
+    - EvidenceArtifact
+    - HumanReviewGate
+    - PromotionDecision
+
+  relations:
+    validates:
+      domain: ValidationRun
+      range: TargetSnapshot
+    comparesAgainst:
+      domain: ValidationRun
+      range: SourceSnapshot
+    governedBy:
+      domain: ValidationRun
+      range: ValidationPolicy
+    produces:
+      domain: ValidationRun
+      range: EvidenceArtifact
+    reports:
+      domain: ValidationRun
+      range: ValidationMetric
+    detects:
+      domain: ValidationRun
+      range: ValidationDelta
+    requiresReview:
+      domain: PromotionDecision
+      range: HumanReviewGate
+
+  workflow:
+    - SNAPSHOT_SOURCE
+    - SNAPSHOT_TARGET
+    - HASH_INPUTS
+    - COMPARE_BY_STABLE_KEY
+    - CALCULATE_VALIDATION_ACCURACY
+    - RECORD_CHANGED_MISSING_UNEXPECTED
+    - APPLY_THRESHOLD_POLICY
+    - EMIT_EVIDENCE
+    - REQUIRE_HUMAN_REVIEW_FOR_CONSEQUENTIAL_PROMOTION
+
+  runtime:
+    engine: scripts/black-house/continuous-validator.mjs
+    paidApiRequired: false
+    externalServiceRequired: false
+    supportedInputs: [JSON, CSV]
+    defaultKey: id
+    defaultThresholdPct: 99
+    evidencePath: .black-house/evidence/continuous-validation.json
+    ciWorkflow: .github/workflows/black-house-continuous-validation.yml
+
+  invariants:
+    - Validation evidence must contain hashes for source and target input material.
+    - Failed validation must return a non-zero process exit code.
+    - A passing validation does not itself authorize deployment or promotion.
+    - Consequential promotion requires an explicit human review gate.
+    - No external API, model subscription, or paid inference service is required.
