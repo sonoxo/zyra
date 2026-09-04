@@ -1,0 +1,9 @@
+Distribution recommendation
+
+Visibility: Public
+Regions: All regions
+Pricing: Free
+Mature content: No
+Item support: On
+
+Do not claim the extension is approved or publicly available until Chrome Web Store review is complete.
