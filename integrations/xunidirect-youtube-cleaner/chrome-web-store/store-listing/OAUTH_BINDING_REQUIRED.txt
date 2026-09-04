@@ -1,0 +1,15 @@
+FINAL EXTERNAL FIELD — GOOGLE OAUTH CLIENT ID
+
+Chrome Web Store Item ID:
+afmhdjmneddlnmfeimikfombdbmjmnjk
+
+The production extension package still needs a Google OAuth client of application type “Chrome Extension” bound to the Store Item ID above.
+
+Replace this exact manifest value:
+REPLACE_WITH_CHROME_EXTENSION_OAUTH_CLIENT_ID.apps.googleusercontent.com
+
+with the real Chrome Extension OAuth Client ID generated in the publisher's Google Cloud project.
+
+This value cannot be fabricated by the package builder. It is issued by Google to the publisher's authenticated Cloud project.
+
+After replacement, re-zip the extension root so manifest.json is at the ZIP root and upload that final ZIP to the existing draft item.
