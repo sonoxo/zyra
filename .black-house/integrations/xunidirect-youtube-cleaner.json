@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.1",
+  "schemaVersion": "1.0.2",
   "id": "xunidirect-youtube-cleaner",
   "displayName": "XuniDirect YouTube Cleaner",
   "component": "XUNIDIRECT",
@@ -9,13 +9,22 @@
   "platform": "CHROME_MANIFEST_V3",
   "executionMode": "HUMAN_CONFIRMED_EXTERNAL_ACTION",
   "runtimeStatus": "LOCAL_FUNCTIONALITY_VERIFIED",
-  "storeStatus": "NOT_YET_PUBLISHED",
+  "storeStatus": "DRAFT_ITEM_CREATED",
+  "chromeWebStore": {
+    "itemId": "afmhdjmneddlnmfeimikfombdbmjmnjk",
+    "dashboardState": "DRAFT",
+    "listingPackagePrepared": true,
+    "privacyPolicyPublished": true,
+    "supportPagePublished": true,
+    "reviewSubmitted": false,
+    "approved": false
+  },
   "publicationAutomation": {
-    "status": "READY_FOR_PUBLISHER_AUTH",
-    "createItem": "AUTOMATED_VIA_CHROME_WEB_STORE_API_V1_INSERT",
-    "uploadPackage": "AUTOMATED",
-    "bindChromeOAuth": "GUIDED_HUMAN_AUTHORIZATION_REQUIRED",
-    "submitForReview": "AUTOMATED_AFTER_STORE_LISTING_AND_PRIVACY",
+    "status": "DRAFT_CREATED_PACKAGE_COMPLETION_IN_PROGRESS",
+    "createItem": "COMPLETED",
+    "uploadPackage": "DRAFT_PACKAGE_PRESENT",
+    "bindChromeOAuth": "EXTERNAL_OAUTH_CLIENT_ID_REQUIRED",
+    "submitForReview": "NOT_YET_SUBMITTED",
     "googleReview": "EXTERNAL_PROVIDER_CONTROLLED"
   },
   "purpose": "Allow the authenticated owner to inspect, filter, select, and remove their own YouTube subscriptions using the official YouTube Data API.",
@@ -36,10 +45,9 @@
       "scope": "https://www.googleapis.com/auth/youtube.force-ssl"
     },
     {
-      "name": "Chrome Web Store Publish API",
+      "name": "Chrome Web Store",
       "provider": "Google",
-      "auth": "OAuth 2.0",
-      "scope": "https://www.googleapis.com/auth/chromewebstore"
+      "itemId": "afmhdjmneddlnmfeimikfombdbmjmnjk"
     }
   ],
   "dataBoundary": {
