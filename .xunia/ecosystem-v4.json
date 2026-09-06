@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "ecosystem_version": "4.0.0",
+  "repo": "sonoxo/zyra",
+  "plane_id": "zyra",
+  "role": "governed-execution",
+  "control_root": "sonoxo/gpt-doug-llm",
+  "hub": "sonoxo/xuniahub",
+  "responsibilities": ["security gate", "approval", "bounded execution", "audit", "CI evidence", "tool integrations"],
+  "collective_ai_layers": ["classical_ai", "machine_learning", "neural_networks", "deep_learning", "generative_ai", "agentic_ai"],
+  "authority_boundary": "ZYRA executes only through explicit capabilities and permissions; repository or model identity does not create authority over external systems."
+}
