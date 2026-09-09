@@ -10,6 +10,7 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/zyra-eyes.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts server/nxyz-horizons.test.ts server/nxyz-microsoft-layer.test.ts",
+    "test:mission-contract": "node --test packages/mission-contract/contract.test.mjs && tsx --test server/xunia-security-platform.test.ts server/xunia-security-boundaries.test.ts server/black-house-kernel.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
