@@ -1,0 +1,22 @@
+name: Mission contract and security boundaries
+on:
+  pull_request:
+    paths:
+      - 'packages/mission-contract/**'
+      - 'server/xunia-security*'
+      - '.github/workflows/mission-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node --test packages/mission-contract/contract.test.mjs
+      - run: npx --no-install tsx --test server/xunia-security-platform.test.ts server/xunia-security-boundaries.test.ts server/black-house-kernel.test.ts
