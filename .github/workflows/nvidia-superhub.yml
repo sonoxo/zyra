@@ -1,0 +1,18 @@
+name: NVIDIA SuperHub
+on:
+  push:
+    paths: ['integrations/nvidia-superhub/**', 'package.json', '.github/workflows/nvidia-superhub.yml']
+  pull_request:
+    paths: ['integrations/nvidia-superhub/**', 'package.json', '.github/workflows/nvidia-superhub.yml']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 integrations/nvidia-superhub/test.py
+      - run: python3 integrations/nvidia-superhub/run.py --help

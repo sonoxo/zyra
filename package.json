@@ -10,7 +10,9 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "test": "tsx --test server/zyra-shield-core.test.ts server/engineering-context.test.ts server/managed-browser.test.ts server/zyra-eyes.test.ts server/contractops-evidence.test.ts server/contractops-scoring.test.ts server/contractops-proposal.test.ts server/contractops-package.test.ts server/nxyz-horizons.test.ts server/nxyz-microsoft-layer.test.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "nvidia": "python3 integrations/nvidia-superhub/run.py",
+    "nvidia:test": "python3 integrations/nvidia-superhub/test.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

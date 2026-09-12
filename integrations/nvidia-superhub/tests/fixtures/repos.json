@@ -1,0 +1,7 @@
+[
+  {"name":"NeMo","html_url":"https://github.com/NVIDIA/NeMo","clone_url":"https://github.com/NVIDIA/NeMo.git","description":"AI framework","language":"Python","stargazers_count":15000,"archived":false,"license":{"spdx_id":"Apache-2.0"},"updated_at":"2026-09-01T00:00:00Z"},
+  {"name":"Megatron-LM","description":"Large model training","stargazers_count":12000,"license":{"spdx_id":"BSD-3-Clause"}},
+  {"name":"TensorRT-LLM","description":"LLM inference","stargazers_count":11000,"license":{"spdx_id":"Apache-2.0"}},
+  {"name":"garak","description":"LLM vulnerability scanner","stargazers_count":7000,"license":{"spdx_id":"Apache-2.0"}}
+]
+

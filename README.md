@@ -311,3 +311,12 @@ Recommended starting points:
 **The Black House owns the global kernel. ZYRA owns its registered security and execution boundary. Human authority remains explicit.**
 
 </div>
+
+## NVIDIA ecosystem tools
+
+Integrated [NVIDIA SuperHub](integrations/nvidia-superhub/README.md) provides public
+repository discovery, search, stack plans, ontology metadata export and reviewed
+local checkouts. Run `npm run nvidia -- catalog`, then `npm run nvidia -- graph`.
+Validate offline with `npm run nvidia:test`. These commands do not provision GPUs
+or automatically activate upstream models. ZYRA approval and Black House authority
+remain unchanged.
