@@ -28,6 +28,19 @@
   <a href="https://github.com/sonoxo/zyra/actions/workflows/zyra-eyes-ci.yml"><img src="https://github.com/sonoxo/zyra/actions/workflows/zyra-eyes-ci.yml/badge.svg?branch=main" alt="ZYRA Eyes CI" /></a>
 </p>
 
+### Defensive awareness live stack
+
+<p align="center">
+  <a href="https://github.com/nasa/openmct"><img src="https://img.shields.io/github/last-commit/nasa/openmct?label=Open%20MCT" alt="Open MCT upstream activity" /></a>
+  <a href="https://github.com/CesiumGS/cesium"><img src="https://img.shields.io/github/last-commit/CesiumGS/cesium?label=CesiumJS" alt="CesiumJS upstream activity" /></a>
+  <a href="https://github.com/dstl/Stone-Soup"><img src="https://img.shields.io/github/last-commit/dstl/Stone-Soup?label=Stone%20Soup" alt="Stone Soup upstream activity" /></a>
+  <a href="https://github.com/sandialabs/tracktable"><img src="https://img.shields.io/github/last-commit/sandialabs/tracktable?label=Tracktable" alt="Tracktable upstream activity" /></a>
+  <a href="https://github.com/postgis/postgis"><img src="https://img.shields.io/github/last-commit/postgis/postgis?label=PostGIS" alt="PostGIS upstream activity" /></a>
+  <a href="https://github.com/maplibre/maplibre-gl-js"><img src="https://img.shields.io/github/last-commit/maplibre/maplibre-gl-js?label=MapLibre" alt="MapLibre upstream activity" /></a>
+</p>
+
+ZYRA now carries a governed registry for authorized live telemetry, real-world geospatial awareness, sensor health, anomaly detection, safety geofences, and historical playback. See [`docs/DEFENSIVE-AWARENESS-OSS.md`](docs/DEFENSIVE-AWARENESS-OSS.md) and the machine-readable [`docs/defensive-awareness-oss.json`](docs/defensive-awareness-oss.json). The badges above update automatically from upstream GitHub activity.
+
 ---
 
 ## The hierarchy
@@ -283,6 +296,7 @@ Recommended starting points:
 - [`docs/ECOSYSTEM-BEGINNER.md`](docs/ECOSYSTEM-BEGINNER.md)
 - [`docs/ZYRA-EYES-RVIA.md`](docs/ZYRA-EYES-RVIA.md)
 - [`docs/NXYZ-MICROSOFT-OSS-LAYER.md`](docs/NXYZ-MICROSOFT-OSS-LAYER.md)
+- [`docs/DEFENSIVE-AWARENESS-OSS.md`](docs/DEFENSIVE-AWARENESS-OSS.md)
 - [`ZYRA.README.md`](ZYRA.README.md)
 - [`.black-house/kernel.json`](.black-house/kernel.json)
 
