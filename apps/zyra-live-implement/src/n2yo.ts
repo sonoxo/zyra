@@ -137,6 +137,11 @@ function aboveGeoJSON(body: any) {
 
 function fail(res: Response, error: unknown) {
   const status = Number((error as any)?.statusCode || 502);
+  if (res.headersSent) {
+    res.write(`event: error\ndata: ${JSON.stringify({ provider: "n2yo", error: String(error) })}\n\n`);
+    res.end();
+    return;
+  }
   res.status(status).json({ ok: false, provider: "n2yo", error: String(error) });
 }
 
