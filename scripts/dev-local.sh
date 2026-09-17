@@ -53,12 +53,53 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 export DATABASE_URL="${DATABASE_URL:-postgresql://zyra_dev:zyra_dev_local@127.0.0.1:5432/zyra}"
-export PORT="${PORT:-5001}"
 export NODE_ENV="development"
 
 if [ -z "${JWT_SECRET:-}" ]; then
   export JWT_SECRET="$(openssl rand -hex 32)"
 fi
+
+START_PORT="${PORT:-5001}"
+if ! [[ "$START_PORT" =~ ^[0-9]+$ ]] || [ "$START_PORT" -lt 1024 ] || [ "$START_PORT" -gt 65535 ]; then
+  START_PORT=5001
+fi
+
+# Ask Node itself which TCP port is actually bindable on 0.0.0.0. This is
+# more reliable on macOS than assuming lsof output means a port is reusable.
+PORT="$(node - "$START_PORT" <<'NODE'
+const net = require('net');
+let port = Number(process.argv[2] || 5001);
+const limit = Math.min(port + 100, 65535);
+
+function probe() {
+  if (port > limit) {
+    console.error('No free Zyra development port found in scan range.');
+    process.exit(1);
+  }
+
+  const server = net.createServer();
+  server.unref();
+  server.once('error', (err) => {
+    if (err && (err.code === 'EADDRINUSE' || err.code === 'EACCES')) {
+      port += 1;
+      probe();
+      return;
+    }
+    console.error(err && err.message ? err.message : String(err));
+    process.exit(1);
+  });
+  server.listen({ host: '0.0.0.0', port, exclusive: true }, () => {
+    const chosen = port;
+    server.close(() => {
+      process.stdout.write(String(chosen));
+    });
+  });
+}
+
+probe();
+NODE
+)"
+export PORT
 
 cat > "$ENV_FILE" <<EOF
 export DATABASE_URL='$DATABASE_URL'
@@ -82,7 +123,7 @@ printf '%s\n' "======================================" \
   "DATABASE : ONLINE" \
   "PORT     : $PORT" \
   "HEALTH   : http://127.0.0.1:$PORT/health" \
-  "NOTE     : port 5001 avoids macOS AirTunes/AirPlay on 5000" \
+  "NOTE     : port is selected automatically if the preferred port is busy" \
   "======================================"
 echo
 
