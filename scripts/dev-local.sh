@@ -59,13 +59,21 @@ if [ -z "${JWT_SECRET:-}" ]; then
   export JWT_SECRET="$(openssl rand -hex 32)"
 fi
 
+if [ ! -x node_modules/.bin/tsx ]; then
+  echo "[ZYRA] installing Node dependencies..."
+  npm ci
+fi
+
+echo "[ZYRA] applying database schema..."
+npm run db:push
+
 START_PORT="${PORT:-5001}"
 if ! [[ "$START_PORT" =~ ^[0-9]+$ ]] || [ "$START_PORT" -lt 1024 ] || [ "$START_PORT" -gt 65535 ]; then
   START_PORT=5001
 fi
 
-# Ask Node itself which TCP port is actually bindable on 0.0.0.0. This is
-# more reliable on macOS than assuming lsof output means a port is reusable.
+# Probe immediately before launch so a stale or occupied port cannot kill the
+# whole local stack after PostgreSQL and schema setup have already succeeded.
 PORT="$(node - "$START_PORT" <<'NODE'
 const net = require('net');
 let port = Number(process.argv[2] || 5001);
@@ -90,9 +98,7 @@ function probe() {
   });
   server.listen({ host: '0.0.0.0', port, exclusive: true }, () => {
     const chosen = port;
-    server.close(() => {
-      process.stdout.write(String(chosen));
-    });
+    server.close(() => process.stdout.write(String(chosen)));
   });
 }
 
@@ -107,14 +113,6 @@ export JWT_SECRET='$JWT_SECRET'
 export PORT='$PORT'
 EOF
 chmod 600 "$ENV_FILE"
-
-if [ ! -x node_modules/.bin/tsx ]; then
-  echo "[ZYRA] installing Node dependencies..."
-  npm ci
-fi
-
-echo "[ZYRA] applying database schema..."
-npm run db:push
 
 echo
 printf '%s\n' "======================================" \
