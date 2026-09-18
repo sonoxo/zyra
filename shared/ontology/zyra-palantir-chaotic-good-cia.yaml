@@ -1,0 +1,526 @@
+ontology:
+  id: zyra:palantir-chaotic-good-cia
+  version: 1.0.0
+  updatedAt: 2026-09-18
+  status: OWNER_GOVERNANCE_BASELINE
+
+  naming:
+    VA: VIRGINIA_RUNTIME_LANGUAGE
+    RVIA: GPT_DOUG_LLM_MAX_ZYRA_XUNIA_NXYZ_UNIFIED_RUNTIME
+    GPT_DOUG_LLM_MAX: REASONING_AND_PLANNING_ROLE
+    ZYRA: POLICY_SECURITY_APPROVAL_EXECUTION_AUDIT_SHELL
+    XUNIA: APPLICATION_AGENT_ORCHESTRATION_LAYER
+    NXYZ: ONTOLOGY_EVIDENCE_NORMALIZATION_LAYER
+    GOD_MODE: MAXIMUM_OWNER_AUTHORIZED_CAPABILITY_PROFILE_NOT_A_POLICY_BYPASS
+    CHAOTIC_GOOD: HIGH_VARIANCE_IDEATION_PROFILE_STRICTLY_GOVERNED_AT_EXECUTION
+    CIA: CONFIDENTIALITY_INTEGRITY_AVAILABILITY_TRIAD_NOT_INTELLIGENCE_AGENCY
+
+  purpose: >-
+    Define a Palantir-ready operational ontology for GPT-Doug-LLM-Max, ZYRA, XUNIA,
+    NXYZ, VA, and RVIA. The ontology allows aggressive idea generation and rapid
+    proposal branching under CHAOTIC_GOOD while preserving authorization,
+    confidentiality, integrity, availability, provenance, human decision rights,
+    reversible execution where practical, and complete audit evidence.
+    GOD_MODE increases owner-authorized capability only; it never bypasses law,
+    authentication, Palantir permissions, platform controls, third-party rights,
+    data-handling requirements, or human approval for consequential actions.
+
+  semanticBoundary:
+    ciaMeaning: CONFIDENTIALITY_INTEGRITY_AVAILABILITY
+    ciaAgencyMeaning: NOT_USED
+    governmentAffiliationImplied: false
+    authorityInflationAllowed: false
+    classifiedEnvironmentAssumed: false
+
+  platform:
+    operationalGraph: PALANTIR_FOUNDRY_ONTOLOGY
+    aiLayer: PALANTIR_AIP
+    integration:
+      - OSDK
+      - ONTOLOGY_MCP
+      - PALANTIR_MCP
+      - AIP_LOGIC
+      - AUTOMATE
+      - AIP_EVALS
+      - AIP_EVOLVE
+    actionRule: EXPLICIT_ONTOLOGY_ACTIONS_ONLY_FOR_MUTATION
+    directUntrackedMutation: DENY
+
+  runtimeProfiles:
+    OBSERVE:
+      reads: true
+      plans: false
+      writes: false
+      humanApproval: false
+
+    SIMULATE:
+      reads: true
+      plans: true
+      writes: SIMULATED_ONLY
+      humanApproval: false
+
+    OWNER_CONTROLLED:
+      reads: true
+      plans: true
+      writes: AUTHORIZED_AND_AUDITED
+      humanApproval: CONSEQUENTIAL_ACTIONS
+
+    CHAOTIC_GOOD:
+      reads: true
+      plans: HIGH_VARIANCE_PARALLEL
+      writes: PROPOSAL_ONLY
+      humanApproval: true
+      noveltyBudget: HIGH
+      bypassControls: false
+      executionRule: MUST_TRANSITION_THROUGH_ZYRA_GATE
+
+    GOD_MODE:
+      reads: MAXIMUM_CONFIGURED_AUTHORIZED
+      plans: MAXIMUM_CONFIGURED_AUTHORIZED
+      writes: MAXIMUM_CONFIGURED_AUTHORIZED
+      humanApproval: CONSEQUENTIAL_ACTIONS
+      legalOverride: false
+      policyOverride: false
+      authenticationBypass: false
+      authorizationBypass: false
+      platformControlBypass: false
+      thirdPartyPermissionBypass: false
+
+    CHAOTIC_GOOD_GOD_MODE:
+      ideation: HIGH_VARIANCE_PARALLEL
+      execution: MAXIMUM_CONFIGURED_AUTHORIZED
+      humanApproval: CONSEQUENTIAL_ACTIONS
+      stricterRuleWins: true
+      legalOverride: false
+      policyOverride: false
+      authenticationBypass: false
+      authorizationBypass: false
+      platformControlBypass: false
+      thirdPartyPermissionBypass: false
+
+  ciaObjectives:
+    CONFIDENTIALITY:
+      goal: Prevent unauthorized disclosure or exposure.
+      defaultControls:
+        - LEAST_PRIVILEGE
+        - DATA_MINIMIZATION
+        - SECRET_REDACTION
+        - SENSITIVE_DATA_BOUNDARY
+        - EXPLICIT_EGRESS_POLICY
+        - OBJECT_LEVEL_SECURITY
+
+    INTEGRITY:
+      goal: Preserve correctness, provenance, and authorized state transitions.
+      defaultControls:
+        - IMMUTABLE_AUDIT_EVIDENCE
+        - SOURCE_PROVENANCE
+        - BASELINE_COMPARISON
+        - HUMAN_REVIEW_FOR_CONSEQUENTIAL_WRITES
+        - SIGNED_OR_HASHED_EVIDENCE_WHERE_AVAILABLE
+        - POSTCONDITION_VALIDATION
+
+    AVAILABILITY:
+      goal: Preserve authorized service continuity and recoverability.
+      defaultControls:
+        - HEALTH_CHECKS
+        - RATE_LIMITS
+        - REVERSIBLE_ACTIONS
+        - FAILSAFE
+        - ROLLBACK_PLAN
+        - DEGRADED_MODE
+        - RECOVERY_EVIDENCE
+
+  classes:
+    - Mission
+    - MissionIntent
+    - RuntimeProfile
+    - Agent
+    - HumanOperator
+    - SystemAsset
+    - DataAsset
+    - OntologyResource
+    - AuthorizationState
+    - AuthorizationEvidence
+    - CIAObjective
+    - CIAAssessment
+    - RiskFinding
+    - Control
+    - ActionProposal
+    - ActionPlan
+    - HumanApproval
+    - OntologyAction
+    - ExecutionAttempt
+    - PostconditionCheck
+    - AuditEvent
+    - EvidenceRecord
+    - ModelAdapter
+    - EvaluationSuite
+    - EvaluationRun
+    - PromotionDecision
+    - RecoveryPlan
+
+  objectTypes:
+    Mission:
+      primaryKey: missionId
+      properties:
+        - missionId
+        - title
+        - requestedBy
+        - createdAt
+        - purpose
+        - targetScope
+        - profile
+        - status
+        - authorizationState
+        - ciaPriority
+        - riskTier
+
+    SystemAsset:
+      primaryKey: assetId
+      properties:
+        - assetId
+        - name
+        - owner
+        - environment
+        - criticality
+        - authorizationBoundary
+        - availabilityState
+        - lastVerifiedAt
+
+    DataAsset:
+      primaryKey: dataAssetId
+      properties:
+        - dataAssetId
+        - classification
+        - sensitivity
+        - owner
+        - residency
+        - retentionPolicy
+        - provenance
+        - approvedConsumers
+
+    CIAAssessment:
+      primaryKey: assessmentId
+      properties:
+        - assessmentId
+        - confidentialityScore
+        - integrityScore
+        - availabilityScore
+        - confidence
+        - evidenceState
+        - assessedAt
+        - assessor
+
+    ActionProposal:
+      primaryKey: proposalId
+      properties:
+        - proposalId
+        - missionId
+        - proposedBy
+        - actionType
+        - target
+        - parameters
+        - reversible
+        - expectedOutcome
+        - expectedCIAImpact
+        - noveltyScore
+        - status
+
+    OntologyAction:
+      primaryKey: actionId
+      properties:
+        - actionId
+        - actionType
+        - target
+        - authorizationState
+        - approvalState
+        - executionState
+        - startedAt
+        - completedAt
+        - rollbackAvailable
+
+    EvidenceRecord:
+      primaryKey: evidenceId
+      properties:
+        - evidenceId
+        - evidenceType
+        - source
+        - sourceHash
+        - collectedAt
+        - verificationState
+        - classification
+        - retentionPolicy
+
+    AuditEvent:
+      primaryKey: eventId
+      properties:
+        - eventId
+        - timestamp
+        - actor
+        - action
+        - resource
+        - result
+        - policyDecision
+        - evidenceRefs
+
+  relations:
+    missionUsesProfile:
+      domain: Mission
+      range: RuntimeProfile
+
+    missionTargetsAsset:
+      domain: Mission
+      range: SystemAsset
+
+    missionTouchesData:
+      domain: Mission
+      range: DataAsset
+
+    missionRequiresAuthorization:
+      domain: Mission
+      range: AuthorizationState
+
+    authorizationSupportedBy:
+      domain: AuthorizationState
+      range: AuthorizationEvidence
+
+    missionHasAssessment:
+      domain: Mission
+      range: CIAAssessment
+
+    assessmentIdentifies:
+      domain: CIAAssessment
+      range: RiskFinding
+
+    findingMitigatedBy:
+      domain: RiskFinding
+      range: Control
+
+    missionProducesProposal:
+      domain: Mission
+      range: ActionProposal
+
+    proposalRequiresApproval:
+      domain: ActionProposal
+      range: HumanApproval
+
+    approvedProposalMapsTo:
+      domain: ActionProposal
+      range: OntologyAction
+
+    actionProducesAttempt:
+      domain: OntologyAction
+      range: ExecutionAttempt
+
+    attemptRequiresPostcondition:
+      domain: ExecutionAttempt
+      range: PostconditionCheck
+
+    actionEmitsAudit:
+      domain: OntologyAction
+      range: AuditEvent
+
+    auditSupportedBy:
+      domain: AuditEvent
+      range: EvidenceRecord
+
+    actionMayUseRecovery:
+      domain: OntologyAction
+      range: RecoveryPlan
+
+    modelEvaluatedBy:
+      domain: ModelAdapter
+      range: EvaluationSuite
+
+    evaluationProduces:
+      domain: EvaluationSuite
+      range: EvaluationRun
+
+    promotionRequires:
+      domain: PromotionDecision
+      range: EvaluationRun
+
+  actionTypes:
+    proposeMissionAction:
+      effect: CREATE_ACTION_PROPOSAL
+      execution: PROPOSAL_ONLY
+      permittedProfiles:
+        - SIMULATE
+        - OWNER_CONTROLLED
+        - CHAOTIC_GOOD
+        - GOD_MODE
+        - CHAOTIC_GOOD_GOD_MODE
+      requires:
+        - MISSION_EXISTS
+        - TARGET_SCOPE_DEFINED
+        - PURPOSE_DEFINED
+
+    evaluateCIAImpact:
+      effect: CREATE_OR_UPDATE_CIA_ASSESSMENT
+      execution: READ_ANALYZE_WRITE_EVIDENCE
+      requires:
+        - TARGET_SCOPE_DEFINED
+        - SOURCE_PROVENANCE_AVAILABLE
+
+    approveActionProposal:
+      effect: SET_APPROVAL_STATE
+      execution: HUMAN_ONLY
+      requires:
+        - IDENTIFIED_HUMAN_OPERATOR
+        - AUTHORIZATION_VERIFIED
+        - CIA_ASSESSMENT_COMPLETE
+        - MATERIAL_RISKS_DISCLOSED
+
+    executeGovernedAction:
+      effect: EXECUTE_ALLOWLISTED_ONTOLOGY_ACTION
+      execution: GOVERNED_WRITE
+      requires:
+        - AUTHORIZATION_VERIFIED
+        - POLICY_GATE_ALLOW
+        - REQUIRED_HUMAN_APPROVAL_PRESENT
+        - TARGET_WITHIN_SCOPE
+        - CIA_IMPACT_ACCEPTED
+        - AUDIT_SINK_AVAILABLE
+      deniedWhen:
+        - AUTHORIZATION_UNCLEAR
+        - TARGET_OUTSIDE_SCOPE
+        - POLICY_GATE_DENY
+        - REQUIRED_APPROVAL_MISSING
+        - AUDIT_SINK_UNAVAILABLE
+        - CLASSIFICATION_ENVIRONMENT_MISMATCH
+
+    rollbackGovernedAction:
+      effect: RESTORE_VERIFIED_BASELINE
+      execution: GOVERNED_WRITE
+      requires:
+        - ROLLBACK_AVAILABLE
+        - AUTHORIZATION_VERIFIED
+        - ROLLBACK_SCOPE_VERIFIED
+      emits:
+        - POSTCONDITION_CHECK
+        - AUDIT_EVENT
+        - EVIDENCE_RECORD
+
+    verifyPostconditions:
+      effect: RECORD_VERIFIED_RESULT
+      execution: READ_ONLY
+      requires:
+        - EXECUTION_ATTEMPT_EXISTS
+      verifies:
+        - EXPECTED_STATE
+        - CONFIDENTIALITY_NOT_DEGRADED
+        - INTEGRITY_NOT_DEGRADED
+        - AVAILABILITY_WITHIN_ACCEPTED_BOUND
+        - AUDIT_COMPLETE
+
+  chaoticGoodPlanner:
+    role: IDEA_GENERATION_ONLY_UNTIL_GATED
+    allowed:
+      - GENERATE_MULTIPLE_PLANS
+      - SEEK_LOWER_COMPLEXITY_PATHS
+      - PROPOSE_REVERSIBLE_EXPERIMENTS
+      - CHALLENGE_ASSUMPTIONS
+      - IDENTIFY_UNDERUSED_EXISTING_CAPABILITIES
+      - OPTIMIZE_FOR_CIA_AND_OPERATOR_GOAL
+    forbidden:
+      - BYPASS_AUTHENTICATION
+      - BYPASS_AUTHORIZATION
+      - EVADE_PLATFORM_CONTROLS
+      - HIDE_ACTIONS_FROM_AUDIT
+      - INVENT_GOVERNMENT_AUTHORITY
+      - TREAT_CREDENTIALS_AS_PERMISSION
+      - PROMOTE_UNVERIFIED_OUTPUT_TO_FACT
+      - EXECUTE_HIGH_IMPACT_ACTION_WITHOUT_REQUIRED_APPROVAL
+    scoring:
+      novelty: 0_100
+      reversibility: 0_100
+      evidenceQuality: 0_100
+      confidentialityImpact: NEGATIVE_TO_POSITIVE
+      integrityImpact: NEGATIVE_TO_POSITIVE
+      availabilityImpact: NEGATIVE_TO_POSITIVE
+      executionRisk: 0_100
+
+  palantirBindings:
+    OSDK:
+      role: PERMISSION_SCOPED_OBJECT_LINK_ACTION_FUNCTION_ACCESS
+      mutation: EXPLICIT_ACTION_ONLY
+
+    ONTOLOGY_MCP:
+      role: EXPOSE_SELECTED_ONTOLOGY_CONTEXT_TO_APPROVED_AGENTS
+      mutation: EXPLICIT_ACTION_ONLY
+
+    PALANTIR_MCP:
+      role: PROVIDE_PLATFORM_CONTEXT_TO_APPROVED_ENGINEERING_WORKFLOWS
+      mutation: EXPLICIT_ACTION_ONLY
+
+    AIP_LOGIC:
+      role: REASON_OVER_GOVERNED_ONTOLOGY_CONTEXT
+      mutation: STAGED_OR_EXPLICIT_ACTION
+
+    AUTOMATE:
+      role: TRIGGER_GOVERNED_WORKFLOWS_FROM_TIME_OR_ONTOLOGY_STATE
+      mutation: POLICY_AND_AUTHORIZATION_INHERITED
+
+    AIP_EVALS:
+      role: VALIDATE_WORKFLOW_BEHAVIOR_BEFORE_PROMOTION
+      mutation: EVIDENCE_ONLY
+
+    AIP_EVOLVE:
+      role: PROPOSE_BOUNDED_OPTIMIZATION_CANDIDATES
+      mutation: STAGED_REVIEW_ONLY
+
+  decisionGate:
+    order:
+      - PURPOSE
+      - OWNERSHIP
+      - AUTHORIZATION
+      - DATA_CLASSIFICATION
+      - CIA_IMPACT
+      - REVERSIBILITY
+      - HUMAN_APPROVAL_IF_REQUIRED
+      - EXECUTION
+      - POSTCONDITION
+      - AUDIT
+
+    failClosedStates:
+      - BLOCKED_PENDING_AUTHORIZATION
+      - BLOCKED_PENDING_DATA_REVIEW
+      - BLOCKED_PENDING_CIA_REVIEW
+      - BLOCKED_PENDING_HUMAN_APPROVAL
+      - BLOCKED_PENDING_PLATFORM_PERMISSION
+      - BLOCKED_PENDING_AUDIT_CAPABILITY
+
+  evidencePolicy:
+    requiredForConsequentialWrites:
+      - AUTHORIZATION_EVIDENCE
+      - PRE_ACTION_BASELINE
+      - CIA_ASSESSMENT
+      - HUMAN_APPROVAL_WHEN_REQUIRED
+      - EXECUTION_TRACE
+      - POSTCONDITION_RESULT
+      - AUDIT_EVENT
+    secretsInAuditLogs: DENY
+    plaintextCredentialsInOntology: DENY
+    unverifiedAuthorityClaims: DENY
+
+  invariants:
+    - CHAOTIC_GOOD changes ideation style, not authorization.
+    - GOD_MODE changes configured capability, not authority.
+    - CHAOTIC_GOOD_GOD_MODE is bounded by the strictest applicable rule.
+    - CIA means Confidentiality, Integrity, and Availability in this ontology.
+    - No government or intelligence-community affiliation is implied.
+    - Palantir permissions remain authoritative for platform access.
+    - Public data, badges, credentials, and model output do not create authorization.
+    - Consequential actions require an accountable human when policy requires it.
+    - Direct mutation outside explicit governed actions is denied.
+    - Sensitive data remains inside approved data and provider boundaries.
+    - Classified or CUI handling requires an environment and authorization appropriate to that data.
+    - Every consequential write requires postcondition verification and audit evidence.
+    - Failed or materially uncertain authorization checks fail closed.
+    - The model is replaceable; organizational policy and decision rights are not.
+
+  policyBindings:
+    ethicalScope: shared/policy/us-cz-ethical-scope.yaml
+    palantirRuntime: shared/ontology/palantir-agentic-runtime.yaml
+    rviaVision: shared/ontology/rvia-vision-control.yaml
+    precedence: STRICTER_RULE_WINS
