@@ -71,3 +71,33 @@ test("parses canonical RICHMONDVA3LM stack signature", () => {
   assert.equal(mission.mode, "RICHMONDVA3LM");
   assert.equal(mission.steps[0]?.op, "SHUTDOWN_ZYRA");
 });
+
+
+test("parses governed drone mission", () => {
+  const mission = parseVirginia(`VIRGINIA
+DRONE MODE SIMULATION
+DRONE CONNECT
+DRONE READY
+DRONE TELEMETRY
+DRONE TAKEOFF 12
+DRONE WAIT 3
+DRONE BEHAVIOR orbit {"radiusM":20,"speedMps":4}
+DRONE RTL
+DRONE LAND`);
+  assert.deepEqual(mission.steps.map((s) => s.op), [
+    "DRONE_MODE",
+    "DRONE_CONNECT",
+    "DRONE_READY",
+    "DRONE_TELEMETRY",
+    "DRONE_TAKEOFF",
+    "DRONE_WAIT",
+    "DRONE_BEHAVIOR",
+    "DRONE_RTL",
+    "DRONE_LAND",
+  ]);
+  assert.deepEqual(mission.steps[4]?.parameters, { altitudeM: 12 });
+  assert.deepEqual(mission.steps[6]?.parameters, {
+    name: "orbit",
+    args: { radiusM: 20, speedMps: 4 },
+  });
+});

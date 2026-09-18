@@ -13,6 +13,15 @@ export type VirginiaStep = {
     | "FPRIME_TELEMETRY"
     | "BRAIN_UPDATE_SOURCE"
     | "SHUTDOWN_ZYRA"
+    | "DRONE_MODE"
+    | "DRONE_CONNECT"
+    | "DRONE_READY"
+    | "DRONE_TELEMETRY"
+    | "DRONE_TAKEOFF"
+    | "DRONE_WAIT"
+    | "DRONE_RTL"
+    | "DRONE_LAND"
+    | "DRONE_BEHAVIOR"
     | "NOTE";
   ontology?: string;
   objectType?: string;
@@ -116,6 +125,53 @@ export function parseVirginia(input: string): VirginiaMission {
     const detections = line.match(/^GEOVISION\s+DETECTIONS(?:\s+(\S+))?$/i);
     if (detections) {
       steps.push({ op: "GEOVISION_DETECTIONS", ontology: detections[1] });
+      continue;
+    }
+    const droneMode = line.match(/^DRONE\s+MODE\s+(SIMULATION|HARDWARE)$/i);
+    if (droneMode) {
+      steps.push({ op: "DRONE_MODE", parameters: { mode: droneMode[1].toUpperCase() } });
+      continue;
+    }
+    if (/^DRONE\s+CONNECT$/i.test(line)) {
+      steps.push({ op: "DRONE_CONNECT" });
+      continue;
+    }
+    if (/^DRONE\s+READY$/i.test(line)) {
+      steps.push({ op: "DRONE_READY" });
+      continue;
+    }
+    if (/^DRONE\s+TELEMETRY$/i.test(line)) {
+      steps.push({ op: "DRONE_TELEMETRY" });
+      continue;
+    }
+    const droneTakeoff = line.match(/^DRONE\s+TAKEOFF\s+(\d+(?:\.\d+)?)$/i);
+    if (droneTakeoff) {
+      steps.push({ op: "DRONE_TAKEOFF", parameters: { altitudeM: Number(droneTakeoff[1]) } });
+      continue;
+    }
+    const droneWait = line.match(/^DRONE\s+WAIT\s+(\d+(?:\.\d+)?)$/i);
+    if (droneWait) {
+      steps.push({ op: "DRONE_WAIT", parameters: { seconds: Number(droneWait[1]) } });
+      continue;
+    }
+    if (/^DRONE\s+RTL$/i.test(line)) {
+      steps.push({ op: "DRONE_RTL" });
+      continue;
+    }
+    if (/^DRONE\s+LAND$/i.test(line)) {
+      steps.push({ op: "DRONE_LAND" });
+      continue;
+    }
+    const droneBehavior = line.match(/^DRONE\s+BEHAVIOR\s+([A-Z0-9_.:-]+)(?:\s+(.+))?$/i);
+    if (droneBehavior) {
+      let args: unknown = droneBehavior[2]?.trim() || "";
+      if (typeof args === "string" && args) {
+        try { args = JSON.parse(args); } catch {}
+      }
+      steps.push({
+        op: "DRONE_BEHAVIOR",
+        parameters: { name: droneBehavior[1].toLowerCase(), args },
+      });
       continue;
     }
     if (/^LIST\s+ONTOLOGIES$/i.test(line)) {

@@ -23,6 +23,15 @@ export type VirginiaOperationType =
   | "FPRIME_TELEMETRY"
   | "BRAIN_UPDATE_SOURCE"
   | "SHUTDOWN_ZYRA"
+  | "DRONE_MODE"
+  | "DRONE_CONNECT"
+  | "DRONE_READY"
+  | "DRONE_TELEMETRY"
+  | "DRONE_TAKEOFF"
+  | "DRONE_WAIT"
+  | "DRONE_RTL"
+  | "DRONE_LAND"
+  | "DRONE_BEHAVIOR"
   | "NOTE";
 
 export type VirginiaMissionMode = "VIRGINIA" | "VAL3M" | "VA3LM" | "RICHMONDVA3LM";
