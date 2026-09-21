@@ -15,5 +15,10 @@
   ],
   "cloudLayer": "Zyra Cloud",
   "failureState": "RED",
-  "successState": "GREEN"
+  "successState": "GREEN",
+  "governance": {
+    "profile": "NIST_AI_RMF_1_0_XUNIA_PROFILE_V1",
+    "contract": ".black-house/nist-ai-rmf.json",
+    "failClosed": true
+  }
 }
