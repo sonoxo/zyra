@@ -23,7 +23,13 @@
     "Policy",
     "CredentialReference",
     "Artifact",
-    "IntelligenceBrief"
+    "IntelligenceBrief",
+    "RiskProfile",
+    "RiskAssessment",
+    "TEVVRecord",
+    "ResidualRisk",
+    "DecommissionPlan",
+    "RiskDecision"
   ],
   "relationshipTypes": [
     "EXECUTES",
@@ -37,7 +43,14 @@
     "RUNS_ON",
     "ROUTES_TO",
     "AUDITS",
-    "EVIDENCES"
+    "EVIDENCES",
+    "ASSESSES",
+    "MEASURES",
+    "MITIGATES",
+    "MONITORS",
+    "HAS_RESIDUAL_RISK",
+    "DECOMMISSIONS",
+    "CONFORMS_TO_PROFILE"
   ],
   "cloudLayer": "Zyra Cloud",
   "intelligence": {
@@ -51,5 +64,14 @@
   },
   "approvalAuthority": true,
   "failureState": "RED",
-  "successState": "GREEN"
+  "successState": "GREEN",
+  "governanceProfile": ".black-house/nist-ai-rmf.json",
+  "riskManagement": {
+    "profileId": "NIST_AI_RMF_1_0_XUNIA_PROFILE_V1",
+    "failClosed": true,
+    "humanAuthorityRequired": true,
+    "riskEnvelopeRequired": true,
+    "tevvRequiredBeforeGreen": true,
+    "criticalRiskDefault": "HOLD"
+  }
 }
