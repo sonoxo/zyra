@@ -51,6 +51,57 @@ This is an ecosystem/provenance binding. It identifies the applications and proj
 
 The previous 25-record ledger was expanded after direct audit of the supplied `Education .zip`. Nine additional evidence-backed records were reconciled. Skills are not counted as certifications. Expired certifications remain historical. Coursework is not promoted to a license. Platform access is not inferred from a badge alone.
 
+## ZYRA Credential Standard 2026
+
+ZYRA now applies **[ZYRA Credential Standard 2026](docs/credentials/ZYRA-CREDENTIAL-STANDARD-2026.md)** across the credential ledger.
+
+**Credential standard:** `ZYRA-CREDENTIAL-STANDARD-2026.09`  
+**Governance overlay:** `shared/policy/universal-galactic-federation-ai-guardrails.yaml`  
+**Review date:** September 22, 2026
+
+The updated standard preserves the current **34-record reconciled credential/training ledger** while introducing explicit separation between:
+
+- **issuer-verified credentials** and owner-supplied evidence;
+- **skills evidence** and certifications;
+- **platform entitlements** and training credentials;
+- **repository credentials** and external certifications;
+- **standards alignment** and third-party certification;
+- **credential evidence** and live runtime authorization.
+
+The owner-defined labels **AGI-S-Q**, **SAGI-Q**, **QAGI**, **AI-A-I**, **SAGI-QAGI-AI-A-I**, and **Universal Galactic/Galactick Federation** are maintained as **project taxonomy/governance namespaces**. They do not by themselves claim an external standard, scientific consensus, government status, security clearance, accreditation, or unrestricted authority.
+
+### Current public standards overlay
+
+ZYRA's 2026 governance crosswalk now includes NIST AI RMF 1.0 and NIST AI 600-1, NIST CSF 2.0, NIST SP 800-53 Rev. 5, NIST zero-trust guidance, ISO/IEC 42001:2023, ISO/IEC 23894:2023, ISO/IEC 42005:2025, ISO/IEC 42006:2025 as a certification-body reference, OWASP GenAI/LLM security guidance, and MITRE ATLAS.
+
+These are **alignment references**, not claims that ZYRA or the credential owner is certified, accredited, endorsed, cleared, or approved by those organizations.
+
+### Universal federation guardrail rule
+
+```text
+IDENTITY
+   ↓
+CREDENTIAL / SKILL / ENTITLEMENT EVIDENCE
+   ↓
+DATA + RESOURCE CLASSIFICATION
+   ↓
+PER-REQUEST AUTHORIZATION
+   ↓
+RISK + IMPACT ASSESSMENT
+   ↓
+AGENT / TOOL / TARGET SCOPE
+   ↓
+HUMAN APPROVAL WHEN REQUIRED
+   ↓
+GOVERNED ACTION
+   ↓
+POSTCONDITION VERIFICATION
+   ↓
+AUDIT + INCIDENT / ROLLBACK PATH
+```
+
+**Fail-closed invariant:** missing, stale, conflicting, or unverifiable authorization does not become permission.
+
 ## Primary issuer / supplied credential stack
 
 | # | Domain | Credential | Evidence state | Issued / validity | Verification reference |
