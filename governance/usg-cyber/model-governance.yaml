@@ -5,6 +5,12 @@ frameworks:
   - nist-ai-600-1
   - nist-csf-2.0
   - nist-sp800-53r5
+  - nist-sp800-207
+  - iso-iec-42001-2023
+  - iso-iec-23894-2023
+  - iso-iec-42005-2025
+  - owasp-llm-top10-2025
+  - mitre-atlas
 
 models:
   - id: gpt-doug-llm
@@ -117,3 +123,9 @@ claim_rules:
     - "DoD approved"
     - "NSA approved"
     - "government authorized AI"
+
+policy_bindings:
+  credential_standard: docs/credentials/ZYRA-CREDENTIAL-STANDARD-2026.md
+  universal_federation_guardrails: shared/policy/universal-galactic-federation-ai-guardrails.yaml
+  precedence: STRICTER_RULE_WINS
+  authorization_default: DENY
