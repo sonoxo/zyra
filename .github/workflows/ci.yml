@@ -35,7 +35,7 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Enforce registry quality result
         env:
           QUALITY_RESULT: ${{ needs.registry-quality.result }}
