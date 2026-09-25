@@ -4,12 +4,14 @@ export const BLACK_HOUSE_CONTROL_PLANE = "THE_BLACK_HOUSE_V1" as const;
 export const BLACK_HOUSE_OBJECT_TYPES = [
   "Mission", "Agent", "Model", "User", "Repository", "Service", "Tool", "Resource", "Evidence",
   "Source", "Decision", "Approval", "Action", "Deployment", "Incident", "Policy",
-  "CredentialReference", "Artifact", "IntelligenceBrief",
+  "CredentialReference", "Artifact", "IntelligenceBrief", "RiskProfile", "RiskAssessment", "TEVVRecord",
+  "ResidualRisk", "DecommissionPlan", "RiskDecision",
 ] as const;
 
 export const BLACK_HOUSE_RELATIONSHIP_TYPES = [
   "EXECUTES", "USES", "PRODUCES", "DERIVED_FROM", "AUTHORIZES", "GOVERNS", "DEPLOYED_TO",
-  "IMPLEMENTS", "RUNS_ON", "ROUTES_TO", "AUDITS", "EVIDENCES",
+  "IMPLEMENTS", "RUNS_ON", "ROUTES_TO", "AUDITS", "EVIDENCES", "ASSESSES", "MEASURES", "MITIGATES",
+  "MONITORS", "HAS_RESIDUAL_RISK", "DECOMMISSIONS", "CONFORMS_TO_PROFILE",
 ] as const;
 
 export type BlackHouseObjectType = typeof BLACK_HOUSE_OBJECT_TYPES[number];
@@ -59,5 +61,9 @@ export const BLACK_HOUSE_KERNEL = {
     consequentialMutationRequiresHumanApproval: true,
     unknownRelationshipsFailClosed: true,
     externalAuthorizationNeverImplied: true,
+    nistAiRmfProfile: "NIST_AI_RMF_1_0_XUNIA_PROFILE_V1",
+    nistAiRmfRiskEnvelopeRequired: true,
+    nistAiRmfTevvRequiredBeforeGreen: true,
+    criticalRiskDefaultsToHold: true,
   },
 } as const;

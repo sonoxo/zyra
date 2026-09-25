@@ -13,12 +13,13 @@ import { registerNxyzHorizonsRoutes } from "./nxyz-horizons";
 import { registerNxyzMicrosoftLayerRoutes } from "./nxyz-microsoft-layer";
 import { registerWarRoomRoutes } from "./war-room";
 import { registerXuniaSecurityRoutes } from "./xunia-security-routes";
+import { registerSpaceTrackerLiveRoutes } from "./spacetracker-live";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
 function validateEnv() {
   const required = ["DATABASE_URL", "JWT_SECRET"];
-  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM", "HF_TOKEN", "ZYRA_EYES_NATIVE_CONTROL", "ZYRA_EYES_AUDIT_LOG"];
+  const optional = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "VITE_STRIPE_PUBLISHABLE_KEY", "BOOTSTRAP_SECRET", "EMAIL_FROM", "HF_TOKEN", "ZYRA_EYES_NATIVE_CONTROL", "ZYRA_EYES_AUDIT_LOG", "SPACETRACKER_LIVE_URL", "SPACETRACKER_ORBITAL_API_URL", "SPACETRACKER_CACHE_TTL_MS", "SPACETRACKER_REQUEST_TIMEOUT_MS"];
   const missing = required.filter(k => !process.env[k]);
   if (missing.length > 0) {
     console.error(`FATAL: Missing required environment variables: ${missing.join(", ")}`);
@@ -178,6 +179,7 @@ app.use((req, res, next) => {
   registerNxyzMicrosoftLayerRoutes(app);
   registerWarRoomRoutes(app);
   registerXuniaSecurityRoutes(app);
+  registerSpaceTrackerLiveRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -227,6 +229,7 @@ app.use((req, res, next) => {
         "nxyz-microsoft-oss-layer",
         "aegis-war-room",
         "xunia-security-platform-v1",
+        "spacetracker-live-orbital-feed",
       ].filter(Boolean);
       console.log(`\n  ╔═══════════════════════════════════════╗`);
       console.log(`  ║  ZYRA Cybersecurity Platform          ║`);

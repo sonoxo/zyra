@@ -3,11 +3,29 @@
   "kernelVersion": "3.0.0",
   "missionProtocol": "black-house-mission-v1",
   "component": "ZYRA",
-  "acceptedTargets": ["ZYRA", "NXYZ", "ZYRA_CLOUD"],
+  "acceptedTargets": [
+    "ZYRA",
+    "NXYZ",
+    "ZYRA_CLOUD"
+  ],
   "adapterMode": "contract-adapter",
   "approvalAuthority": true,
   "requiresExplicitApprovalForMutation": true,
   "evidenceRequired": true,
   "auditRequired": true,
-  "failClosed": true
+  "failClosed": true,
+  "governanceProfile": ".black-house/nist-ai-rmf.json",
+  "nistAiRmf": {
+    "profileId": "NIST_AI_RMF_1_0_XUNIA_PROFILE_V1",
+    "riskEnvelopeRequired": true,
+    "humanOwnerRequired": true,
+    "governRequired": true,
+    "mapRequiredBeforePlan": true,
+    "measureRequiredBeforeApproval": true,
+    "manageDecisionRequiredBeforeDispatch": true,
+    "monitoringRequired": true,
+    "decommissionPathRequired": true,
+    "highRiskHumanReviewRequired": true,
+    "criticalRiskDefault": "HOLD"
+  }
 }
