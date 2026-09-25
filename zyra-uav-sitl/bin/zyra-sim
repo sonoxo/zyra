@@ -1,0 +1,232 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+CMD="${1:-status}"
+ARG="${2:-}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PX4_DIR="${PX4_DIR:-$HOME/PX4-Autopilot}"
+STATE_DIR="${ZYRA_SITL_STATE_DIR:-$HOME/.zyra-sitl}"
+LOG_DIR="$STATE_DIR/logs"
+mkdir -p "$LOG_DIR"
+
+PX4_LOG="$LOG_DIR/px4.log"
+MAVSDK_LOG="$LOG_DIR/mavsdk.log"
+MISSION_LOG="$LOG_DIR/mission.log"
+PX4_PID_FILE="$STATE_DIR/px4-launch.pid"
+MAVSDK_PID_FILE="$STATE_DIR/mavsdk.pid"
+MISSION_PID_FILE="$STATE_DIR/mission.pid"
+
+say() { printf '%s\n' "$*"; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+load_env() {
+  if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif have brew; then
+    eval "$(brew shellenv)"
+  fi
+
+  if have brew && brew --prefix openjdk@17 >/dev/null 2>&1; then
+    export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
+    export PATH="$JAVA_HOME/bin:$PATH"
+  fi
+}
+
+px4_up() { pgrep -x px4 >/dev/null 2>&1; }
+gz_up() { pgrep -f "gz sim" >/dev/null 2>&1; }
+mavsdk_up() { pgrep -f "mavsdk_server" >/dev/null 2>&1; }
+grpc_up() { lsof -nP -iTCP:50051 -sTCP:LISTEN >/dev/null 2>&1; }
+mission_up() {
+  if [ -f "$MISSION_PID_FILE" ]; then
+    kill -0 "$(cat "$MISSION_PID_FILE")" 2>/dev/null
+  else
+    return 1
+  fi
+}
+
+wait_until() {
+  local seconds="$1"
+  shift
+  local i
+  for i in $(seq 1 "$seconds"); do
+    if "$@"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+kill_pid_file() {
+  local file="$1"
+  if [ -f "$file" ]; then
+    local pid
+    pid="$(cat "$file" 2>/dev/null || true)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      sleep 1
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    rm -f "$file"
+  fi
+}
+
+stop_stack() {
+  say "[ZYRA] stopping detached SITL stack"
+  kill_pid_file "$MISSION_PID_FILE"
+  kill_pid_file "$MAVSDK_PID_FILE"
+  kill_pid_file "$PX4_PID_FILE"
+
+  pkill -f "mavsdk_server" 2>/dev/null || true
+  pkill -x px4 2>/dev/null || true
+  pkill -f "gz sim" 2>/dev/null || true
+  pkill -f "make px4_sitl gz_x500_lidar_2d" 2>/dev/null || true
+
+  say "[ZYRA] stopped"
+}
+
+start_stack() {
+  load_env
+
+  if [ ! -d "$PX4_DIR" ]; then
+    say "ERROR: PX4 repo not found at $PX4_DIR"
+    exit 1
+  fi
+
+  if ! have mavsdk_server; then
+    say "ERROR: mavsdk_server not found. Install MAVSDK first."
+    exit 1
+  fi
+
+  stop_stack >/dev/null 2>&1 || true
+  : > "$PX4_LOG"
+  : > "$MAVSDK_LOG"
+
+  say "[ZYRA] starting MAVSDK listener on UDP 14540"
+  nohup mavsdk_server -p 50051 udpin://0.0.0.0:14540 \
+    > "$MAVSDK_LOG" 2>&1 < /dev/null &
+  echo $! > "$MAVSDK_PID_FILE"
+
+  sleep 1
+
+  say "[ZYRA] starting PX4 + Gazebo walls + X500 2D LiDAR"
+  (
+    cd "$PX4_DIR"
+    nohup env PX4_GZ_WORLD=walls CCACHE_DISABLE=1 \
+      make px4_sitl gz_x500_lidar_2d \
+      > "$PX4_LOG" 2>&1 < /dev/null &
+    echo $! > "$PX4_PID_FILE"
+  )
+
+  if ! wait_until 90 px4_up; then
+    say "ERROR: PX4 did not start."
+    tail -n 40 "$PX4_LOG" || true
+    exit 1
+  fi
+
+  say "[ZYRA] PX4 online"
+
+  if wait_until 45 grpc_up; then
+    say "[ZYRA] MAVSDK discovered PX4; gRPC 50051 online"
+  else
+    say "[ZYRA] PX4 is running, but MAVSDK has not discovered it yet."
+    say "[ZYRA] status: bash $ROOT/bin/zyra-sim status"
+    say "[ZYRA] mavsdk log: bash $ROOT/bin/zyra-sim logs mavsdk"
+    exit 2
+  fi
+
+  if [ "${ZYRA_OPEN_QGC:-1}" = "1" ]; then
+    open -ga QGroundControl >/dev/null 2>&1 || true
+  fi
+
+  say "[ZYRA] stack ready"
+  status_stack
+}
+
+status_stack() {
+  say "======================================"
+  say " ZYRA SITL STATUS"
+  say "======================================"
+  px4_up && say "PX4      : ONLINE" || say "PX4      : OFFLINE"
+  gz_up && say "GAZEBO   : ONLINE" || say "GAZEBO   : OFFLINE"
+  mavsdk_up && say "MAVSDK   : PROCESS ONLINE" || say "MAVSDK   : OFFLINE"
+  grpc_up && say "gRPC     : 50051 ONLINE" || say "gRPC     : OFFLINE"
+  if grep -q "System discovered" "$MAVSDK_LOG" 2>/dev/null; then
+    say "DISCOVERY: PX4 DISCOVERED"
+  else
+    say "DISCOVERY: WAITING"
+  fi
+  mission_up && say "MISSION  : RUNNING" || say "MISSION  : IDLE"
+  say "LOGS     : $LOG_DIR"
+  say "======================================"
+}
+
+run_mission() {
+  load_env
+
+  if ! grpc_up; then
+    say "ERROR: MAVSDK gRPC 50051 is not ready."
+    say "Run: make -C $ROOT sim-start"
+    exit 1
+  fi
+
+  if mission_up; then
+    say "[ZYRA] mission is already running"
+    exit 0
+  fi
+
+  local main_class
+  if [ -f "$ROOT/src/main/java/com/sonoxo/zyra/uav/sitl/InspectionApp.java" ]; then
+    main_class="com.sonoxo.zyra.uav.sitl.InspectionApp"
+  else
+    main_class="com.sonoxo.zyra.uav.sitl.App"
+  fi
+
+  : > "$MISSION_LOG"
+  say "[ZYRA] launching mission in background: $main_class"
+  (
+    cd "$ROOT"
+    nohup env ZYRA_SITL_ONLY=1 mvn -q exec:java \
+      -Dexec.mainClass="$main_class" \
+      > "$MISSION_LOG" 2>&1 < /dev/null &
+    echo $! > "$MISSION_PID_FILE"
+  )
+
+  sleep 2
+  if mission_up; then
+    say "[ZYRA] mission running"
+    say "[ZYRA] mission log: bash $ROOT/bin/zyra-sim logs mission"
+  else
+    say "[ZYRA] mission exited early"
+    tail -n 60 "$MISSION_LOG" || true
+    exit 1
+  fi
+}
+
+show_logs() {
+  case "$ARG" in
+    px4) tail -n 80 "$PX4_LOG" ;;
+    mavsdk) tail -n 80 "$MAVSDK_LOG" ;;
+    mission) tail -n 80 "$MISSION_LOG" ;;
+    *)
+      say "Use one of:"
+      say "  bash $ROOT/bin/zyra-sim logs px4"
+      say "  bash $ROOT/bin/zyra-sim logs mavsdk"
+      say "  bash $ROOT/bin/zyra-sim logs mission"
+      ;;
+  esac
+}
+
+case "$CMD" in
+  start) start_stack ;;
+  restart) stop_stack; start_stack ;;
+  stop) stop_stack ;;
+  status) status_stack ;;
+  mission) run_mission ;;
+  logs) show_logs ;;
+  qgc) open -ga QGroundControl ;;
+  *)
+    say "Usage: bash $ROOT/bin/zyra-sim {start|restart|status|mission|logs|qgc|stop}"
+    exit 1
+    ;;
+esac

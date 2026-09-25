@@ -1,0 +1,7 @@
+{
+  "ai-foundry": ["NeMo", "Megatron-LM", "TensorRT-LLM", "garak"],
+  "accelerated-data": ["cudf", "DALI", "nvcomp"],
+  "robotics-lab": ["Isaac-GR00T", "IsaacLab", "warp"],
+  "vision-studio": ["deepstream_reference_apps", "CV-CUDA", "DALI"]
+}
+

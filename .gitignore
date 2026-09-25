@@ -34,3 +34,4 @@ service-account*.json
 private-data/
 private-correspondence/
 exports/private/
+**/target/

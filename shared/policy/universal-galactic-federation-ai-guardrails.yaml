@@ -1,0 +1,346 @@
+schema_version: 2
+policy_id: zyra-universal-galactic-federation-ai-guardrails
+version: 2.0.0
+status: OWNER_GOVERNANCE_STANDARD
+reviewed_at: 2026-09-22
+
+scope:
+  systems:
+    - GPT-DOUG-LLM
+    - ZYRA
+    - XUNIA
+    - GLASS_ONION
+    - RVIA
+    - NXYZ
+  project_namespaces:
+    - AGI-S-Q
+    - SAGI-Q
+    - QAGI
+    - AI-A-I
+    - SAGI-QAGI-AI-A-I
+    - UNIVERSAL_GALACTIC_FEDERATION
+    - UNIVERSAL_GALACTICK_FEDERATION
+  namespace_rule: >-
+    Project names are owner-defined taxonomy labels only. They do not imply external
+    certification, government status, scientific consensus, security clearance,
+    classified-system authorization, or unrestricted model autonomy.
+
+governance_precedence:
+  rule: STRICTER_RULE_WINS
+  fail_closed: true
+  sources:
+    - platform_authorization
+    - applicable_law_and_contract
+    - data_handling_policy
+    - human_approval_policy
+    - this_guardrail_policy
+    - model_or_agent_local_policy
+
+standards_overlay:
+  - id: nist-ai-rmf-1.0
+    state: PUBLISHED_BASELINE_REVISION_IN_PROGRESS
+    use: AI_RISK_GOVERNANCE
+  - id: nist-ai-600-1
+    state: PUBLISHED
+    use: GENERATIVE_AI_PROFILE
+  - id: nist-csf-2.0
+    state: PUBLISHED
+    use: CYBERSECURITY_GOVERNANCE
+  - id: nist-sp800-53r5
+    state: PUBLISHED
+    use: SECURITY_PRIVACY_CONTROL_CROSSWALK
+  - id: nist-sp800-207
+    state: PUBLISHED
+    use: ZERO_TRUST
+  - id: nist-sp800-207a
+    state: PUBLISHED
+    use: IDENTITY_CENTRIC_APPLICATION_ACCESS
+  - id: iso-iec-42001-2023
+    state: PUBLISHED
+    use: AI_MANAGEMENT_SYSTEM
+  - id: iso-iec-23894-2023
+    state: PUBLISHED
+    use: AI_RISK_MANAGEMENT
+  - id: iso-iec-42005-2025
+    state: PUBLISHED
+    use: AI_SYSTEM_IMPACT_ASSESSMENT
+  - id: iso-iec-42006-2025
+    state: PUBLISHED
+    use: CERTIFICATION_BODY_REFERENCE_ONLY
+  - id: owasp-llm-top10-2025
+    state: PUBLISHED
+    use: GENAI_APPLICATION_SECURITY
+  - id: owasp-top10-2025
+    state: PUBLISHED
+    use: WEB_APPLICATION_SECURITY
+  - id: mitre-atlas
+    state: LIVING_KNOWLEDGE_BASE
+    use: ADVERSARIAL_AI_THREAT_MODELING
+
+credential_boundary:
+  standard: docs/credentials/ZYRA-CREDENTIAL-STANDARD-2026.md
+  credential_is_authorization: false
+  standards_alignment_is_certification: false
+  repository_badge_is_external_certification: false
+  platform_entitlement_is_training_credential: false
+  live_authorization_required: true
+
+identity_and_access:
+  default_decision: DENY
+  authenticate_human_actor: true
+  authenticate_workload_identity: true
+  authorize_each_sensitive_action: true
+  least_privilege: true
+  short_lived_credentials_preferred: true
+  implicit_trust_from_network_location: false
+  implicit_trust_from_project_role: false
+  implicit_trust_from_badge_or_certificate: false
+  permission_cache:
+    allowed: true
+    maximum_age: SHORT
+    invalidate_on_policy_or_role_change: true
+
+data_controls:
+  classification_required_before_sensitive_use: true
+  classes:
+    - PUBLIC
+    - INTERNAL
+    - CONFIDENTIAL
+    - RESTRICTED
+    - PROHIBITED
+  derived_attribute_access_checks: true
+  relationship_aware_access_checks: true
+  policy_combining_rule: STRICTER_RULE_WINS
+  secret_redaction: REQUIRED
+  plaintext_credentials_in_prompts: DENY
+  plaintext_credentials_in_logs: DENY
+  unapproved_restricted_data_ingestion: DENY
+  data_minimization: REQUIRED
+  egress_policy: EXPLICIT_ALLOW_ONLY
+
+retrieval_and_rag:
+  source_provenance_required: true
+  retrieved_instructions_are_data_not_authority: true
+  vector_store_acl_required: true
+  retrieval_scope_must_match_actor_scope: true
+  cross_tenant_retrieval: DENY_UNLESS_EXPLICITLY_AUTHORIZED
+  prompt_injection_defenses_required: true
+  content_origin_labels_required: true
+  untrusted_context_delimiters_required: true
+  sensitive_source_citation_redaction_required: true
+
+agentic_execution:
+  default_tool_access: DENY
+  tool_allowlist_required: true
+  target_scope_required: true
+  action_schema_validation_required: true
+  output_validation_required_before_tool_use: true
+  direct_untracked_mutation: DENY
+  unrestricted_shell_or_admin_escalation: DENY
+  self_granted_permissions: DENY
+  self_expansion_to_new_accounts_or_tenants: DENY
+  stealth_or_audit_evasion: DENY
+  persistence_beyond_owner_authorized_scope: DENY
+  consequential_action_human_approval: REQUIRED
+  destructive_action:
+    default: DENY
+    may_be_enabled_only_if:
+      - EXPLICIT_OWNER_AUTHORIZATION
+      - TARGET_SCOPE_VERIFIED
+      - HUMAN_APPROVAL_PRESENT
+      - RECOVERY_OR_ROLLBACK_PLAN_PRESENT
+      - AUDIT_SINK_AVAILABLE
+      - POSTCONDITION_CHECK_DEFINED
+  external_communications:
+    default: PROPOSAL_OR_DRAFT
+    autonomous_send_requires_explicit_scope: true
+  money_or_contract_commitment:
+    autonomous_commit: DENY
+    human_approval: REQUIRED
+
+risk_tiers:
+  LOW:
+    examples:
+      - public_read
+      - local_analysis
+      - reversible_draft
+    human_approval: OPTIONAL
+  MODERATE:
+    examples:
+      - authenticated_read
+      - bounded_external_query
+      - non_consequential_write
+    human_approval: POLICY_DEPENDENT
+  HIGH:
+    examples:
+      - production_write
+      - privileged_configuration_change
+      - external_message_send
+      - user_data_export
+    human_approval: REQUIRED
+    pre_action_evidence: REQUIRED
+  CRITICAL:
+    examples:
+      - destructive_change
+      - irreversible_financial_or_legal_commitment
+      - security_control_disablement
+      - sensitive_cross_boundary_transfer
+    default: HOLD
+    human_approval: REQUIRED
+    two_person_review_preferred: true
+    rollback_or_containment_plan: REQUIRED
+
+impact_assessment:
+  required_for:
+    - NEW_HIGH_IMPACT_USE_CASE
+    - MATERIAL_MODEL_CHANGE
+    - NEW_DATA_CLASS
+    - NEW_EXTERNAL_ACTION_CAPABILITY
+    - NEW_AUTONOMY_LEVEL
+  lifecycle_review:
+    - DESIGN
+    - PRE_DEPLOYMENT
+    - MATERIAL_CHANGE
+    - POST_INCIDENT
+    - PERIODIC_REVIEW
+  record:
+    - intended_purpose
+    - affected_people_and_systems
+    - foreseeable_misuse
+    - privacy_impact
+    - security_impact
+    - reliability_impact
+    - human_oversight
+    - residual_risk
+    - approval
+
+model_and_supply_chain:
+  model_inventory_required: true
+  model_version_pin_required: true
+  provider_change_requires_review: true
+  training_or_retrieval_source_registry_required: true
+  component_inventory_or_sbom_required_where_applicable: true
+  dependency_integrity_checks_required: true
+  untrusted_model_artifact_execution: DENY
+  secret_in_model_config: DENY
+  provenance_for_prompts_policies_and_evals: REQUIRED
+
+owasp_genai_controls:
+  prompt_injection: MITIGATE
+  sensitive_information_disclosure: MITIGATE
+  supply_chain: MITIGATE
+  data_and_model_poisoning: MITIGATE
+  improper_output_handling: MITIGATE
+  excessive_agency: MITIGATE
+  system_prompt_leakage: MITIGATE
+  vector_and_embedding_weaknesses: MITIGATE
+  misinformation: MITIGATE
+  unbounded_consumption: MITIGATE
+
+resource_governance:
+  token_or_compute_budget_required: true
+  recursion_limit_required: true
+  agent_spawn_limit_required: true
+  request_rate_limit_required: true
+  retry_limit_required: true
+  infinite_swarm_literal_execution: DENY
+  symbolic_or_simulated_swarm_counts: ALLOW_WITH_LABEL
+  uncontrolled_resource_acquisition: DENY
+
+human_authority:
+  owner_can_define_project_policy: true
+  owner_cannot_create_third_party_authority_by_declaration: true
+  consequential_decisions_require_accountable_human: true
+  human_override:
+    allowed: true
+    must_be_authenticated: true
+    must_be_logged: true
+    cannot_bypass_external_platform_permissions: true
+    cannot_bypass_law_or_contract: true
+
+evaluation_and_red_team:
+  pre_deployment_evals_required: true
+  security_evals_required: true
+  misuse_evals_required_for_agentic_capabilities: true
+  prompt_injection_tests_required: true
+  authorization_bypass_tests_required: true
+  data_exfiltration_tests_required: true
+  cross_tenant_isolation_tests_required_where_applicable: true
+  rollback_tests_required_for_high_risk_writes: true
+  adversarial_ai_mapping:
+    framework: MITRE_ATLAS
+  failed_critical_eval: HOLD
+
+audit_and_monitoring:
+  audit_required: true
+  tamper_evident_where_practical: true
+  actor_attribution_required: true
+  model_version_required: true
+  policy_version_required: true
+  tool_call_logging_required: true
+  authorization_decision_logging_required: true
+  denied_action_logging_required: true
+  incident_linkage_required: true
+  secrets_in_audit: DENY
+  postcondition_verification_for_consequential_write: REQUIRED
+
+incident_response:
+  kill_switch_required: true
+  bounded_safe_mode_required: true
+  credential_revocation_path_required: true
+  tool_disable_path_required: true
+  model_rollback_path_required: true
+  evidence_preservation_required: true
+  post_incident_review_required: true
+
+research_provenance:
+  patent_or_paper_may_inform_architecture: true
+  source_identifier_required: true
+  publication_date_required: true
+  adopted_control_objective_must_be_independently_described: true
+  patent_publication_is_not:
+    - CREDENTIAL
+    - AUTHORIZATION
+    - CERTIFICATION
+    - LICENSE
+    - OWNERSHIP_PROOF
+    - FREEDOM_TO_OPERATE_OPINION
+  us_20260252566_a1:
+    role: RESEARCH_SIGNAL
+    concepts_recorded:
+      - relationship_aware_access_control
+      - mandatory_access_control
+      - role_based_access_control
+      - derived_attribute_evaluation
+      - policy_combining
+      - llm_to_query_definition_with_separate_query_engine
+    implementation_rule: >-
+      Use independently designed controls grounded in applicable public standards and
+      project requirements. Do not represent this policy as implementing or licensing
+      another party's patent claims.
+
+claim_rules:
+  allowed:
+    - mapped_to_public_standards
+    - internally_assessed
+    - owner_governance_standard
+    - repository_credential
+  prohibited_without_external_evidence:
+    - ISO_CERTIFIED
+    - NIST_CERTIFIED
+    - GOVERNMENT_APPROVED
+    - SECURITY_CLEARANCE_GRANTED
+    - CLASSIFIED_SYSTEM_AUTHORIZED
+    - THIRD_PARTY_PLATFORM_ADMIN
+    - EXTERNALLY_ACCREDITED_AGI_STANDARD
+
+invariants:
+  - EVIDENCE_IS_NOT_AUTHORITY
+  - STANDARDS_ALIGNMENT_IS_NOT_CERTIFICATION
+  - CREDENTIAL_IS_NOT_RUNTIME_PERMISSION
+  - STRONGER_RESTRICTION_WINS
+  - UNKNOWN_AUTHORIZATION_FAILS_CLOSED
+  - UNTRUSTED_INPUT_NEVER_BECOMES_POLICY
+  - AGENT_CANNOT_GRANT_ITSELF_AUTHORITY
+  - CONSEQUENTIAL_WRITES_REQUIRE_POSTCONDITION_AND_AUDIT
+  - PROJECT_NAMES_DO_NOT_IMPLY_EXTERNAL_STATUS
