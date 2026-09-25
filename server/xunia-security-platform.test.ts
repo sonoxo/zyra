@@ -14,7 +14,7 @@ const base: SecurityEngagementManifest = {
   startsAt: "2026-09-01T00:00:00.000Z",
   endsAt: "2026-09-02T00:00:00.000Z",
   targets: [{ type: "url", value: "https://lab.example.test" }],
-  exclusions: [{ type: "url", value: "https://lab.example.test/billing" }],
+  exclusions: [],
   allowedChecks: ["web.baseline", "service.discovery", "web.templates", "supply-chain.sbom"],
   maxRequestsPerSecond: 10,
   maxConcurrency: 4,
@@ -55,11 +55,11 @@ test("ASSESS mode removes safe-active validation", () => {
 
 test("explicit exclusions override the parent target", () => {
   assert.equal(
-    authorizePlanTarget(base, { type: "url", value: "https://lab.example.test/billing" }),
+    authorizePlanTarget({ ...base, exclusions: [{ type: "url", value: "https://lab.example.test/billing" }] }, { type: "url", value: "https://lab.example.test/billing" }, now),
     false,
   );
   assert.equal(
-    authorizePlanTarget(base, { type: "url", value: "https://lab.example.test/api" }),
+    authorizePlanTarget(base, { type: "url", value: "https://lab.example.test/api" }, now),
     true,
   );
 });
