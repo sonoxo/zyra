@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { parseVirginia, type VirginiaStep } from "./src/virginia.js";
+import n2yoRouter from "./src/n2yo.js";
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
@@ -189,9 +190,12 @@ app.get("/api/health", (_req, res) => {
     eyerisConfigured: Boolean(eyerisBaseUrl()),
     eyerisOntology: eyerisOntology() || null,
     watchDogBufferedEvents: watchDogEvents.length,
+    orbitalDataConfigured: Boolean(process.env.XUNIA_N2YO_PROXY_URL || process.env.N2YO_API_KEY),
     publicCctv: "BLOCKED",
   });
 });
+
+app.use("/api/live/orbit", n2yoRouter);
 
 app.get("/api/va3lm/geovision/status", async (_req, res) => {
   res.json(await geoVisionStatus());
