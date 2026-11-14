@@ -1,51 +1,16 @@
 import crypto from "crypto";
 
-const RESEND_API_URL = "https://api.resend.com/emails";
-
 interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
 }
 
-async function sendEmail(options: SendEmailOptions): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("RESEND_API_KEY not configured — email not sent to", options.to);
-    return false;
-  }
-
-  const fromAddress = process.env.EMAIL_FROM || "Zyra <noreply@zyra.host>";
-  console.log(`[email] Sending "${options.subject}" to ${options.to} from ${fromAddress}`);
-
-  try {
-    const res = await fetch(RESEND_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: [options.to],
-        subject: options.subject,
-        html: options.html,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[email] Send failed:", res.status, err);
-      return false;
-    }
-
-    const result = await res.json();
-    console.log("[email] Sent successfully, id:", result.id);
-    return true;
-  } catch (err) {
-    console.error("[email] Send error:", err);
-    return false;
-  }
+// CL1 free-only: email delivery via metered APIs is disabled.
+// Return false rather than claiming password-reset/verification mail was sent.
+async function sendEmail(_options: SendEmailOptions): Promise<boolean> {
+  console.warn("[CL1] outbound email disabled (local-only mode).");
+  return false;
 }
 
 export function generateVerificationToken(): string {

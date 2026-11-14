@@ -3,6 +3,9 @@ import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { storage } from "./storage";
 
+// CL1 free-only: leave legacy billing module import-compatible without ever
+// creating a payment/subscription API client. Existing billing data is untouched.
+const CL1_DISABLE_BILLING = true;
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
 const PRICE_MAP: Record<string, { amount: number; name: string }> = {
@@ -22,6 +25,7 @@ const checkoutSchema = z.object({
 });
 
 function getStripe(): Stripe | null {
+  if (CL1_DISABLE_BILLING) return null;
   if (!STRIPE_SECRET_KEY) return null;
   return new Stripe(STRIPE_SECRET_KEY);
 }
@@ -37,7 +41,7 @@ function getCanonicalBaseUrl(req: Request): string {
 }
 
 export function isStripeConfigured(): boolean {
-  return !!STRIPE_SECRET_KEY;
+  return !CL1_DISABLE_BILLING && !!STRIPE_SECRET_KEY;
 }
 
 export function isPaidPlan(plan: string): boolean {
@@ -49,7 +53,7 @@ export function registerStripeRoutes(app: Express, requireAuth: (req: Request, r
     if (req.user?.role === "viewer") return res.status(403).json({ message: "Access denied" });
     next();
   }, (_req: Request, res: Response) => {
-    return res.json({ configured: !!STRIPE_SECRET_KEY });
+    return res.json({ configured: isStripeConfigured() });
   });
 
   app.post("/api/stripe/create-checkout-session", requireAuth, (req: Request, res: Response, next: () => void) => {
